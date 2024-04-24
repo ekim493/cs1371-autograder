@@ -7,8 +7,10 @@ The *new* Gradescope autograder for CS1371.
 - To run the Docker locally, download the repo and the Docker engine, then type `docker build /repo/download/location -t gradescope_base` followed by `docker run --rm -it -v /source/submit:/autograder/submission -v /source:/autograder/results gradescope_base:latest bash`.
 - Update the Dockerfile if the Matlab version changes.
 - Ideally we want the Docker to be published automatically somehow.
+
 `/matlab` holds the linux installation for the relevant Matlab version. 
 - To update the Matlab version, download the installer and run 'download without installing. See [here](https://www.mathworks.com/help/install/ug/install-noninteractively-silent-installation.html) for more info.
+
 `/source` holds all relevant data necessary to run the autograder
 - `/source/runTester.m` is the main Matlab driver to run the test cases and output the results as a results.json.
 - `/source/solutions` holds the solution codes for all HW assignments. 
