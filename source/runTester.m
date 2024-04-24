@@ -19,6 +19,9 @@ assignment_name = 'HW0'; % Import this from gradescope metadata
 % so sprintf cannot be used. For failed cases, we replace the formatted '\n' by masking it,
 % replacing it with a temp character '`', and then replacing it with the escape sequence. The double
 % quotes are also replaced with single quotes.
+% 
+% The diagnostic output cuts output past "Framework Diagnostics", which means the tester is
+% responsible for outputting the relevant data to gradescope.
 %
 % If a student code errors, the exception is read in and a message is generated. The student's
 % script will also be read to output the relevant line to gradescope.
@@ -33,13 +36,13 @@ for i = 1:length(tests)
         line_num = exception.stack(strcmp({exception.stack.name}, cell2mat(extractBetween(tests(i).Name, '/', '_')))).line;
         script = strip(readlines(sprintf('%s.m', extractBefore(results(i).name, '_'))));
         line = strip(script(line_num));
-        results(i).output = ['An error occured while running your function.\nIdentifer: ' exception.identifier '\nMessage: ' exception.message '\nLine: ' num2str(line_num), '\n', char(line)];
+        results(i).output = ['An error occured while running your function.\nMessage: ' exception.message '\nLine: ' num2str(line_num), '\n', char(line)];
     elseif tests(i).Failed
         out = tests(i).Details.DiagnosticRecord.Report;
         out(out == 10) = '`';
         out = strrep(out, '`', '\n');
         out = strrep(out, '"', '''');
-        out = extractBefore(out, 'Stack Information');
+        out = extractBefore(out, '\n    ---------------------\n    Framework Diagnostic');
         results(i).output = out;
     end
 end

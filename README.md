@@ -22,6 +22,9 @@ The *new* Gradescope autograder for CS1371.
     - The name of the tester should be the the gradescope assignment name + 'Tester.m'.
     - The name of the scoring rubrics should be a JSON with the name being the assignment + 'Scores.json'.
     - Example: For a gradescope assignment called `HW0`, the testers file should contain a `HW0Tester.m` and a `HW0Scores.json`.
+## Gradescope view
+What the current gradescope autograder view looks like:
+![image](current_gradescope_view.png)
 ## To-Do
 - [ ] Add ABC check implementation.
 - [ ] Modify the runner once a valid Matlab license has been obtained to run inside Gradescope.
