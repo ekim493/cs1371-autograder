@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+cp /autograder/source/results.json /autograder/results/results.json

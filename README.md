@@ -1,0 +1,20 @@
+# CS1371-autograder
+The *new* Gradescope autograder for CS1371.
+## Stucture
+`/matlab` holds the linux installation for the relevant Matlab version. 
+- To update the Matlab version, download the installer and run 'download without installing. See [here](https://www.mathworks.com/help/install/ug/install-noninteractively-silent-installation.html) for more info.
+- Update the Dockerfile if the Matlab version changes.
+`[/source](source/README.md)` holds all relevant data necessary to run the autograder
+- `/source/runTester.m` is the main Matlab driver to run the test cases and output the results as a results.json.
+- `[/source/solutions](source/solutions/README.md)` holds the solution codes for all HW assignments. 
+    - All assignments should be organized into folders where the name of the folder is the same as the gradescope assignment.
+    - All solutions codes should be name `FUNCTION_soln.m`, where `FUNCTION` is replaced with the name of the function.
+- `[/source/testers](source/testers/README.md)` holds the test suites & scoring rubrics for all HW assignments. 
+    - The name of the tester should be the the gradescope assignment name + 'Tester.m'.
+    - The name of the scoring rubrics should be a JSON with the name being the assignment + 'Scores.json'.
+    - Example: For a gradescope assignment called `HW0`, the testers file should contain a `HW0Tester.m` and a `HW0Scores.json`.
+## To-Do
+- [ ] Add ABC check implementation.
+- [ ] Modify the runner once a valid Matlab license has been obtained to run inside Gradescope.
+- [ ] Figure out how to run matlab once that's done
+- [ ] Figure out how to get github to automatically publish the Docker image to Docker hub. Documentation [here](https://docs.github.com/en/actions/publishing-packages/publishing-docker-images) and [here](https://github.com/docker/build-push-action).

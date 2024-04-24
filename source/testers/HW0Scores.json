@@ -1,0 +1,18 @@
+{ 
+  "visibility": "visible",
+  "tests":
+    [
+        {
+            "max_score": 1, 
+            "name": "example1"
+        },
+        {
+            "max_score": 2, 
+            "name": "example2"
+        },
+        {
+            "max_score": 3, 
+            "name": "example3"
+        }
+    ]
+}
