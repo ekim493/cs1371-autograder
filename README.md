@@ -5,6 +5,7 @@ The *new* Gradescope autograder for CS1371.
 - Uses gradescope/autograder-base as the base and attempts to silently install Matlab (see [here](https://www.mathworks.com/help/install/ug/install-noninteractively-silent-installation.html))
     - No File Installation Key currently
 - To run the Docker locally, download the repo and the Docker engine, then type `docker build /repo/download/location -t gradescope_base` followed by `docker run --rm -it -v /source/submit:/autograder/submission -v /source:/autograder/results gradescope_base:latest bash`.
+    - **REPLACE `/repo/download/location` with your repo location**
 - Update the Dockerfile if the Matlab version changes.
 - Ideally we want the Docker to be published automatically somehow.
 
