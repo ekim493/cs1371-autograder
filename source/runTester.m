@@ -2,7 +2,7 @@ function runTester
 % RUNTESTER Run a MATLAB test suite and generate the results as a results.json for gradescope.
 %
 % The assignment name is imported from gradescope metadata, and the testing suite should be located
-% at /testers/ according to the readme.md specificiations.
+% at source/testers/ according to the readme.md specificiations.
 
 assignment_name = 'HW0'; % Import this from gradescope metadata
 
@@ -32,11 +32,15 @@ for i = 1:length(tests)
     results(i).name = extractAfter(tests(i).Name, '/');
     results(i).passed = tests(i).Passed;
     if tests(i).Incomplete
-        exception = tests(i).Details.DiagnosticRecord.Exception;
-        line_num = exception.stack(strcmp({exception.stack.name}, cell2mat(extractBetween(tests(i).Name, '/', '_')))).line;
-        script = strip(readlines(sprintf('%s.m', extractBefore(results(i).name, '_'))));
-        line = strip(script(line_num));
-        results(i).output = ['An error occured while running your function.\nMessage: ' exception.message '\nLine: ' num2str(line_num), '\n', char(line)];
+        try
+            exception = tests(i).Details.DiagnosticRecord.Exception;
+            line_num = exception.stack(strcmp({exception.stack.name}, cell2mat(extractBetween(tests(i).Name, '/', '_')))).line;
+            script = strip(readlines(sprintf('%s.m', extractBefore(results(i).name, '_'))));
+            line = strip(script(line_num));
+            results(i).output = ['An error occured while running your function.\nMessage: ' exception.message '\nLine: ' num2str(line_num), '\n', char(line)];
+        catch
+            results(i).output = 'An unknown error has occured while running your function.';
+        end
     elseif tests(i).Failed
         out = tests(i).Details.DiagnosticRecord.Report;
         out(out == 10) = '`';
@@ -48,7 +52,7 @@ for i = 1:length(tests)
 end
 
 %% Determine the points per test case
-% Find the number of test cases present for each function and devide from the max score for that
+% Find the number of test cases present for each function and divide from the max score for that
 % function. points_per_tests is stored under the json structure at json.tests.
 %
 % An error is thrown if this does not work. Most likely, there is a discrepancy between the
@@ -85,8 +89,10 @@ end
 
 %% Parse through results to create cell array containing each test case
 % Gradescope doesn't like it when a field is empty and Matlab doesn't like jagged structures,
-% so we compromise by creating a cell array of structures.
-% If there is no ouput text to display (ie. results.output is empty), it will get removed and added to a cell
+% so we compromise by splitting up the structure, removing empty fields, and placing the smaller
+% structures into cells.
+% If there is no ouput text to display (ie. results.output is empty), it will get removed and added
+% to a cell.
 
 results = rmfield(results, 'passed'); % No need for field anymore
 tests = cell(length(results), 1);
@@ -108,6 +114,7 @@ fclose('all');
 %% For local testing only
 % To show what the output will look like in Gradescope, add the 'test_output.zip' file as an
 % autograder configuration and submit any file to get the autograder running.
-
-zip('test_output.zip', ["run_autograder", "setup.sh", "results.json"]) 
+if ispc || ismac
+    zip('test_output.zip', ["run_autograder", "setup.sh", "results.json"]);
+end
 end

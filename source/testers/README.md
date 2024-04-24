@@ -24,6 +24,8 @@ function example1_Test1(testCase)
     testCase.verifyEqual(out1, out1_soln);
 end
 ```
+The `TesterHelper.m` contains a `TesterHelper` class which contains static helper functions that can be used by any Tester.
+- Note: Currently configured for user use, modify for gradescope use
 ## Scoring Rubric Specifications
 All scoring rubrics should be a .json file with at minimum a 'tests' field. This field should contain a list of every function that is to be tested, with the field 'name' assigned to the name of the function, and the field 'max_score' assigned the total possible score for that function.
 Any assignment wide fields such as visibility should also be listed in this JSON. See the specifications on [Gradescope](https://gradescope-autograders.readthedocs.io/en/latest/specs/). Currently, additional data in tests is not transferred over.
