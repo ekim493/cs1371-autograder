@@ -13,14 +13,15 @@ ADD matlab /matlab
 
 RUN cp /autograder/source/run_autograder /autograder/run_autograder
 
-RUN dos2unix /autograder/run_autograder /autograder/source/setup.sh
+RUN dos2unix /autograder/run_autograder
 RUN chmod +x /autograder/run_autograder
 
 RUN apt-get update && \
     apt-get install -y unzip && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+ARG VER
 RUN cd /matlab && \
-    unzip matlab_${VER}_Linux.zip && \
+    unzip -q -n matlab_${VER}_Linux.zip && \
     ./install -inputFile installer_input.txt && \
     cd /autograder/source
