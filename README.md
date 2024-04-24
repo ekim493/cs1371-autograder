@@ -30,3 +30,4 @@ What the current gradescope autograder view looks like:
 - [ ] Modify the runner once a valid Matlab license has been obtained to run inside Gradescope.
 - [ ] Figure out how to run matlab once that's done
 - [ ] Figure out how to get github to automatically publish the Docker image to Docker hub. Documentation [here](https://docs.github.com/en/actions/publishing-packages/publishing-docker-images) and [here](https://github.com/docker/build-push-action).
+    - So it looks like this isn't possible unless we move the github to a non-enterprise version or we pay for Docker hub
