@@ -4,6 +4,7 @@ on:
   push:
     branches: 
       - 'main'
+  workflow_dispatch:
 
 jobs:
   docker:
@@ -19,6 +20,5 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
           push: true
           tags: ekim493-autograder:latest
