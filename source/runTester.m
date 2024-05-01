@@ -37,7 +37,7 @@ for i = 1:length(tests)
             line_num = exception.stack(strcmp({exception.stack.name}, cell2mat(extractBetween(tests(i).Name, '/', '_')))).line;
             script = strip(readlines(sprintf('%s.m', extractBefore(results(i).name, '_'))));
             line = strip(script(line_num));
-            results(i).output = ['An error occured while running your function.\nMessage: ' exception.message '\nLine: ' num2str(line_num), '\n', char(line)];
+            results(i).output = ['An error occured while running your function.\n    ---------------------\n    Description: ' exception.message '\n    Location: line ' num2str(line_num), '\n    Code: ', char(line)];
         catch
             results(i).output = 'An unknown error has occured while running your function.';
         end

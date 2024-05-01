@@ -1,9 +1,14 @@
 # CS1371-autograder
 The *new* Gradescope autograder for CS1371.
+## To-Do
+- [ ] Modify the runner once a valid Matlab license has been obtained to run inside Gradescope.
+    - Originally, the goal was to attempt to silently install Matlab (see [here](https://www.mathworks.com/help/install/ug/install-noninteractively-silent-installation.html))
+    - However, it seems like a connection to a license network server must be made instead (see [here](https://github.com/mathworks-ref-arch/matlab-dockerfile))
+- [ ] Figure out how to run the tester once that's done
+- [ ] Figure out how to get github to automatically publish the Docker image to Docker hub. Documentation [here](https://docs.github.com/en/actions/publishing-packages/publishing-docker-images) and [here](https://github.com/docker/build-push-action).
+    - So it looks like this isn't possible unless we move the github to a non-enterprise version or we pay for Docker hub
 ## Stucture
 `Dockerfile` is the file used to build our Docker environment
-- Uses gradescope/autograder-base as the base and attempts to silently install Matlab (see [here](https://www.mathworks.com/help/install/ug/install-noninteractively-silent-installation.html))
-    - No File Installation Key currently
 - To run the Docker image locally, download the repo and the Docker engine, then type `docker build /repo/download/location -t cs1371-autograder` followed by `docker run --rm -it -v /source/submit:/autograder/submission -v /source:/autograder/results cs1371-autograder:latest bash`.
     - **REPLACE `/repo/download/location` with your repo location**
     - To test the gradescope output, run `source/runTester.m` in your local Matlab, upload the resulting 'test_output.zip' to a gradescope autograder, and submit any file to get the autograder running.
@@ -11,7 +16,6 @@ The *new* Gradescope autograder for CS1371.
 - Ideally we want the Docker to be published automatically somehow.
 
 `matlab` holds the linux installation for the relevant Matlab version. 
-- To update the Matlab version, download the installer and run 'download without installing'. See [here](https://www.mathworks.com/help/install/ug/install-noninteractively-silent-installation.html) for more info.
 
 `source` holds all relevant data necessary to run the autograder
 - `source/runTester.m` is the main Matlab driver to run the test cases and output the results as a results.json.
@@ -25,9 +29,4 @@ The *new* Gradescope autograder for CS1371.
 ## Gradescope view
 What the current gradescope autograder view looks like:
 ![image](current_gradescope_view.png)
-## To-Do
-- [ ] Add ABC check implementation.
-- [ ] Modify the runner once a valid Matlab license has been obtained to run inside Gradescope.
-- [ ] Figure out how to run matlab once that's done
-- [ ] Figure out how to get github to automatically publish the Docker image to Docker hub. Documentation [here](https://docs.github.com/en/actions/publishing-packages/publishing-docker-images) and [here](https://github.com/docker/build-push-action).
-    - So it looks like this isn't possible unless we move the github to a non-enterprise version or we pay for Docker hub
+
