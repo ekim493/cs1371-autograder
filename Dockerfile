@@ -1,27 +1,102 @@
-# Default Gradescope Dockerfile
-
-# Define base and a couple of tags
 ARG BASE_REPO=gradescope/autograder-base
 ARG TAG=latest
 ARG VER=R2024a
 
+# To specify which MATLAB release to install in the container, edit the value of the MATLAB_RELEASE argument.
+# Use lowercase to specify the release, for example: ARG MATLAB_RELEASE=r2021b
+ARG MATLAB_RELEASE=r2024a
+
+# Specify the list of products to install into MATLAB.
+ARG MATLAB_PRODUCT_LIST="MATLAB"
+
+# Specify MATLAB Install Location.
+ARG MATLAB_INSTALL_LOCATION="/opt/matlab/${MATLAB_RELEASE}"
+
+# Specify license server information using the format: port@hostname 
+ARG LICENSE_SERVER=1711@matlablic.gatech.edu
+
+# Specify gradescope autograder base
+ARG GRADESCOPE_REPO=gradescope/autograder-base:latest
+
 FROM ${BASE_REPO}:${TAG}
 
+ARG MATLAB_RELEASE
+ARG MATLAB_PRODUCT_LIST
+ARG MATLAB_INSTALL_LOCATION
+ARG LICENSE_SERVER
+
 # Import local files
+ADD base-dependencies.txt /tmp/base-dependencies.txt
 ADD source /autograder/source
-ADD matlab /matlab
 
 RUN cp /autograder/source/run_autograder /autograder/run_autograder
 
 RUN dos2unix /autograder/run_autograder
 RUN chmod +x /autograder/run_autograder
 
-RUN apt-get update && \
-    apt-get install -y unzip && \
-    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+ENV DEBIAN_FRONTEND="noninteractive" TZ="Etc/UTC"
+ENV MLM_LICENSE_FILE=$LICENSE_SERVER
 
-ARG VER
-RUN cd /matlab && \
-    unzip -q -n matlab_${VER}_Linux.zip && \
-    ./install -inputFile installer_input.txt && \
-    cd /autograder/source
+RUN apt-get update
+RUN apt-get install -y ca-certificates \
+libasound2 \
+libc6 \
+libcairo-gobject2 \
+libcairo2 \
+libcap2 \
+libcups2 \
+libdrm2 \
+libfontconfig1 \
+libgbm1 \
+libgdk-pixbuf-2.0-0 \
+libgl1 \
+libglib2.0-0 \
+libgstreamer-plugins-base1.0-0 \
+libgstreamer1.0-0 \
+libgtk-3-0 \
+libice6 \
+libltdl7 \
+libnspr4 \
+libnss3 \
+libpam0g \
+libpango-1.0-0 \
+libpangocairo-1.0-0 \
+libpangoft2-1.0-0 \
+libsndfile1 \
+libudev1 \
+libuuid1 \
+libwayland-client0 \
+libxcomposite1 \
+libxcursor1 \
+libxdamage1 \
+libxfixes3 \
+libxft2 \
+libxinerama1 \
+libxrandr2 \
+libxt6 \
+libxtst6 \
+libxxf86vm1 \
+locales \
+locales-all \
+make \
+net-tools \
+procps \
+sudo \
+unzip \
+zlib1g
+
+
+#RUN xargs -a /tmp/base-dependencies.txt apt-get install -y
+RUN apt-get clean && apt-get -y autoremove && rm -rf /var/lib/apt/lists/*
+
+RUN [ -d /usr/share/X11/xkb ] || mkdir -p /usr/share/X11/xkb
+
+RUN wget -q https://www.mathworks.com/mpm/glnxa64/mpm \ 
+    && chmod +x mpm \
+    && sudo HOME=${HOME} ./mpm install \
+    --release=${MATLAB_RELEASE} \
+    --destination=${MATLAB_INSTALL_LOCATION} \
+    --products ${MATLAB_PRODUCT_LIST} \
+    || (echo "MPM Installation Failure. See below for more information:" && cat /tmp/mathworks_root.log && false) \
+    && sudo rm -rf mpm /tmp/mathworks_root.log ${HOME}/.MathWorks \
+    && sudo ln -s ${MATLAB_INSTALL_LOCATION}/bin/matlab /usr/local/bin/matlab

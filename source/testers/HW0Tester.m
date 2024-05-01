@@ -2,7 +2,7 @@ classdef HW0Tester < matlab.unittest.TestCase
     methods(TestClassSetup)
         function add_path(testCase)
             addpath('../solutions/HW0/');
-            addpath('../');
+            addpath('/autograder/submission');
         end
     end
     

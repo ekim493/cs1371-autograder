@@ -1,10 +1,6 @@
 function runTester
-% RUNTESTER Run a MATLAB test suite and generate the results as a results.json for gradescope.
-%
-% The assignment name is imported from gradescope metadata, and the testing suite should be located
-% at source/testers/ according to the readme.md specificiations.
-
-assignment_name = 'HW0'; % Import this from gradescope metadata
+submission = jsondecode(fileread('/autograder/submission_metadata.json'));
+assignment_name = submission.assignment.title; % Import this from gradescope metadata
 
 %% Run tester with suppressed output
 [~, tests] = evalc("runtests(sprintf('./testers/%sTester.m', assignment_name))");
@@ -110,11 +106,4 @@ json = jsonencode(json);
 fh = fopen(fullfile(pwd, 'results.json'), 'w');
 fprintf(fh, json);
 fclose('all');
-
-%% For local testing only
-% To show what the output will look like in Gradescope, add the 'test_output.zip' file as an
-% autograder configuration and submit any file to get the autograder running.
-if ispc || ismac
-    zip('test_output.zip', ["run_autograder", "setup.sh", "results.json"]);
-end
 end
