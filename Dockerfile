@@ -17,7 +17,6 @@ ARG MATLAB_INSTALL_LOCATION
 ARG LICENSE_SERVER
 
 # Import local files
-ADD base-dependencies.txt /tmp/base-dependencies.txt
 ADD source /autograder/source
 
 RUN cp /autograder/source/run_autograder /autograder/run_autograder

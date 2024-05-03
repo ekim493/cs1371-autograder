@@ -30,10 +30,14 @@ for i = 1:length(tests)
     if tests(i).Incomplete
         try
             exception = tests(i).Details.DiagnosticRecord.Exception;
-            line_num = exception.stack(strcmp({exception.stack.name}, cell2mat(extractBetween(tests(i).Name, '/', '_')))).line;
-            script = strip(readlines(sprintf('%s.m', extractBefore(results(i).name, '_'))));
-            line = strip(script(line_num));
-            results(i).output = ['An error occured while running your function.\n    ---------------------\n    Description: ' exception.message '\n    Location: line ' num2str(line_num), '\n    Code: ', char(line)];
+            line_num = exception.stack(1).line;
+            if strcmp(exception.stack(1).name, extractBefore(results(i).name, '_'))
+                script = strip(readlines(sprintf('%s.m', extractBefore(results(i).name, '_'))));
+                line = strip(script(line_num));
+                results(i).output = ['An error occured while running your function.\n    ---------------------\n    Description: ' exception.message '\n    Location: line ' num2str(line_num), '\n    Code: ', char(line)];
+            else
+                results(i).output = ['An error occured while running your function.\n    ---------------------\n    Description: ' exception.message];
+            end
         catch
             results(i).output = 'An unknown error has occured while running your function.';
         end
