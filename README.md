@@ -10,6 +10,7 @@ Currently, the Docker is hosted by me at ekim493/cs1371-autograder. To follow th
 - It will then prompt you for a one time password by following a link to the Mathworks website.
 - Enter the password and Matlab should start.
 - Open a new terminal, and type `docker commit CONTAINER_NAME ekim493/cs1371-autograder:latest`
+    - Replace CONATINER_NAME with the name of the current container. This can be found in the Docker desktop app.
     - **Ensure you are logged in**
 - Finally, push the image to the web using `docker push ekim493/cs1371-autograder`.
 - In gradescope, go to 'Configure Autograder', select 'Manual Docker configuration', and then type in the docker image name. `ekim493/cs1371-autograder:latest` in this case.
