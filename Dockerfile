@@ -3,14 +3,16 @@
 ARG MATLAB_RELEASE=r2024a
 
 # Specify the list of products to install into MATLAB.
+# If additional packages are necessary, specify them here
 ARG MATLAB_PRODUCT_LIST="MATLAB"
 
 # Specify MATLAB Install Location.
 ARG MATLAB_INSTALL_LOCATION="/opt/matlab/${MATLAB_RELEASE}"
 
-# Specify gradescope autograder base
+# Build from gradescope base
 FROM gradescope/autograder-base:latest
 
+# Load args into container
 ARG MATLAB_RELEASE
 ARG MATLAB_PRODUCT_LIST
 ARG MATLAB_INSTALL_LOCATION
@@ -19,14 +21,14 @@ ARG LICENSE_SERVER
 # Import local files
 ADD source /autograder/source
 
+# Copy run_autograder into proper location and make it executable
 RUN cp /autograder/source/run_autograder /autograder/run_autograder
-
 RUN dos2unix /autograder/run_autograder
 RUN chmod +x /autograder/run_autograder
 
 ENV DEBIAN_FRONTEND="noninteractive" TZ="Etc/UTC"
-ENV MLM_LICENSE_FILE=$LICENSE_SERVER
 
+# Download necessary Matlab dependencies
 RUN apt-get update
 RUN apt-get install -y ca-certificates \
 libasound2 \
@@ -77,6 +79,7 @@ zlib1g
 
 RUN apt-get clean && apt-get -y autoremove && rm -rf /var/lib/apt/lists/*
 
+# Install Matlab
 RUN wget -q https://www.mathworks.com/mpm/glnxa64/mpm \ 
     && chmod +x mpm \
     && sudo HOME=${HOME} ./mpm install \

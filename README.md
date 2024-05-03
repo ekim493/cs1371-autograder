@@ -2,14 +2,15 @@
 The *new* Gradescope autograder for CS1371.
 ## Install instructions
 Currently, the Docker is hosted by me at ekim493/cs1371-autograder. To follow these instructions on your own, create a Docker hub account, then create your own Docker hub repository. Then, replace all instances of ekim493/cs1371-autograder with the name of your repository.
-- Download the Docker engine
+These instructions are only tested for Windows.
+- Download the Docker engine and log in.
 - Open the terminal and navigate to the directory with the Dockerfile.
 - Type `docker build ./ -t ekim493/cs1371-autograder` followed by `docker run --rm -it -v /source/submit:/autograder/submission -v /source:/autograder/results ekim493/cs1371-autograder:latest bash`.
 - You should now be in the Docker container, and the terminal should say something like root@123123.
 - Run Matlab by typing `matlab -licmode onlinelicensing`. You will then be prompted to enter your email.
 - It will then prompt you for a one time password by following a link to the Mathworks website.
 - Enter the password and Matlab should start.
-- Open a new terminal, and type `docker commit CONTAINER_NAME ekim493/cs1371-autograder:latest`
+- Open a new terminal while the previous one is running, and type `docker commit CONTAINER_NAME ekim493/cs1371-autograder:latest`
     - Replace CONATINER_NAME with the name of the current container. This can be found in the Docker desktop app.
     - **Ensure you are logged in**
 - Finally, push the image to the web using `docker push ekim493/cs1371-autograder`.

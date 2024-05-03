@@ -11,7 +11,7 @@ All testers should have have a `TestClassSetup` method where the following funct
 ```
 function add_path(testCase)
     addpath('../solutions/HW0/');
-    addpath('../');
+    addpath('/autograder/submission');
 end
 ```
 All test cases should be name `FUNCTION_Test#`, where `FUNCTION` is replaced with the function name it is testing, and # is an identifier for the test case.
