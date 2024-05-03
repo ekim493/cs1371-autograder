@@ -1,7 +1,3 @@
-ARG BASE_REPO=gradescope/autograder-base
-ARG TAG=latest
-ARG VER=R2024a
-
 # To specify which MATLAB release to install in the container, edit the value of the MATLAB_RELEASE argument.
 # Use lowercase to specify the release, for example: ARG MATLAB_RELEASE=r2021b
 ARG MATLAB_RELEASE=r2024a
@@ -12,13 +8,8 @@ ARG MATLAB_PRODUCT_LIST="MATLAB"
 # Specify MATLAB Install Location.
 ARG MATLAB_INSTALL_LOCATION="/opt/matlab/${MATLAB_RELEASE}"
 
-# Specify license server information using the format: port@hostname 
-ARG LICENSE_SERVER=1711@matlablic.gatech.edu
-
 # Specify gradescope autograder base
-ARG GRADESCOPE_REPO=gradescope/autograder-base:latest
-
-FROM ${BASE_REPO}:${TAG}
+FROM gradescope/autograder-base:latest
 
 ARG MATLAB_RELEASE
 ARG MATLAB_PRODUCT_LIST
@@ -85,11 +76,7 @@ sudo \
 unzip \
 zlib1g
 
-
-#RUN xargs -a /tmp/base-dependencies.txt apt-get install -y
 RUN apt-get clean && apt-get -y autoremove && rm -rf /var/lib/apt/lists/*
-
-RUN [ -d /usr/share/X11/xkb ] || mkdir -p /usr/share/X11/xkb
 
 RUN wget -q https://www.mathworks.com/mpm/glnxa64/mpm \ 
     && chmod +x mpm \

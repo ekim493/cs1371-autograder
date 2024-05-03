@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 cd /autograder/source
-matlab -batch run runTester
+matlab -licmode onlinelicensing -batch runTester
 cp /autograder/source/results.json /autograder/results/results.json
