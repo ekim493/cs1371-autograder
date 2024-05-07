@@ -1,13 +1,14 @@
 # CS1371-autograder
 The *new* Gradescope autograder for CS1371.
 ## Install instructions
-Currently, the Docker is hosted by me at ekim493/cs1371-autograder. To follow these instructions on your own, create a Docker hub account, then create your own Docker hub repository. Then, replace all instances of 'ekim493/cs1371-autograder' with the name of your Docker hub repository.
-These instructions are only tested for Windows. Contact [Eric Kim](ekim493@gatech.edu) for questions or comments.
+Currently, the Docker is hosted by me at ekim493/cs1371-autograder. To follow these instructions on your own, create a Docker hub account, then create your own Docker hub repository. Then, replace all instances of 'ekim493/cs1371-autograder' with the name of your Docker hub repository. These instructions are only tested for Windows. 
+
+Contact [Eric Kim](mailto:ekim493@gatech.edu) for questions or comments.
 - Clone this Github repository.
 - Download the Docker engine and log in.
 - Open the terminal and navigate to the cloned repository directory with the Dockerfile.
 - Add all necessary files (solution codes, tester, and scores.json) for the corresponding HW assignment.
-    - See the [Structure](https://github.gatech.edu/ekim493/cs1371-autograder#stucture) section below for more info.
+    - See the [Structure](https://github.gatech.edu/ekim493/cs1371-autograder#stucture) section below for more info. Also see the [testers readme](https://github.gatech.edu/ekim493/cs1371-autograder/tree/master/source/testers#testers) for info on how to structure the tester and json.
 - Type `docker build ./ -t ekim493/cs1371-autograder` and wait for the build process to finish.
 - Type `docker run --rm -it -v /source/submit:/autograder/submission -v /source:/autograder/results ekim493/cs1371-autograder:latest bash`.
 - You should now be in the Docker container, and the terminal should say something like root@123123.
@@ -17,7 +18,7 @@ These instructions are only tested for Windows. Contact [Eric Kim](ekim493@gatec
 - Open a new terminal **while the previous one is still running**, and type `docker commit CONTAINER_NAME ekim493/cs1371-autograder:latest`.
     - Replace CONATINER_NAME with the name of the current container. This can be found in the Docker desktop app under the 'containers' tab.
     - **Ensure you are logged in**
-- Finally, push the image to the web using `docker push ekim493/cs1371-autograder` (still in the new terminal).
+- Finally, push the image to the web using `docker push ekim493/cs1371-autograder` (while still in the new terminal).
 - In gradescope, go to 'Configure Autograder', select 'Manual Docker configuration', and then type in the docker image name. `ekim493/cs1371-autograder:latest` in this case.
 ## Stucture
 `Dockerfile` is the file used to build our Docker environment
