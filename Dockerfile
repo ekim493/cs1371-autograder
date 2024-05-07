@@ -16,7 +16,6 @@ FROM gradescope/autograder-base:latest
 ARG MATLAB_RELEASE
 ARG MATLAB_PRODUCT_LIST
 ARG MATLAB_INSTALL_LOCATION
-ARG LICENSE_SERVER
 
 # Import local files
 ADD source /autograder/source

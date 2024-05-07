@@ -3,16 +3,24 @@
   "tests":
     [
         {
-            "max_score": 1, 
+            "level": 0,
+            "name": "exampleABC"
+        },
+        {
+            "level": 1, 
             "name": "example1"
         },
         {
-            "max_score": 2, 
+            "level": 2, 
             "name": "example2"
         },
         {
-            "max_score": 3, 
+            "level": 3, 
             "name": "example3"
+        },
+        {
+            "level": 4,
+            "name": "exampleEC"
         }
     ]
 }

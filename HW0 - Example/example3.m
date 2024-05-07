@@ -1,3 +1,4 @@
-function out = example3(vec)
-out = vec(end+1);
+function [out1, out2] = example3(vec)
+out1 = -1;
+out2 = -1;
 end
