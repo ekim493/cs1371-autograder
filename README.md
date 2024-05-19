@@ -36,4 +36,7 @@ Contact [Eric Kim](mailto:ekim493@gatech.edu) for questions or comments.
 ## Gradescope view
 What the current gradescope autograder view looks like:
 ![image](current_gradescope_view.png)
+## To-do
+- Implement banned functions test and included functions test (for problems that require the use of specific functions like a while loop).
+- Modify TesterHelper to output properly to gradescope.
 
