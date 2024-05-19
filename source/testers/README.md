@@ -29,10 +29,10 @@ end
 The `TesterHelper.m` contains a `TesterHelper` class which contains static helper functions that can be used by any Tester.
 - Note: Currently configured for user use, modify for gradescope use
 ## Scoring Rubric Specifications
-All scoring rubrics should be a .json file with at minimum a 'tests' field. This field should contain a list of every function that is to be tested, with the field 'name' assigned to the name of the function, and the field 'max_score' assigned the total possible score for that function.
-- Level 1 problems should be assigned 1 point, level 2 = 2 points, and level 3 = 3 points.
-- Level 0 or ABC problems should be assigned 0 points.
-- Extra credit problems should be given -1 point.
+All scoring rubrics should be a .json file with at minimum a 'tests' field. This field should contain a list of every function that is to be tested, with the field 'name' assigned to the name of the function, and the field 'level' assigned the level/difficulty for that problem.
+- Level 1 problems are assigned 1 point, level 2 = 2 points, and level 3 = 3 points.
+- Level 0 or ABC problems will be assigned 0 points, but failing any test case will halve the total score.
+- Extra credit problems will be given 0 points with no effect.
 
 Any assignment wide fields such as visibility should also be listed in this JSON. See the specifications on [Gradescope](https://gradescope-autograders.readthedocs.io/en/latest/specs/).
 
@@ -43,14 +43,25 @@ Example:
   "tests":
     [
         {
-            "max_score": 1, 
+            "level": 0,
+            "name": "exampleABC"
+        },
+        {
+            "level": 1, 
             "name": "example1"
         },
         {
-            "max_score": 2, 
+            "level": 2, 
             "name": "example2"
         },
-        // Add more test cases
+        {
+            "level": 3, 
+            "name": "example3"
+        },
+        {
+            "level": 4,
+            "name": "exampleEC"
+        }
     ]
 }
 ```
