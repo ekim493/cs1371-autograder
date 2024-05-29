@@ -1,9 +1,8 @@
 # CS1371-autograder
-The *new* Gradescope autograder for CS1371.
+The *new* Gradescope autograder for CS1371. Contact [Eric Kim](mailto:ekim493@gatech.edu) for questions or comments.
 ## Install instructions
 Currently, the Docker is hosted by me at ekim493/cs1371-autograder. To follow these instructions on your own, create a Docker hub account, then create your own Docker hub repository. Then, replace all instances of 'ekim493/cs1371-autograder' with the name of your Docker hub repository. These instructions are only tested for Windows. 
 
-Contact [Eric Kim](mailto:ekim493@gatech.edu) for questions or comments.
 - Clone this Github repository.
 - Download the Docker engine and log in.
 - Open the terminal and navigate to the cloned repository directory with the Dockerfile.
@@ -20,9 +19,11 @@ Contact [Eric Kim](mailto:ekim493@gatech.edu) for questions or comments.
     - **Ensure you are logged in**
 - Finally, push the image to the web using `docker push ekim493/cs1371-autograder` (while still in the new terminal).
 - In gradescope, go to 'Configure Autograder', select 'Manual Docker configuration', and then type in the docker image name. `ekim493/cs1371-autograder:latest` in this case.
+    - Make sure the Docker hub repository is public.
 ## Stucture
 `Dockerfile` is the file used to build our Docker environment
 - Update the Dockerfile if the Matlab version changes.
+- See [here](https://github.com/mathworks-ref-arch/matlab-dockerfile) for details on building the matlab docker, and see [here](https://github.com/mathworks-ref-arch/container-images/tree/main/matlab-deps) for details on the required Matlab dependencies.
 
 `source` holds all relevant data necessary to run the autograder
 - `source/runTester.m` is the main Matlab driver to run the test cases and output the results as a results.json.
@@ -33,10 +34,3 @@ Contact [Eric Kim](mailto:ekim493@gatech.edu) for questions or comments.
     - The name of the tester should be the the gradescope assignment name + 'Tester.m'.
     - The name of the scoring rubrics should be a JSON with the name being the assignment + 'Scores.json'.
     - Example: For a gradescope assignment called `HW0`, the testers file should contain a `HW0Tester.m` and a `HW0Scores.json`.
-## Gradescope view
-What the current gradescope autograder view looks like:
-![image](current_gradescope_view.png)
-## To-do
-- Implement banned functions test and included functions test (for problems that require the use of specific functions like a while loop).
-- Modify TesterHelper to output properly to gradescope.
-

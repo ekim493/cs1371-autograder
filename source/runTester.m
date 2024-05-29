@@ -2,8 +2,10 @@ function runTester
 submission = jsondecode(fileread('/autograder/submission_metadata.json'));
 assignment_name = submission.assignment.title; % Import this from gradescope metadata
 
-%% Run tester with suppressed output
-[~, tests] = evalc("runtests(sprintf('./testers/%sTester.m', assignment_name))");
+%% Run tester
+suite = testsuite(sprintf('./testers/%sTester.m', assignment_name));
+runner = testrunner();
+tests = run(runner, suite);
 
 %% Parse through the results of the tester and create a structure with relevant data
 % Store the results in the results structure
@@ -117,6 +119,7 @@ end
 % If there is no ouput text to display (ie. results.output is empty), it will get removed and added
 % to a cell.
 
+[results.output_format] = deal('html'); % Add output format
 results = rmfield(results, 'passed'); % No need for field anymore
 tests = cell(length(results), 1);
 for i = 1:length(results)

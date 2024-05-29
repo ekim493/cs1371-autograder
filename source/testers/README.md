@@ -26,8 +26,12 @@ function example1_Test1(testCase)
     testCase.verifyEqual(out1, out1_soln, sprintf('Actual output: %d\nExpected output: %d',out1, out1_soln));
 end
 ```
-The `TesterHelper.m` contains a `TesterHelper` class which contains static helper functions that can be used by any Tester.
-- Note: Currently configured for user use, modify for gradescope use
+The `TesterHelper.m` contains a `TesterHelper` class which contains static helper functions that can be used by any Tester. It currently contains the following checks:
+- checkCalls -> Check for banned functions and operations, or the inclusion of specific functions or oeprations.
+- checkFilesClosed -> Check to make sure all files have been fclose-d.
+- checkImages -> Check two images against one another.
+- checkPlots -> Check two plots against one another.
+For full details, see file.
 ## Scoring Rubric Specifications
 All scoring rubrics should be a .json file with at minimum a 'tests' field. This field should contain a list of every function that is to be tested, with the field 'name' assigned to the name of the function, and the field 'level' assigned the level/difficulty for that problem.
 - Level 1 problems are assigned 1 point, level 2 = 2 points, and level 3 = 3 points.
