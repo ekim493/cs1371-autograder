@@ -28,9 +28,11 @@ end
 ```
 The `TesterHelper.m` contains a `TesterHelper` class which contains static helper functions that can be used by any Tester. It currently contains the following checks:
 - checkCalls -> Check for banned functions and operations, or the inclusion of specific functions or oeprations.
-- checkFilesClosed -> Check to make sure all files have been fclose-d.
+- checkFilesClosed -> Check to make sure all files have been closed.
 - checkImages -> Check two images against one another.
 - checkPlots -> Check two plots against one another.
+- toChar -> Turns any input into a character for display in Gradescope or other.
+
 For full details, see file.
 ## Scoring Rubric Specifications
 All scoring rubrics should be a .json file with at minimum a 'tests' field. This field should contain a list of every function that is to be tested, with the field 'name' assigned to the name of the function, and the field 'level' assigned the level/difficulty for that problem.
