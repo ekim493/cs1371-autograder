@@ -5,59 +5,92 @@ classdef HW0Tester < matlab.unittest.TestCase
             addpath('/autograder/submission');
         end
     end
-    
     methods(Test)
-        % Test methods
-        function exampleABC_A(testCase)
+        %% Test methods
+        % ABC Example
+        function exampleABC_Test(testCase) 
             exampleABC();
-            testCase.verifyEqual(A, 'abc');
+            exampleABC_soln();
+            TesterHelper.checkCalls();
+            TesterHelper.checkAllEqual('html');
         end
-        function exampleABC_B(testCase)
-            exampleABC();
-            testCase.verifyEqual(B, {123});
-        end
-        function exampleABC_C(testCase)
-            exampleABC();
-            testCase.verifyEqual(C, true);
-        end
+        % Basic Example
         function example1_Test1(testCase)
             vec = rand(1,9)*100+1;
             out1 = example1(vec);
             out1_soln = example1_soln(vec);
-            testCase.verifyEqual(out1, out1_soln);
+            TesterHelper.checkCalls();
+            TesterHelper.checkAllEqual('html');
         end
+        function example1_Test2(testCase)
+            vec = rand(1,9)*100+1;
+            out1 = example1(vec);
+            out1_soln = example1_soln(vec);
+            TesterHelper.checkCalls();
+            TesterHelper.checkAllEqual('html');
+        end
+        % Character example
         function example2_Test1(testCase)
-            vec = rand(1,9)*100+1;
-            out1 = example2(vec);
-            out1_soln = example2_soln(vec);
-            testCase.verifyEqual(out1, out1_soln, sprintf('Actual output: %d\nExpected output: %d',out1, out1_soln));
+            word = 'alphabet';
+            [out1, out2] = example2(word); 
+            [out1_soln, out2_soln] = example2_soln(word);
+            TesterHelper.checkCalls();
+            TesterHelper.checkAllEqual('html');
         end
-        function example2_Test2(testCase)
-            vec = rand(1,9)*100+1;
-            out1 = example2(vec);
-            out1_soln = example2_soln(vec);
-            testCase.verifyEqual(out1, out1_soln, sprintf('Actual output: %d\nExpected output: %d',out1, out1_soln));
-        end
-        function example2_Test3(testCase)
-            vec = rand(1,9)*100+1;
-            out1 = example2(vec);
-            out1_soln = example2_soln(vec);
-            testCase.verifyEqual(out1, out1_soln, sprintf('Actual output: %d\nExpected output: %d',out1, out1_soln));
-        end
+        % Array, iteration, and conditionals example
         function example3_Test1(testCase)
-            vec = rand(1,9)*100+1;
-            [out1, out2] = example3(vec);
-            [out1_soln, out2_soln] = example3_soln(vec);
-            testCase.verifyEqual(out1, out1_soln, sprintf('Actual output: %d\nExpected output: %d',out1, out1_soln));
-            testCase.verifyEqual(out2, out2_soln, sprintf('Actual output: %d\nExpected output: %d',out2, out2_soln));
+            arr = randi(15, 3, 3);
+            [out1, out2] = example3(arr);
+            [out1_soln, out2_soln] = example3_soln(arr);
+            TesterHelper.checkCalls(include={'FOR', 'IF'});
+            TesterHelper.checkAllEqual('html');
         end
-        function exampleEC_Test1(testCase)
-            vec = rand(1,9)*100+1;
-            [out1, out2] = exampleEC(vec);
-            [out1_soln, out2_soln] = exampleEC_soln(vec);
-            testCase.verifyEqual(out1, out1_soln, sprintf('Actual output: %d\nExpected output: %d',out1, out1_soln));
-            testCase.verifyEqual(out2, out2_soln, sprintf('Actual output: %d\nExpected output: %d',out2, out2_soln));
+        % Cell array and plotting example
+        function example4_Test1(testCase)
+            ca = {[1, 4, 5], [3, 6, 8], 'r--', 3;
+                  [2, 5, 9], [3, 2, 1], 'b-.', 1;
+                  [3, 5, 6], [6, 2, 4], 'g-', 2};
+            num = 2;
+            close all;
+            out1 = example4(ca, num);
+            figure;
+            out1_soln = example4_soln(ca, num);
+            TesterHelper.checkCalls();
+            TesterHelper.checkAllEqual('html');
+            TesterHelper.checkPlots('html');
+        end
+        % Lo-level example
+        function example5_Test1(testCase)
+            filename = 'example.txt';
+            example5(filename);
+            example5_soln(filename);
+            TesterHelper.checkCalls();
+            TesterHelper.checkFilesClosed();
+            TesterHelper.checkTxtFiles('new.txt');
+        end
+        % Structures Example
+        function example6_Test1(testCase)
+            st1 = struct('Season', {'Spring', 'Summer', 'Fall', 'Winter'});
+            field1 = 'Temp';
+            vals1 = [40, 60, 80, 65];
+            new_st = example6(st1, field1, vals1);
+            new_st_soln = example6_soln(st1, field1, vals1);
+            TesterHelper.checkCalls();
+            TesterHelper.checkAllEqual('html');
+        end
+        % Images Example (bonus)
+        function example7_Test1(testCase)
+            img = 'image.png';
+            num = example7(img);
+            num_soln = example7_soln(img);
+            TesterHelper.checkCalls();
+            TesterHelper.checkAllEqual('html');
+            TesterHelper.checkImages('image_updated.png', 'html');
         end
     end
-    
+
+    %#ok<*MANU>
+    %#ok<*NASGU>
+    %#ok<*ASGLU>
+       
 end

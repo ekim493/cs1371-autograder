@@ -1,3 +1,3 @@
 function out = example1_soln(vec)
-out = sum(vec);
+out = [min(vec) max(vec)];
 end
