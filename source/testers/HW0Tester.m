@@ -12,9 +12,17 @@ classdef HW0Tester < matlab.unittest.TestCase
             exampleABC();
             exampleABC_soln();
             TesterHelper.checkCalls();
+            TesterHelper.checkAllEqual('limit', 'html');
+        end
+        % Error Example
+        function example0_Test1(testCase)
+            vec = [1, 2, 3];
+            out1 = example0(vec);
+            out1_soln = example0_soln(vec);
+            TesterHelper.checkCalls();
             TesterHelper.checkAllEqual('html');
         end
-        % Basic Example
+        % Basic & multiple test Example
         function example1_Test1(testCase)
             vec = rand(1,9)*100+1;
             out1 = example1(vec);
@@ -42,7 +50,7 @@ classdef HW0Tester < matlab.unittest.TestCase
             arr = randi(15, 3, 3);
             [out1, out2] = example3(arr);
             [out1_soln, out2_soln] = example3_soln(arr);
-            TesterHelper.checkCalls(include={'FOR', 'IF'});
+            TesterHelper.checkCalls('html', include={'FOR', 'IF'});
             TesterHelper.checkAllEqual('html');
         end
         % Cell array and plotting example
@@ -64,9 +72,9 @@ classdef HW0Tester < matlab.unittest.TestCase
             filename = 'example.txt';
             example5(filename);
             example5_soln(filename);
+            TesterHelper.checkFilesClosed('html');
             TesterHelper.checkCalls();
-            TesterHelper.checkFilesClosed();
-            TesterHelper.checkTxtFiles('new.txt');
+            TesterHelper.checkTxtFiles('new.txt', 'html');
         end
         % Structures Example
         function example6_Test1(testCase)

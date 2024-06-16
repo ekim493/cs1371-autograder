@@ -3,8 +3,6 @@ fh = fopen(fn);
 fhw = fopen('new.txt', 'w');
 line = fgets(fh);
 while ischar(line)
-    fprintf(fhw, upper(line));
+    fprintf(fhw, (line));
     line = fgets(fh);
 end
-fclose(fh);
-fclose(fhw);

@@ -14,12 +14,15 @@ classdef TesterHelper
             %   Syntax
             %       checkAllEqual()
             %       checkAllEqual(testCase)
-            %       checkAllEqual(___, 'html')
+            %       checkAllEqual(___, FLAG)
             %
             %   Input Arguments
             %       testCase - TestCase object to run the verifyEqual function on. If unspecified, it looks for a
             %                  variable called 'testCase' in the caller's workspace.
-            %       'html' - Outputs the diagnostic in html format.
+            %       FLAG - Indicate additional arguments. It can be:
+            %           'html' - Outputs the diagnostic in html format (can be input with 'limit' flag).
+            %           'limit' - Only ouput which variables are incorrect instead of a comparison.
+            %           'none' - No output text.
             
             if nargin == 0 || ~isa(varargin{1}, 'matlab.unittest.TestCase')
                 try
@@ -36,14 +39,24 @@ classdef TesterHelper
                 try
                     student = evalin('caller', vars{strcmp(vars, extractBefore(solns{i}, '_soln'))});
                 catch
-                    error('The variable %s (and possibly others) was not found', extractBefore(solns{i}, '_soln'));
+                    error('Variable %s (and possibly others) was not found', extractBefore(solns{i}, '_soln'));
                 end
                 soln = evalin('caller', solns{i});
-                if any(strcmpi(varargin, 'html'))
-                    testCase.verifyEqual(student, soln, ['Actual output:\n' TesterHelper.toChar(student, 'h') '\nExpected Output:\n' TesterHelper.toChar(soln, 'h')]);
-                else
-                    testCase.verifyEqual(student, soln, sprintf('Actual output:\n%s\nExpected Output:\n%s', TesterHelper.toChar(student), TesterHelper.toChar(soln)));
+                if any(strcmpi(varargin, 'none'))
+                    testCase.verifyEqual(student, soln);
+                    continue
                 end
+                if any(strcmpi(varargin, 'limit'))
+                    msg = sprintf('Variable %s does not match the solution''s.', extractBefore(solns{i}, '_soln'));
+                    if any(strcmpi(varargin, 'html'))
+                        msg = ['    ' msg];
+                    end
+                elseif any(strcmpi(varargin, 'html'))
+                    msg = ['    Actual output:\n    ' TesterHelper.toChar(student, 'h') '\n    Expected Output:\n    ' TesterHelper.toChar(soln, 'h')];
+                else
+                    msg = sprintf('Actual output:\n%s\nExpected Output:\n%s', TesterHelper.toChar(student), TesterHelper.toChar(soln));
+                end
+                testCase.verifyEqual(student, soln, msg);
             end
         end
 
@@ -57,12 +70,14 @@ classdef TesterHelper
             %   Syntax
             %       [tf, msg] = checkCalls(func)
             %       [tf, msg] = checkCalls(func, FLAG=LIST, ___)
-            %       checkCalls(testCase, func, FLAG=LIST, ___)
+            %       checkCalls(testCase, func, 'html', FLAG=LIST, ___)
+            %       checkCalls('html', FLAG=LIST)
             %       checkCalls(___)
             %
             %    Input Arguments
             %       func - Name of the function to test as a character vector. If unspecified, it retrieves the name of
             %              the caller function and uses the appropriate substring (assumes the caller function is named FUNCNAME_TEST#).
+            %       'html' - Add extra spacing for html output.
             %       FLAG - Specify either 'banned' or 'include' functions.
             %       LIST - List of functions corresponding to the flag before it. Must be a cell array of character
             %              vectors. Operations ('BANG', 'PARFOR', 'SPMD', 'GLOBAL', 'IF', 'SWITCH', 'FOR', 'WHILE') must
@@ -87,7 +102,7 @@ classdef TesterHelper
                 additional.include cell={}
             end
 
-            if nargin > 0 && ischar(varargin{end})
+            if nargin > 0 && ischar(varargin{end}) && ~strcmpi(varargin, 'html')
                 funcFile = varargin{end};
             else
                 try
@@ -124,6 +139,10 @@ classdef TesterHelper
                 end
             end
 
+            if any(strcmpi(varargin, 'html'))
+                msg = ['    ' msg];
+            end
+
             if nargin > 0 && isa(varargin{1}, 'matlab.unittest.TestCase')
                 testCase = varargin{1};
                 testCase.verifyTrue(hasPassed, msg);
@@ -145,12 +164,13 @@ classdef TesterHelper
             %
             %   Syntax
             %       [tf, msg] = checkFilesClosed()
-            %       checkFilesClosed(testCase)
-            %       checkFilesClosed()
+            %       checkFilesClosed(testCase, 'html')
+            %       checkFilesClosed(___)
             %
             %   Input Arguments
             %       testCase - testCase object to run the verifyEqual function on. If unspecified and there are no
             %                  output arguments, it looks for a variable called 'testCase' in the caller's workspace.
+            %       'html' - Add extra spacing for html
             %
             %   Output Arguments
             %       tf - True if all files were properly closed, and false if not.
@@ -160,14 +180,22 @@ classdef TesterHelper
             fclose all;
             if ~isempty(stillOpen)
                 isClosed = false;
-                msg = sprintf('%d file(s) still open!', length(stillOpen));
+                msg = sprintf('%d file(s) still open! (Did you fclose?)', length(stillOpen));
             else
                 isClosed = true;
                 msg = '';
             end
+            if any(strcmpi(varargin, 'html'))
+                msg = ['    ' msg];
+            end
             if nargin > 0 && isa(varargin{1}, 'matlab.unittest.TestCase')
+                testCase = varargin{1};
+                testCase.verifyTrue(isClosed, msg);
+            elseif nargout == 0
+                testCase = evalin('caller', 'testCase');
                 testCase.verifyTrue(isClosed, msg);
             end
+
         end
 
         function varargout = checkImages(varargin)
@@ -232,7 +260,7 @@ classdef TesterHelper
                 varargout{2} = 'The image(s) do not exist or are in a different directory.';
                 return;
             end
-            if (nargout == 0)
+            if nargout == 0 && ~html
                 TesterHelper.compareImg(user_fn, expected_fn);
                 shg;
                 return;
@@ -261,7 +289,7 @@ classdef TesterHelper
                 if html
                     base64string = TesterHelper.compareImg(user_fn, expected_fn);
                     msg = strrep(msg, newline, '\n');
-                    varargout{2} = sprintf('%s\\n%s', msg, base64string);
+                    varargout{2} = sprintf('    %s\\n%s', msg, base64string);
                 else
                     varargout{2} = sprintf('%s\n<a href="matlab: cd(''%s'');TesterHelper.compareImg(''%s'', ''%s'')">Image comparison</a>', msg, pwd, user_fn, expected_fn);
                 end
@@ -383,14 +411,14 @@ classdef TesterHelper
                 sMap = TesterHelper.mapPlot(sAxesPlots);
                 cMap = TesterHelper.mapPlot(cAxesPlots);   
                 if ~isequal(sMap, cMap)
-                    msg = 'Incorrect data or style in plot(s).';
+                    msg = 'Incorrect data and/or style in plot(s)';
                     % Check if any points are outside x and y bounds
                     xLim = sAxes(i).XLim;
                     yLim = sAxes(i).YLim;
                     for j = 1:numel(sMap)
                         if any([sAxesPlots(i).XData] > xLim(2)) || any([sAxesPlots(i).XData] < xLim(1))...
                             || any([sAxesPlots(i).YData] > yLim(2)) || any([sAxesPlots(i).YData] < yLim(1))
-                            msg = sprintf('%s\\nThere seems to be data outside of the plot boundaries.', msg);
+                            msg = sprintf('%s\\nThere seems to be data outside of the plot boundaries', msg);
                         end
                     end
                 end
@@ -447,7 +475,8 @@ classdef TesterHelper
                 if nargin > 0
                     if any(strcmpi(varargin, 'html'))
                         base64string = TesterHelper.compareImg(sFig, cFig);
-                        msg = sprintf('%s\\n%s', msg, base64string);
+                        msg = strrep(msg, '\n', '\n    ');
+                        msg = sprintf('    %s\\n%s', msg, base64string);             
                     end
                     if isa(varargin{1}, 'matlab.unittest.TestCase')
                         testCase = varargin{1};
@@ -490,6 +519,7 @@ classdef TesterHelper
             %           'loose' - Ignore capitilization in the check.
             %           'limit' - Don't output the full text comparison in msg.
             %           'uncap' - Disable the 15 line per text file cap in msg.
+            %           'html' - Output the comparison in html format.
             %
             %   Output Arguments
             %       tf - True if the text files matched, false if not.
@@ -559,12 +589,15 @@ classdef TesterHelper
                     soln(n_st+1:end) = strcat("<strong>", soln(n_st+1:end), "</strong>");
                 end
                 msg = sprintf('%s\n%s\nActual text file:\n%s\n%s\n%s\nExpected text file:\n%s\n%s', ...
-                    msg, repelem('-', 17), repelem('-', 17), char(strjoin(student, '\n')), repelem('-', 17), repelem('-', 17), char(strjoin(soln, '\n')));
+                        msg, repelem('-', 17), repelem('-', 17), char(strjoin(student, '\n')), repelem('-', 17), repelem('-', 17), char(strjoin(soln, '\n')));
+                if any(strcmpi(varargin, 'html'))
+                    msg(msg == '"') = '''';
+                    msg = strrep(msg, newline, '\n    ');
+                    msg = ['    ' msg];
+                end
             end
 
-            if exist('testCase', 'var')
-                msg(msg == '"') = '''';
-                msg = strrep(msg, newline, '\n');
+            if exist('testCase', 'var')  
                 testCase.verifyTrue(hasPassed, msg);
             end
         end
@@ -636,7 +669,7 @@ classdef TesterHelper
                 if nargin == 2
                     TesterHelper.compareImg(varargin{:}, 'html');
                 end
-                set(gcf, 'Position', [100, 100, 300, 100]);
+                set(gcf, 'Position', [100, 100, 300, 100]); % Size of output image
                 saveas(gcf, 'figure.png');
                 fid = fopen('figure.png','rb');
                 bytes = fread(fid);
@@ -796,7 +829,7 @@ classdef TesterHelper
                 elseif r == 1 && contains(in, '.txt') && exist(in, 'file')
                     out = char(strjoin(readlines(in), '\n'));
                 else
-                    in = [repmat('''', r, 1) in repmat('''', r, 1)];
+                    in = [repmat('  ''', r, 1) in repmat('''', r, 1)];
                     out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
                 end
             elseif isnumeric(in) || islogical(in)
@@ -840,7 +873,7 @@ classdef TesterHelper
             end
             if any(strcmpi(varargin, 'h'))
                 out(out == '"') = '''';
-                out = strrep(out, newline, '\n');
+                out = strrep(out, newline, '\n    ');
             end
         end
 

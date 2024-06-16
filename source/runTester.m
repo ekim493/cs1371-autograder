@@ -41,7 +41,7 @@ for i = 1:length(tests)
             temp = tests(i).Details.DiagnosticRecord(j).Report;
             temp = strrep(temp, newline, '\n');
             temp = strrep(temp, '"', '''');
-            temp = char(extractBetween(temp, 'Test Diagnostic:\n    ----------------\n', '\n    ---------------------\n    Framework Diagnostic'));
+            temp = char(extractBetween(temp, 'Test Diagnostic:\n    ----------------\n    ', '\n    ---------------------\n    Framework Diagnostic'));
             if isempty(temp)
                 out = [];
                 continue;
@@ -122,14 +122,17 @@ end
 [results.output_format] = deal('html'); % Add output format
 results = rmfield(results, 'passed'); % No need for field anymore
 tests = cell(length(results), 1);
-for i = 1:length(results)
-    if isempty(results(i).output)
-        tests{i} = rmfield(results(i), 'output');
-    else
-        tests{i} = results(i);
+if isfield(results, 'output')
+    for i = 1:length(results)
+        if isempty(results(i).output)
+            tests{i} = rmfield(results(i), 'output');
+        else
+            tests{i} = results(i);
+        end
     end
+else
+    tests = results;
 end
-
 
 %% Write json structure to final results.json file
 json.tests = tests;
