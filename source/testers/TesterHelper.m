@@ -592,6 +592,8 @@ classdef TesterHelper
                         msg, repelem('-', 17), repelem('-', 17), char(strjoin(student, '\n')), repelem('-', 17), repelem('-', 17), char(strjoin(soln, '\n')));
                 if any(strcmpi(varargin, 'html'))
                     msg(msg == '"') = '''';
+                    msg = strrep(msg, '<strong>', '<mark>');
+                    msg = strrep(msg, '</strong>', '</mark>');
                     msg = strrep(msg, newline, '\n    ');
                     msg = ['    ' msg];
                 end
@@ -646,14 +648,14 @@ classdef TesterHelper
                     subplot(1, 2, 1);
                     imshow(user);
                     if nargin == 3
-                        title(sprintf('Student %s', type), 'FontSize', 6);
+                        title(sprintf('Student %s', type), 'FontSize', 8);
                     else
                         title(sprintf('Student %s', type));
                     end
                     subplot(1, 2, 2);
                     imshow(expected);
                     if nargin == 3
-                        title(sprintf('Solution %s', type), 'FontSize', 6);
+                        title(sprintf('Solution %s', type), 'FontSize', 8);
                     else
                         title(sprintf('Solution %s', type));
                     end
@@ -669,16 +671,16 @@ classdef TesterHelper
                 if nargin == 2
                     TesterHelper.compareImg(varargin{:}, 'html');
                 end
-                set(gcf, 'Position', [100, 100, 300, 100]); % Size of output image
-                saveas(gcf, 'figure.png');
-                fid = fopen('figure.png','rb');
+                set(gcf, 'Position', [100, 100, 600, 200]); % Size of output image
+                saveas(gcf, 'figure.jpg');
+                fid = fopen('figure.jpg','rb');
                 bytes = fread(fid);
                 fclose(fid);
-                delete('figure.png');
+                delete('figure.jpg');
                 close;
                 encoder = org.apache.commons.codec.binary.Base64;
                 base64string = char(encoder.encode(bytes))';
-                varargout{1} = sprintf('<img src=''data:image/png;base64,%s'' />', base64string);
+                varargout{1} = sprintf('<img src=''data:image/png;base64,%s'' width = ''900'' height = ''300''>', base64string);
             end
         end
 
