@@ -14,12 +14,12 @@ classdef TesterHelper
             %   Syntax
             %       checkAllEqual()
             %       checkAllEqual(testCase)
-            %       checkAllEqual(___, FLAG)
+            %       checkAllEqual(___, FLAGS)
             %
             %   Input Arguments
             %       testCase - TestCase object to run the verifyEqual function on. If unspecified, it looks for a
             %                  variable called 'testCase' in the caller's workspace.
-            %       FLAG - Indicate additional arguments. It can be:
+            %       FLAGS - Indicate additional arguments. It can be:
             %           'html' - Outputs the diagnostic in html format (can be input with 'limit' flag).
             %           'limit' - Only ouput which variables are incorrect instead of a comparison.
             %           'none' - No output text.
@@ -198,7 +198,7 @@ classdef TesterHelper
 
         end
 
-        function varargout = checkImages(varargin)
+        function [hasPassed, msg] = checkImages(varargin)
 
             % CHECKIMAGES - Check and compare an image against the solution's.
             %   This function will read in an image filename and compare it to its corresponding image solution with a
@@ -208,10 +208,10 @@ classdef TesterHelper
             %   Syntax
             %       [tf, msg] = checkImages(file)
             %       [tf, msg] = checkImages(user, expected)
-            %       [tf, msg] = checkImages(___, 'html')
+            %       [tf, msg] = checkImages(___, FLAGS)
             %       checkImages(___)
             %       checkImages(testCase,___)      
-            %       checkImages(___, 'html')
+            %       checkImages(___, FLAGS)
             %
             %   Input Arguments
             %       file - Filename of the student's image. This will compare it to the solution image, which is the
@@ -219,10 +219,13 @@ classdef TesterHelper
             %       user, expected - Filename of the student's image and the expected image.
             %       testCase - testCase object to run the verifyEqual function on. If unspecified and there are no
             %                  output arguments, it looks for a variable called 'testCase' in the caller's workspace.
-            %       'html' - Adds the figure comparison as embedded html data (base64) to the output msg variable. 
-            %                If this argument is specified and there are no output arguments, it looks for a variable 
-            %                called 'testCase' in the caller's workspace to run verifyEqual.
-            %
+            %       FLAGS - Indicate additional arguments. It can be:
+            %           'html' - Adds the figure comparison as embedded html data (base64) to the output msg variable. 
+            %                    If this argument is specified and there are no output arguments, it looks for a variable 
+            %                    called 'testCase' in the caller's workspace to run verifyEqual.
+            %           'limit' - Only ouput which variables are incorrect instead of a comparison.
+            %           'none' - No output text.
+            %       
             %   Output Arguments
             %       tf - True if the images matched, and false if not.
             %       msg - Character message indicating why the test failed, along with a hyperlink to display the
@@ -233,7 +236,6 @@ classdef TesterHelper
             else
                 html = false;
             end
-            varargin(contains(varargin, 'html')) = [];
 
             if isa(varargin{1}, 'matlab.unittest.TestCase')
                 testCase = varargin{1};
@@ -246,7 +248,7 @@ classdef TesterHelper
                 end
             end
 
-            if isscalar(varargin)
+            if nargin >= 2 || ~exist(varargin{2}, 'file')
                 user_fn = varargin{1};
                 [file, ext] = strtok(varargin{1}, '.');
                 expected_fn = [file '_soln' ext];
@@ -256,8 +258,8 @@ classdef TesterHelper
             end
             
             if (~exist(user_fn, 'file') || ~exist(expected_fn, 'file')) 
-                varargout{1} = false;
-                varargout{2} = 'The image(s) do not exist or are in a different directory.';
+                hasPassed = false;
+                msg = 'The image(s) do not exist or are in a different directory.';
                 return;
             end
             if nargout == 0 && ~html
@@ -274,28 +276,32 @@ classdef TesterHelper
                     diff = abs(double(user) - double(expected));
                     isDiff = any(diff(:) > tolerance);
                     if isDiff
-                        varargout{1} = false;
+                        hasPassed = false;
                         msg = 'The image output does not match the expected image.';
                     else
-                        varargout{1} = true;
-                        varargout{2} = [];
+                        hasPassed = true;
+                        msg = [];
                         return;
                     end
                 else
-                    varargout{1} = false;
+                    hasPassed = false;
                     msg = sprintf('The dimensions of the image do not match the expected image.\nActual size: %dx%dx%d\nExpected size: %dx%dx%d', rUser, cUser, lUser, rExp, cExp, lExp);
                 end
 
-                if html
-                    base64string = TesterHelper.compareImg(user_fn, expected_fn);
-                    msg = strrep(msg, newline, '\n');
-                    varargout{2} = sprintf('    %s\\n%s', msg, base64string);
-                else
-                    varargout{2} = sprintf('%s\n<a href="matlab: cd(''%s'');TesterHelper.compareImg(''%s'', ''%s'')">Image comparison</a>', msg, pwd, user_fn, expected_fn);
+                if any(strcmpi(varargin, 'none'))
+                    msg = '';
+                elseif ~any(strcmpi(varargin, 'limit'))
+                    if html
+                        base64string = TesterHelper.compareImg(user_fn, expected_fn);
+                        msg = strrep(msg, newline, '\n');
+                        msg = sprintf('    %s\\n%s', msg, base64string);
+                    else
+                        msg = sprintf('%s\n<a href="matlab: cd(''%s'');TesterHelper.compareImg(''%s'', ''%s'')">Image comparison</a>', msg, pwd, user_fn, expected_fn);
+                    end
                 end
 
                 if exist('testCase', 'var')
-                    testCase.verifyTrue(varargout{1}, varargout{2});
+                    testCase.verifyTrue(hasPassed, msg);
                 end
             end
         end
@@ -315,9 +321,12 @@ classdef TesterHelper
             %       checkPlots(___)
             %
             %   Input Arguments
-            %       'html' - Add a figure comparison as embedded html data to the output msg if tf is false.
             %       testCase - testCase object to run the verifyEqual function on. If unspecified and there are no
             %                  output arguments, it looks for a variable called 'testCase' in the caller's workspace.
+            %       FLAGS - Indicate additional arguments. It can be:
+            %           'html' - Adds the figure comparison as embedded html data (base64) to the output msg variable. 
+            %           'limit' - Only ouput which variables are incorrect instead of a comparison.
+            %           'none' - No output text.
             %
             %   Output Arguments
             %       tf - True if the plots matched, false if not.
@@ -342,8 +351,7 @@ classdef TesterHelper
                 error('There must be at least 2 figures displayed.');
             end
             
-            % sFig - Student, cFig - Correct figure. Need to check next plot in case figure was
-            % called in the function.
+            % sFig - Student, cFig - Correct figure. Need to check next plot in case 'figure' was called in the function.
             sFig = figure(1);
             if numel(sFig.Children) == 0
                 sFig = figure(2);
@@ -478,20 +486,21 @@ classdef TesterHelper
                         msg = strrep(msg, '\n', '\n    ');
                         msg = sprintf('    %s\\n%s', msg, base64string);             
                     end
-                    if isa(varargin{1}, 'matlab.unittest.TestCase')
-                        testCase = varargin{1};
-                        testCase.verifyTrue(hasPassed, msg);
-                    elseif nargout == 0
-                        try
-                            testCase = evalin('caller', 'testCase');
-                            testCase.verifyTrue(hasPassed, msg);
-                        catch
-                            error('If there are no output arguments, a testCase object must be input to the function or be present in the caller''s workspace.');
-                        end
-                    end
                 end
             else
                 hasPassed = true;
+            end
+
+            if isa(varargin{1}, 'matlab.unittest.TestCase')
+                testCase = varargin{1};
+                testCase.verifyTrue(hasPassed, msg);
+            elseif nargout == 0
+                try
+                    testCase = evalin('caller', 'testCase');
+                    testCase.verifyTrue(hasPassed, msg);
+                catch
+                    error('If there are no output arguments, a testCase object must be input to the function or be present in the caller''s workspace.');
+                end
             end
         end
 
@@ -514,10 +523,11 @@ classdef TesterHelper
             %       user, expected - Filename of the student's text file and the expected text file.
             %       testCase - testCase object to run the verifyEqual function on. If unspecified and there are no
             %                  output arguments, it looks for a variable called 'testCase' in the caller's workspace.
-            %       FLAG - Indicate additional arguments. It can be:
+            %       FLAGS - Indicate additional arguments. It can be:
             %           'strict' - Don't ignore the newline at the end of a text file.
             %           'loose' - Ignore capitilization in the check.
             %           'limit' - Don't output the full text comparison in msg.
+            %           'none' - No output text.
             %           'uncap' - Disable the 15 line per text file cap in msg.
             %           'html' - Output the comparison in html format.
             %
@@ -574,7 +584,9 @@ classdef TesterHelper
                 msg = '';
             end
 
-            if ~hasPassed && ~any(strcmpi(varargin, 'limit'))
+            if any(strcmpi(varargin, 'none'))
+                msg = '';
+            elseif ~hasPassed && ~any(strcmpi(varargin, 'limit'))
                 if n_st > 15 && ~any(strcmpi(varargin, 'uncap'))
                     student = [student(1:15); "Additional rows have been suppressed."];
                 end
