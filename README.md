@@ -19,7 +19,7 @@ Currently, the Docker is hosted by me at ekim493/cs1371-autograder. To follow th
     - **Ensure you are logged in**
 - Finally, push the image to the web using `docker push ekim493/cs1371-autograder` (while still in the new terminal).
 - In gradescope, go to 'Configure Autograder', select 'Manual Docker configuration', and then type in the docker image name. `ekim493/cs1371-autograder:latest` in this case.
-    - Make sure the Docker hub repository is public.
+    - Make sure the Docker hub repository is public. NOTE: Making it public will allow all files to be visible online. To prevent this, either make the Docker private and add `gradescopeecs` as a collaborator (requires Pro account) or ensure all solution files are pcoded.
 ## Stucture
 `Dockerfile` is the file used to build our Docker environment
 - Update the Dockerfile if the Matlab version changes.

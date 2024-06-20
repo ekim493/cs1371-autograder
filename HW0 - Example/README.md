@@ -1,2 +1,2 @@
 # HW0 - Example
-This folder contain possible student solutions to HW0. All these functions have some sort of issue. See the [solutions folder](https://github.gatech.edu/ekim493/cs1371-autograder/tree/master/source/solutions) for the correct solutions.
+This folder contain possible student solutions to HW0. Incorrect solutions will produce incorrect code (with example0 being an error).
