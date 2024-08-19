@@ -48,11 +48,8 @@ classdef TesterHelper
                 end
                 if any(strcmpi(varargin, 'limit'))
                     msg = sprintf('Variable %s does not match the solution''s.', extractBefore(solns{i}, '_soln'));
-                    if any(strcmpi(varargin, 'html'))
-                        msg = ['    ' msg];
-                    end
                 elseif any(strcmpi(varargin, 'html'))
-                    msg = ['    Actual output:\n    ' TesterHelper.toChar(student, 'h') '\n    Expected Output:\n    ' TesterHelper.toChar(soln, 'h')];
+                    msg = ['Actual output:\n    ' TesterHelper.toChar(student, 'h') '\n    Expected Output:\n    ' TesterHelper.toChar(soln, 'h')];
                 else
                     msg = sprintf('Actual output:\n%s\nExpected Output:\n%s', TesterHelper.toChar(student), TesterHelper.toChar(soln));
                 end
@@ -70,14 +67,13 @@ classdef TesterHelper
             %   Syntax
             %       [tf, msg] = checkCalls(func)
             %       [tf, msg] = checkCalls(func, FLAG=LIST, ___)
-            %       checkCalls(testCase, func, 'html', FLAG=LIST, ___)
-            %       checkCalls('html', FLAG=LIST)
+            %       checkCalls(testCase, func, FLAG=LIST, ___)
+            %       checkCalls(FLAG=LIST)
             %       checkCalls(___)
             %
             %    Input Arguments
             %       func - Name of the function to test as a character vector. If unspecified, it retrieves the name of
             %              the caller function and uses the appropriate substring (assumes the caller function is named FUNCNAME_TEST#).
-            %       'html' - Add extra spacing for html output.
             %       FLAG - Specify either 'banned' or 'include' functions.
             %       LIST - List of functions corresponding to the flag before it. Must be a cell array of character
             %              vectors. Operations ('BANG', 'PARFOR', 'SPMD', 'GLOBAL', 'IF', 'SWITCH', 'FOR', 'WHILE') must
@@ -112,15 +108,15 @@ classdef TesterHelper
                     error('Error retrieving the name of the function being tested.');
                 end
             end
-            list = jsondecode(fileread('Banned_Functions.json'));
-            banned = [list.BANNED; list.BANNED_OPS];
+            list = jsondecode(fileread('Allowed_Functions.json'));
+            allowed = [list.ALLOWED; list.ALLOWED_OPS];
             msg = [];
-            banned = [banned; additional.banned'];
+            banned = additional.banned';
             include = additional.include;
 
             calls = TesterHelper.getCalls(which(funcFile));
             
-            bannedCalls = calls(ismember(calls, banned));
+            bannedCalls = [calls(ismember(calls, banned)), calls(~ismember(calls, allowed))];
             includeCalls = cellstr(setdiff(include, calls));
             if isempty(bannedCalls) && isempty(includeCalls)
                 hasPassed = true;
@@ -134,13 +130,9 @@ classdef TesterHelper
                     if isempty(msg)
                         msg = temp;
                     else
-                        msg = [msg '\n' temp];
+                        msg = [msg '\n    ' temp];
                     end
                 end
-            end
-
-            if any(strcmpi(varargin, 'html'))
-                msg = ['    ' msg];
             end
 
             if nargin > 0 && isa(varargin{1}, 'matlab.unittest.TestCase')
@@ -170,7 +162,6 @@ classdef TesterHelper
             %   Input Arguments
             %       testCase - testCase object to run the verifyEqual function on. If unspecified and there are no
             %                  output arguments, it looks for a variable called 'testCase' in the caller's workspace.
-            %       'html' - Add extra spacing for html
             %
             %   Output Arguments
             %       tf - True if all files were properly closed, and false if not.
@@ -184,9 +175,6 @@ classdef TesterHelper
             else
                 isClosed = true;
                 msg = '';
-            end
-            if any(strcmpi(varargin, 'html'))
-                msg = ['    ' msg];
             end
             if nargin > 0 && isa(varargin{1}, 'matlab.unittest.TestCase')
                 testCase = varargin{1};
@@ -294,7 +282,7 @@ classdef TesterHelper
                     if html
                         base64string = TesterHelper.compareImg(user_fn, expected_fn);
                         msg = strrep(msg, newline, '\n');
-                        msg = sprintf('    %s\\n%s', msg, base64string);
+                        msg = sprintf('%s\\n%s', msg, base64string);
                     else
                         msg = sprintf('%s\n<a href="matlab: cd(''%s'');TesterHelper.compareImg(''%s'', ''%s'')">Image comparison</a>', msg, pwd, user_fn, expected_fn);
                     end
@@ -484,7 +472,7 @@ classdef TesterHelper
                     if any(strcmpi(varargin, 'html'))
                         base64string = TesterHelper.compareImg(sFig, cFig);
                         msg = strrep(msg, '\n', '\n    ');
-                        msg = sprintf('    %s\\n%s', msg, base64string);             
+                        msg = sprintf('%s\\n%s', msg, base64string);             
                     end
                 end
             else
@@ -607,7 +595,6 @@ classdef TesterHelper
                     msg = strrep(msg, '<strong>', '<mark>');
                     msg = strrep(msg, '</strong>', '</mark>');
                     msg = strrep(msg, newline, '\n    ');
-                    msg = ['    ' msg];
                 end
             end
 

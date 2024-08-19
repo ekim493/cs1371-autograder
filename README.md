@@ -14,11 +14,12 @@ Currently, the Docker is hosted by me at ekim493/cs1371-autograder. To follow th
 - Run Matlab by typing `matlab -licmode onlinelicensing`. You will then be prompted to enter your email (enter the one used to login to Mathworks).
 - It will then prompt you for a one time password by following a link to the Mathworks website.
 - Enter the password and Matlab should start.
-- Open a new terminal **while the previous one is still running**, and type `docker commit CONTAINER_NAME ekim493/cs1371-autograder:latest`.
+- Open a new terminal **while the previous one is still running**, and type `docker commit CONTAINER_NAME ekim493/cs1371-autograder:TAG`.
     - Replace CONATINER_NAME with the name of the current container. This can be found in the Docker desktop app under the 'containers' tab.
+    - Replace TAG with a tag to label this instance
     - **Ensure you are logged in**
-- Finally, push the image to the web using `docker push ekim493/cs1371-autograder` (while still in the new terminal).
-- In gradescope, go to 'Configure Autograder', select 'Manual Docker configuration', and then type in the docker image name. `ekim493/cs1371-autograder:latest` in this case.
+- Finally, push the image to the web using `docker push ekim493/cs1371-autograder:TAG` (while still in the new terminal).
+- In gradescope, go to 'Configure Autograder', select 'Manual Docker configuration', and then type in the docker image name. `ekim493/cs1371-autograder:TAG` in this case.
     - Make sure the Docker hub repository is public. NOTE: Making it public will allow all files to be visible online. To prevent this, either make the Docker private and add `gradescopeecs` as a collaborator (requires Pro account) or ensure all solution files are pcoded.
 ## Stucture
 `Dockerfile` is the file used to build our Docker environment
@@ -34,3 +35,5 @@ Currently, the Docker is hosted by me at ekim493/cs1371-autograder. To follow th
     - The name of the tester should be the the gradescope assignment name + 'Tester.m'.
     - The name of the scoring rubrics should be a JSON with the name being the assignment + 'Scores.json'.
     - Example: For a gradescope assignment called `HW0`, the testers file should contain a `HW0Tester.m` and a `HW0Scores.json`.
+
+`Submissions` can be used alongside `Local_Tester.m` to test the submissions locally. Add all submission files to the submissions folder and run the .m file.

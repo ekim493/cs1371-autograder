@@ -1,6 +1,17 @@
 function runTester
-submission = jsondecode(fileread('/autograder/submission_metadata.json'));
-assignment_name = submission.assignment.title; % Import this from gradescope metadata
+try
+    submission = jsondecode(fileread('/autograder/submission_metadata.json')); % Autograder
+catch
+    submission = jsondecode(fileread('submission_metadata.json')); % Local testing
+end
+assignment_name = submission.assignment.title;
+
+%% Manual Delay
+delay = 30; % Set delay in seconds
+tic
+while toc < delay
+    continue
+end
 
 %% Run tester
 suite = testsuite(sprintf('./testers/%sTester.m', assignment_name));
@@ -41,7 +52,7 @@ for i = 1:length(tests)
             temp = tests(i).Details.DiagnosticRecord(j).Report;
             temp = strrep(temp, newline, '\n');
             temp = strrep(temp, '"', '''');
-            temp = char(extractBetween(temp, 'Test Diagnostic:\n    ----------------\n    ', '\n    ---------------------\n    Framework Diagnostic'));
+            temp = char(extractBetween(temp, 'Test Diagnostic:\n    ----------------\n', '\n    ---------------------\n    Framework Diagnostic'));
             if isempty(temp)
                 out = [];
                 continue;

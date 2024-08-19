@@ -50,7 +50,7 @@ classdef HW0Tester < matlab.unittest.TestCase
             arr = randi(15, 3, 3);
             [out1, out2] = example3(arr);
             [out1_soln, out2_soln] = example3_soln(arr);
-            TesterHelper.checkCalls('html', include={'FOR', 'IF'});
+            TesterHelper.checkCalls(include={'FOR', 'IF'});
             TesterHelper.checkAllEqual('html');
         end
         % Cell array and plotting example
@@ -72,7 +72,7 @@ classdef HW0Tester < matlab.unittest.TestCase
             filename = 'example.txt';
             example5(filename);
             example5_soln(filename);
-            TesterHelper.checkFilesClosed('html');
+            TesterHelper.checkFilesClosed();
             TesterHelper.checkCalls();
             TesterHelper.checkTxtFiles('new.txt', 'html');
         end
