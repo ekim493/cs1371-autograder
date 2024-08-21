@@ -1,17 +1,16 @@
 function runTester
 try
     submission = jsondecode(fileread('/autograder/submission_metadata.json')); % Autograder
+    delay = 30; % Set delay in seconds
+    tic
+    while toc < delay
+        continue
+    end
 catch
     submission = jsondecode(fileread('submission_metadata.json')); % Local testing
 end
 assignment_name = submission.assignment.title;
 
-%% Manual Delay
-delay = 30; % Set delay in seconds
-tic
-while toc < delay
-    continue
-end
 
 %% Run tester
 suite = testsuite(sprintf('./testers/%sTester.m', assignment_name));

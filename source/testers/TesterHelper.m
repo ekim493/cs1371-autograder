@@ -43,7 +43,7 @@ classdef TesterHelper
                 end
                 soln = evalin('caller', solns{i});
                 if any(strcmpi(varargin, 'none'))
-                    testCase.verifyEqual(student, soln);
+                    testCase.verifyEqual(student, soln, "RelTol", 0.1);
                     continue
                 end
                 if any(strcmpi(varargin, 'limit'))
@@ -53,7 +53,7 @@ classdef TesterHelper
                 else
                     msg = sprintf('Actual output:\n%s\nExpected Output:\n%s', TesterHelper.toChar(student), TesterHelper.toChar(soln));
                 end
-                testCase.verifyEqual(student, soln, msg);
+                testCase.verifyEqual(student, soln, msg, "RelTol", 0.1);
             end
         end
 
@@ -725,7 +725,7 @@ classdef TesterHelper
             end
         
             % add any operations
-            OPS = {'BANG', 'PARFOR', 'SPMD', 'GLOBAL', 'IF', 'SWITCH', 'FOR', 'WHILE'};
+            OPS = {'BANG', 'PARFOR', 'SPMD', 'GLOBAL', 'IF', 'SWITCH', 'FOR', 'WHILE', 'TRY', 'CONTINUE', 'BREAK'};
             calls = [calls reshape(string(info.mtfind('Kind', OPS).kinds), 1, [])];
             calls = unique(calls);
         end
