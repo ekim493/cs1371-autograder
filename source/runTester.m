@@ -43,7 +43,7 @@ for i = 1:length(tests)
         out = tests(i).Details.DiagnosticRecord.Report;
         out = strrep(out, newline, '\n');
         out = strrep(out, '"', '''');
-        out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in HW'));
+        out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in H'));
         results(i).output = ['An error occured while running your function.\n    --------------\n    Error Details:\n    --------------\n' out];
     elseif tests(i).Failed
         out = ['Verification failed in ' results(i).name '.\n    ----------------\n    Test Diagnostic:'];

@@ -43,17 +43,17 @@ classdef TesterHelper
                 end
                 soln = evalin('caller', solns{i});
                 if any(strcmpi(varargin, 'none'))
-                    testCase.verifyEqual(student, soln, "RelTol", 0.1);
+                    testCase.verifyEqual(student, soln, "AbsTol", 0.001);
                     continue
                 end
                 if any(strcmpi(varargin, 'limit'))
                     msg = sprintf('Variable %s does not match the solution''s.', extractBefore(solns{i}, '_soln'));
                 elseif any(strcmpi(varargin, 'html'))
-                    msg = ['Actual output:\n    ' TesterHelper.toChar(student, 'h') '\n    Expected Output:\n    ' TesterHelper.toChar(soln, 'h')];
+                    msg = ['<u>', extractBefore(solns{i}, '_soln'), '</u>\n', '    Actual output (' class(student) '):\n    ' TesterHelper.toChar(student, 'h') '\n    Expected Output (' class(soln) '):\n    ' TesterHelper.toChar(soln, 'h')];
                 else
                     msg = sprintf('Actual output:\n%s\nExpected Output:\n%s', TesterHelper.toChar(student), TesterHelper.toChar(soln));
                 end
-                testCase.verifyEqual(student, soln, msg, "RelTol", 0.1);
+                testCase.verifyEqual(student, soln, msg, "AbsTol", 0.001);
             end
         end
 
@@ -819,7 +819,10 @@ classdef TesterHelper
                     out = in;
                 end
                 out = char(formattedDisplayText(out, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup',true));
-            elseif ischar(in)
+            elseif ischar(in) || isstring(in)
+                if isstring(in)
+                    in = char(in);
+                end
                 [r, ~] = size(in);
                 if r == 1 && any(strcmpi(varargin, 'i')) && exist(in, 'file')
                     if contains(in, '.png') || contains(in, '.jpg') || contains(in, '.jpeg')
@@ -830,7 +833,7 @@ classdef TesterHelper
                 elseif r == 1 && contains(in, '.txt') && exist(in, 'file')
                     out = char(strjoin(readlines(in), '\n'));
                 else
-                    in = [repmat('  ''', r, 1) in repmat('''', r, 1)];
+                    in = [repmat('   ''', r, 1) in repmat('''', r, 1)];
                     out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
                 end
             elseif isnumeric(in) || islogical(in)
@@ -846,9 +849,18 @@ classdef TesterHelper
                         out = ['[' out ']'];
                     end
                 else
+                    [r, c] = size(in);
+                    if r == 1 && c == 1 && in > 1000 && (mod(in, 1) > 0)
+                        format longG
+                        out = strtrim(char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true)));
+                        out = ['   ' out];
+                        format default
+                        return
+                    end
+
                     out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
                     loc = find(isstrprop(out, 'alphanum'), true);
-                    [~, c] = size(in);
+                    
                     if c ~= 1
                         out(loc - 1) = '[';
                         out = [out(1:end-1) ']' out(end)];
