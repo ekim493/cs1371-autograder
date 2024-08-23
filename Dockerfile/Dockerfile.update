@@ -1,0 +1,14 @@
+# Base autograder location
+ARG FROM_IMAGE
+FROM ${FROM_IMAGE}
+
+# Delete old files
+RUN rm -rf /autograder/source
+
+# Copy local files
+COPY source /autograder/source
+
+# Copy run_autograder into proper location and make it executable
+RUN cp /autograder/source/run_autograder /autograder/run_autograder
+RUN dos2unix /autograder/run_autograder
+RUN chmod +x /autograder/run_autograder

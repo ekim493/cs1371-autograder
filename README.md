@@ -1,10 +1,27 @@
 # CS1371-autograder
 The *new* Gradescope autograder for CS1371. Contact [Eric Kim](mailto:ekim493@gatech.edu) for questions or comments.
-## Install instructions
-Currently, the Docker is hosted by me at ekim493/cs1371-autograder. To follow these instructions on your own, create a Docker hub account, then create your own Docker hub repository. Then, replace all instances of 'ekim493/cs1371-autograder' with the name of your Docker hub repository. These instructions are only tested for Windows. 
-
+## Install instructions 
+Currently, the Docker is hosted by me at `ekim493/cs1371-autograder`. To follow these instructions on your own, create a Docker hub account, then create your own Docker hub repository.
 - Clone this Github repository.
-- Download the Docker engine and log in.
+- Add all necessary files (solution codes, tester, and scores.json) for the HW.
+    - See the [Structure](https://github.gatech.edu/ekim493/cs1371-autograder#stucture) section below for more info. Also see the [testers readme](https://github.gatech.edu/ekim493/cs1371-autograder/tree/master/source/testers#testers) for info on how to structure the tester and json.
+- Run the `update.bat` script (this script will only work on Windows).
+    - If you have created your own repository, edit the `RepoName` variable at the top of the `update.bat` file.
+    - You must have Docker installed and be logged in.
+- Enter a tag for the docker image (ex. HW01).
+- In gradescope, go to 'Configure Autograder', select 'Manual Docker configuration', and then type in the docker hub repository and tag. For example, `ekim493/cs1371-autograder:latest`.
+    - Make sure the Docker hub repository is public. NOTE: Making it public will allow all files to be visible online. To prevent this, either make the Docker private and add `gradescopeecs` as a collaborator (requires Pro account) or ensure all solution files are pcoded.
+
+If Matlab or the Dockerfile needs to be updated, use the `setup.bat` script. Enter the DockerHub repository and tag to publish to, or use the default values. You will be prompted for your Mathworks email and a OTP.
+    
+
+<details>
+  <summary><b>Old/Manual Instructions</b></summary>
+
+Currently, the Docker is hosted by me at ekim493/cs1371-autograder. To follow these instructions on your own, create a Docker hub account, then create your own Docker hub repository. Then, replace all instances of 'ekim493/cs1371-autograder' with the name of your Docker hub repository. These instructions are only tested for Windows.
+
+-  Clone this Github repository.
+-  Download the Docker engine and log in.
 - Open the terminal and navigate to the cloned repository directory with the Dockerfile.
 - Add all necessary files (solution codes, tester, and scores.json) for the corresponding HW assignment.
     - See the [Structure](https://github.gatech.edu/ekim493/cs1371-autograder#stucture) section below for more info. Also see the [testers readme](https://github.gatech.edu/ekim493/cs1371-autograder/tree/master/source/testers#testers) for info on how to structure the tester and json.
@@ -21,6 +38,8 @@ Currently, the Docker is hosted by me at ekim493/cs1371-autograder. To follow th
 - Finally, push the image to the web using `docker push ekim493/cs1371-autograder:TAG` (while still in the new terminal).
 - In gradescope, go to 'Configure Autograder', select 'Manual Docker configuration', and then type in the docker image name. `ekim493/cs1371-autograder:TAG` in this case.
     - Make sure the Docker hub repository is public. NOTE: Making it public will allow all files to be visible online. To prevent this, either make the Docker private and add `gradescopeecs` as a collaborator (requires Pro account) or ensure all solution files are pcoded.
+</details>
+
 ## Stucture
 `Dockerfile` is the file used to build our Docker environment
 - Update the Dockerfile if the Matlab version changes.
@@ -36,4 +55,5 @@ Currently, the Docker is hosted by me at ekim493/cs1371-autograder. To follow th
     - The name of the scoring rubrics should be a JSON with the name being the assignment + 'Scores.json'.
     - Example: For a gradescope assignment called `HW0`, the testers file should contain a `HW0Tester.m` and a `HW0Scores.json`.
 
-`Submissions` can be used alongside `Local_Tester.m` to test the submissions locally. Add all submission files to the submissions folder and run the .m file.
+## Local Testing
+To test code locally, add all code to test to the `Submissions` folder. Then run `Local_Tester.m`. The output for the test cases will display in the command window, and it will also open up the results.json file.

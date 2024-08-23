@@ -17,7 +17,7 @@ ARG MATLAB_RELEASE
 ARG MATLAB_PRODUCT_LIST
 ARG MATLAB_INSTALL_LOCATION
 
-ENV DEBIAN_FRONTEND="noninteractive" TZ="Etc/UTC"
+ENV DEBIAN_FRONTEND="noninteractive" TZ="US/Eastern"
 
 # Download necessary Matlab dependencies
 RUN apt-get update
@@ -82,7 +82,7 @@ RUN wget -q https://www.mathworks.com/mpm/glnxa64/mpm \
     && sudo ln -s ${MATLAB_INSTALL_LOCATION}/bin/matlab /usr/local/bin/matlab
 
 # Import local files
-ADD source /autograder/source
+COPY source /autograder/source
 
 # Copy run_autograder into proper location and make it executable
 RUN cp /autograder/source/run_autograder /autograder/run_autograder
