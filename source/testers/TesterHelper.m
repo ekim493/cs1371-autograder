@@ -803,13 +803,12 @@ classdef TesterHelper
             %                 string that indicates an existing file, it will also output a hyperlink to open
             %                 that file in Matlab. Files with image extensions '.png', '.jpg', and '.jpeg'
             %                 will display as a figure in Matlab if the hyperlink is clicked.
-            %           'c' - Compact display. Displays numeric and logical vectors in a more condensed
-            %                 format.
             %           'h' - html output. Reformats the output to be purely in html format.
             %           's' - Sort fields. Sorts the fields if the input is a structure.
             %           'u' - Uncapped length. Ignores the 20 row limit.
 
             if isstruct(in) && ~any(strcmpi(varargin, 'i'))
+                % Order structures if sorting is desired
                 if any(strcmpi(varargin, 's'))
                     in = orderfields(in);
                 end
@@ -820,10 +819,12 @@ classdef TesterHelper
                 end
                 out = char(formattedDisplayText(out, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup',true));
             elseif ischar(in) || isstring(in)
+                % Convert string into char
                 if isstring(in)
                     in = char(in);
                 end
                 [r, ~] = size(in);
+                % Interactive inputs
                 if r == 1 && any(strcmpi(varargin, 'i')) && exist(in, 'file')
                     if contains(in, '.png') || contains(in, '.jpg') || contains(in, '.jpeg')
                         out = sprintf('<a href="matlab: cd(''%s'');clf;imgDisp=imread(''%s'');imshow(imgDisp);clear imgDisp;shg">%s</a>', pwd, in, in);
@@ -833,41 +834,43 @@ classdef TesterHelper
                 elseif r == 1 && contains(in, '.txt') && exist(in, 'file')
                     out = char(strjoin(readlines(in), '\n'));
                 else
-                    in = [repmat('   ''', r, 1) in repmat('''', r, 1)];
+                    % Default char and string conversion
+                    in = [repmat('''', r, 1) in repmat('''', r, 1)];
                     out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
                 end
-            elseif isnumeric(in) || islogical(in)
-                if any(strcmpi(varargin, 'c'))
-                    [~, c] = size(in);
-                    out = join(string(in), ', ');
-                    if c > 1
-                        out = sprintf(char(join(out, '\n ')));
+            elseif isnumeric(in)
+                [r, c] = size(in);
+                if r == 1
+                    if c == 1
+                        % Single number
+                        out = num2str(in, 12);
                     else
-                        out = char(out);
-                    end
-                    if c ~= 1
-                        out = ['[' out ']'];
+                        % Numeric vector
+                        out = join(string(in), ', ');
+                        out = ['[' char(out) ']'];
                     end
                 else
-                    [r, c] = size(in);
-                    if r == 1 && c == 1 && in > 1000 && (mod(in, 1) > 0)
-                        format longG
-                        out = strtrim(char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true)));
-                        out = ['   ' out];
-                        format default
-                        return
-                    end
-
+                    % Numeric array
                     out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
                     loc = find(isstrprop(out, 'alphanum'), true);
-                    
-                    if c ~= 1
-                        out(loc - 1) = '[';
-                        out = [out(1:end-1) ']' out(end)];
-                    end
+                    out(loc - 1) = '[';
+                    out = [out(1:end-1) ']' out(end)];
+                end
+            elseif islogical(in)
+                [~, c] = size(in);
+                out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
+                out(out == ' ') = [];
+                if c > 1
+                    % Logical vectors and arrays
+                    out = replace(out, 'true', ', true');
+                    out = replace(out, 'false', ', false');
+                    out = replace(out, [newline ', '], [newline ' ']);
+                    out = ['[' out(3:end-1) ']'];
                 end
             else
+                % Additional inputs
                 if any(strcmpi(varargin, 'i')) && ~isempty(inputname(1))
+                    % Open a file in interactive
                     out = sprintf('<a href="matlab: cd(''%s'');open(''%s'')">%s</a>', pwd, inputname(1), inputname(1));
                 else
                     out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
@@ -885,8 +888,9 @@ classdef TesterHelper
                 end 
             end
             if any(strcmpi(varargin, 'h'))
+                out = ['   ' out];
                 out(out == '"') = '''';
-                out = strrep(out, newline, '\n    ');
+                out = strrep(out, newline, '\n       ');
             end
         end
 
