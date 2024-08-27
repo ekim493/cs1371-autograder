@@ -1,0 +1,7 @@
+*
+!.gitignore
+!Allowed_Functions.json
+!HW0Scores.json
+!HW0Tester.m
+!README.md
+!TesterHelper.m
