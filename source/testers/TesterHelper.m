@@ -49,9 +49,9 @@ classdef TesterHelper
                 if any(strcmpi(varargin, 'limit'))
                     msg = sprintf('Variable %s does not match the solution''s.', extractBefore(solns{i}, '_soln'));
                 elseif any(strcmpi(varargin, 'html'))
-                    msg = ['<u>', extractBefore(solns{i}, '_soln'), '</u>\n', '    Actual output (' class(student) '):\n    ' TesterHelper.toChar(student, 'h') '\n    Expected Output (' class(soln) '):\n    ' TesterHelper.toChar(soln, 'h')];
+                    msg = ['<u>', extractBefore(solns{i}, '_soln'), '</u>\n', '    Actual output (' class(student) '):\n    ' TesterHelper.toChar(student, 'h') '\n    Expected output (' class(soln) '):\n    ' TesterHelper.toChar(soln, 'h')];
                 else
-                    msg = sprintf('Actual output:\n%s\nExpected Output:\n%s', TesterHelper.toChar(student), TesterHelper.toChar(soln));
+                    msg = sprintf('Actual output:\n%s\nExpected output:\n%s', TesterHelper.toChar(student), TesterHelper.toChar(soln));
                 end
                 testCase.verifyEqual(student, soln, msg, "AbsTol", 0.001);
             end

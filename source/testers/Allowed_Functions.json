@@ -35,6 +35,7 @@
         "class",
         "char",
         "double",
+        "logical",
         "uint8",
         "str2num",
         "num2str",
@@ -79,8 +80,7 @@
         "linspace",
         "diff",
         "end",
-	"sqrt",
-	"log"],
+	    "sqrt"],
     "ALLOWED_OPS":
         ["WHILE",
         "FOR",
