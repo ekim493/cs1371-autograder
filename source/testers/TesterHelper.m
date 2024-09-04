@@ -807,7 +807,9 @@ classdef TesterHelper
             %           's' - Sort fields. Sorts the fields if the input is a structure.
             %           'u' - Uncapped length. Ignores the 20 row limit.
 
-            if isstruct(in) && ~any(strcmpi(varargin, 'i'))
+            if isempty(in)
+                out = '[]';
+            elseif isstruct(in) && ~any(strcmpi(varargin, 'i'))
                 % Order structures if sorting is desired
                 if any(strcmpi(varargin, 's'))
                     in = orderfields(in);
