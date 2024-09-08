@@ -730,6 +730,68 @@ classdef TesterHelper
             calls = unique(calls);
         end
 
+        function out = generateString(options)
+
+            % GENERATESTRING - Generate a random string of characters.
+            %   This function generates a random string of characters based on the input options. By
+            %   default, it generates a string of length 1 <= L <= 20, with uppercase characters,
+            %   and no special characters, numbers, or spaces.
+            %
+            %   Syntax
+            %       C = genreateString()
+            %
+            %   Name-Value Arguments
+            %       maxLength (double) - Maximum length of the output. Default = 20.
+            %       minLength (double) - Minimum length of the output. Default = 5.
+            %       uppercase (logical) - Add uppercase letters to output. Default = false.
+            %       special (logical) - Add certain special characters to output. Default = false.
+            %       numbers (logical) - Add digits 0-9 to output. Default = false.
+            %       sentence (logical) - Adds spaces at a frequency of 20% to the output. Default =
+            %       false.  
+
+            arguments
+                options.maxLength (1, 1) double = 20
+                options.minLength (1, 1) double = 5
+                options.uppercase (1, 1) logical = false
+                options.special (1, 1) logical = false
+                options.numbers (1, 1) logical = false
+                options.sentence (1, 1) logical = false
+            end
+
+            pool = 'abcdefghijklmnopqrstuvwxyz';
+            if options.uppercase
+                pool = [pool 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+            end
+            if options.special
+                pool = [pool '!#$%&()*+-./:;<=>?@'];
+            end
+            if options.numbers
+                pool = [pool '0123456789'];
+            end
+
+            out = char(zeros([1, randi([options.minLength, options.maxLength])]));
+            for i = 1:length(out)
+                if options.sentence
+                    if i == 1 || out(i - 1) == ' '
+                        out(i) = pool(randi(numel(pool)));
+                    else
+                        r = rand();
+                        if r < 0.2
+                            out(i) = ' ';
+                        else
+                            out(i) = pool(randi(numel(pool)));
+                        end
+                    end
+                else
+                    out(i) = pool(randi(numel(pool)));
+                end
+            end
+            
+            if out(end) == ' '
+                out(end) = [];
+            end
+        end
+
         function map = mapPlot(lines)
 
             % MAPPLOT - Create a dictionary defining all points and line segments.
