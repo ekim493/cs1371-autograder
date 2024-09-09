@@ -734,8 +734,10 @@ classdef TesterHelper
 
             % GENERATESTRING - Generate a random string of characters.
             %   This function generates a random string of characters based on the input options. By
-            %   default, it generates a string of length 1 <= L <= 20, with uppercase characters,
-            %   and no special characters, numbers, or spaces.
+            %   default, it generates a string of length 5 <= L <= 20, with uppercase characters,
+            %   and no special characters, numbers, or spaces. The generator works by pulling from a
+            %   pool of valid characters, with each character getting equal probability (space being
+            %   an exception).
             %
             %   Syntax
             %       C = genreateString()
@@ -743,17 +745,21 @@ classdef TesterHelper
             %   Name-Value Arguments
             %       maxLength (double) - Maximum length of the output. Default = 20.
             %       minLength (double) - Minimum length of the output. Default = 5.
+            %       length (double) - Specify specific length of output.
             %       uppercase (logical) - Add uppercase letters to output. Default = false.
-            %       special (logical) - Add certain special characters to output. Default = false.
+            %       special (logical/char) - Add certain special characters to output. If only
+            %       certain special characters are desired, input them as a char vector. Default =
+            %       false.
             %       numbers (logical) - Add digits 0-9 to output. Default = false.
-            %       sentence (logical) - Adds spaces at a frequency of 20% to the output. Default =
-            %       false.  
+            %       sentence (logical) - Adds spaces at a frequency to replicate sentence structure. 
+            %       Default = false.  
 
             arguments
                 options.maxLength (1, 1) double = 20
                 options.minLength (1, 1) double = 5
+                options.length (1, 1) double
                 options.uppercase (1, 1) logical = false
-                options.special (1, 1) logical = false
+                options.special (1, 1) = false
                 options.numbers (1, 1) logical = false
                 options.sentence (1, 1) logical = false
             end
@@ -762,26 +768,33 @@ classdef TesterHelper
             if options.uppercase
                 pool = [pool 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
             end
-            if options.special
+            if ~islogical(options.special)
+                pool = [pool options.special];
+            elseif options.special
                 pool = [pool '!#$%&()*+-./:;<=>?@'];
             end
             if options.numbers
                 pool = [pool '0123456789'];
             end
 
-            out = char(zeros([1, randi([options.minLength, options.maxLength])]));
+            if isfield(options, 'length')
+                out = char(zeros([1, options.length]));
+            else
+                out = char(zeros([1, randi([options.minLength, options.maxLength])]));
+            end
+
+            prob = 0;
             for i = 1:length(out)
                 if options.sentence
-                    if i == 1 || out(i - 1) == ' '
-                        out(i) = pool(randi(numel(pool)));
+                    r = rand();
+                    if r < prob
+                        out(i) = ' ';
+                        prob = 0;
                     else
-                        r = rand();
-                        if r < 0.2
-                            out(i) = ' ';
-                        else
-                            out(i) = pool(randi(numel(pool)));
-                        end
+                        out(i) = pool(randi(numel(pool)));
+                        prob = prob + 0.05;
                     end
+                    
                 else
                     out(i) = pool(randi(numel(pool)));
                 end

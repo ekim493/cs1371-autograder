@@ -1,13 +1,13 @@
 function runTester
 try
-    submission = jsondecode(fileread('/autograder/submission_metadata.json')); % Autograder
-    delay = 30; % Set delay in seconds
+    submission = jsondecode(fileread('/autograder/submission_metadata.json')); % Import assignment name from gradescope
+    delay = 30; % Add an optional delay in seconds
     tic
     while toc < delay
         continue
     end
 catch
-    submission = jsondecode(fileread('submission_metadata.json')); % Local testing
+    submission = jsondecode(fileread('submission_metadata.json')); % For local testing
 end
 assignment_name = submission.assignment.title;
 
@@ -48,17 +48,18 @@ for i = 1:length(tests)
     elseif tests(i).Failed
         out = ['Verification failed in ' results(i).name '.\n    ----------------\n    Test Diagnostic:'];
         for j = 1:length(tests(i).Details.DiagnosticRecord)
+            % Temp string created in case multiple verifications were run for one test case.
             temp = tests(i).Details.DiagnosticRecord(j).Report;
             temp = strrep(temp, newline, '\n');
             temp = strrep(temp, '"', '''');
             temp = char(extractBetween(temp, 'Test Diagnostic:\n    ----------------\n', '\n    ---------------------\n    Framework Diagnostic'));
-            if isempty(temp)
+            if isempty(temp) % If there is an issue and no output diagnostic is provided, simply skip output display.
                 out = [];
                 continue;
             end
             out = [out '\n    ----------------\n' temp];
         end
-        results(i).output = out;
+        results(i).output = out; % Out stores a string with the output message to display to students.
     end
 end
 
@@ -142,6 +143,16 @@ if isfield(results, 'output')
     end
 else
     tests = results;
+end
+
+%% Global Edits (optional)
+if false
+    json.output = ''; % If a global text output is required, edit this value here.
+    json.output_format = 'html'; % If the output text needs special formatting.
+    tests = []; % Running this line will delete all prior test cases.
+    json.score = 0; % If the global score needs to be modified
+    json.visibility = 'after_due_date'; % If test case visibility needs to be changed. This can also be modified in the HW#Scores.json file.
+    json.stdout_visibility = 'visible'; % If the command window output should be visible to students.
 end
 
 %% Write json structure to final results.json file
