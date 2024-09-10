@@ -45,6 +45,7 @@ for i = 1:length(tests)
         out = strrep(out, '"', '''');
         out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in H'));
         out = out(out >= 32); % Binary file error fix
+        out = strrep(out, '%', '%%'); % fprintf percent sign fix
         results(i).output = ['An error occured while running your function.\n    --------------\n    Error Details:\n    --------------\n' out];
     elseif tests(i).Failed
         out = ['Verification failed in ' results(i).name '.\n    ----------------\n    Test Diagnostic:'];
