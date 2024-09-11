@@ -74,9 +74,9 @@ classdef TesterHelper
             %    Input Arguments
             %       func - Name of the function to test as a character vector. If unspecified, it retrieves the name of
             %              the caller function and uses the appropriate substring (assumes the caller function is named FUNCNAME_TEST#).
-            %       FLAG - Specify either 'banned' or 'include' functions.
+            %       FLAG - Specify either 'banned', 'include', or 'allow' functions.
             %       LIST - List of functions corresponding to the flag before it. Must be a cell array of character
-            %              vectors. Operations ('BANG', 'PARFOR', 'SPMD', 'GLOBAL', 'IF', 'SWITCH', 'FOR', 'WHILE') must
+            %              vectors. Operations (such as 'IF', 'SWITCH', 'FOR', 'WHILE', 'TRY') must
             %              be in caps.
             %       testCase - testCase object to run the verifyEqual function on. If unspecified and there are no
             %                  output arguments, it looks for a variable called 'testCase' in the caller's workspace.
@@ -96,6 +96,7 @@ classdef TesterHelper
             arguments
                 additional.banned cell={}
                 additional.include cell={}
+                additional.allow cell={}
             end
 
             if nargin > 0 && ischar(varargin{end}) && ~strcmpi(varargin, 'html')
@@ -109,7 +110,7 @@ classdef TesterHelper
                 end
             end
             list = jsondecode(fileread('Allowed_Functions.json'));
-            allowed = [list.ALLOWED; list.ALLOWED_OPS];
+            allowed = [list.ALLOWED; list.ALLOWED_OPS; additional.allow'];
             msg = [];
             banned = additional.banned';
             include = additional.include;
