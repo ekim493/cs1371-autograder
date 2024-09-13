@@ -1,12 +1,11 @@
 function runTester
-try
-    submission = jsondecode(fileread('/autograder/submission_metadata.json')); % Import assignment name from gradescope
-    delay = 30; % Add an optional delay in seconds
-    tic
-    while toc < delay
-        continue
+if isunix && ~ismac
+    try
+        submission = jsondecode(fileread('/autograder/submission_metadata.json')); % Import assignment name from gradescope
+    catch
+        error('The submission metadata wasn''t found.');
     end
-catch
+else
     submission = jsondecode(fileread('submission_metadata.json')); % For local testing
 end
 assignment_name = submission.assignment.title;

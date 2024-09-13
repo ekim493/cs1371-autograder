@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
+DELAY=30 # Set time in seconds
+
 # Function to run the commands with a timeout
 run_commands() {
-  timeout 6m bash -c "
+  timeout 5m bash -c "
     cd /autograder/source || exit 1
     matlab -licmode onlinelicensing -batch runTester -nosplash || exit 1
     cp /autograder/source/results.json /autograder/results/results.json || exit 1
@@ -21,10 +23,11 @@ while [ $attempt -le $max_retries ]; do
   
   if [ $exit_code -eq 0 ]; then
     echo "Autograder ran successfully."
+    sleep $DELAY
     break
   elif [ $exit_code -eq 124 ]; then
     echo "Execution timed out."
-    echo '{ "score": 0, "output": "The autograder failed to execute within sufficient time. Check for infinite loops or try re-running the autograder. If you believe this is an error, please contact the TAs." }' > /autograder/results/results.json
+    echo '{ "score": 0, "output": "The autograder failed to run within sufficient time. Check for infinite loops or try re-running the autograder by re-submitting your work. If you believe this is an error, please contact the TAs." }' > /autograder/results/results.json
     exit 124
   else
     if [ $attempt -lt $max_retries ]; then
@@ -37,6 +40,6 @@ done
 # Check if all attempts failed (but not due to timeout)
 if [ $attempt -gt $max_retries ]; then
   echo "Autograder failed to run."
-  echo '{ "score": 0, "output": "The autograder failed to execute properly. Try re-running the autograder. If the issue persists, please contact the TAs." }' > /autograder/results/results.json
+  echo '{ "score": 0, "output": "The autograder failed to run properly. Try re-running the autograder by re-submitting your work. If the issue persists, please contact the TAs." }' > /autograder/results/results.json
   exit 1
 fi
