@@ -43,7 +43,7 @@ for i = 1:length(tests)
         out = strrep(out, newline, '\n');
         out = strrep(out, '"', '''');
         out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in H'));
-        out = out(out >= 32); % Binary file error fix
+        out(out < 32) = '�'; % Remove illegal ascii characters
         out = strrep(out, '%', '%%'); % fprintf percent sign fix
         results(i).output = ['An error occured while running your function.\n    --------------\n    Error Details:\n    --------------\n' out];
     elseif tests(i).Failed
@@ -59,6 +59,8 @@ for i = 1:length(tests)
                 continue;
             end
             out = [out '\n    ----------------\n' temp];
+            out(out < 32) = '�'; % Remove illegal ascii characters
+            out = strrep(out, '%', '%%'); % fprintf percent sign fix
         end
         results(i).output = out; % Out stores a string with the output message to display to students.
     end
