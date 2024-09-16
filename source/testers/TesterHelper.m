@@ -5,81 +5,84 @@ classdef TesterHelper
     methods (Static)
         %% Check functions
 
-        function checkAllEqual(varargin)
+        function checkAllEqual(options)
 
             % CHECKALLEQUAL - Check and compare all solution variables against the student's.
-            %   This function compares all variables in the caller's workspace that ends with '_soln' against the
-            %   variables that don't with Matlab's unittest verifyEqual function.
+            %   This function compares all variables in the caller's workspace that ends with '_soln' against the 
+            %   variables that don't with Matlab's unittest verifyEqual function. This function can only be used in a
+            %   testing environment and assumes a testCase object exists in the caller.
             %
             %   Syntax
             %       checkAllEqual()
-            %       checkAllEqual(testCase)
-            %       checkAllEqual(___, FLAGS)
+            %       checkAllEqual(Name=Value)
             %
-            %   Input Arguments
-            %       testCase - TestCase object to run the verifyEqual function on. If unspecified, it looks for a
-            %                  variable called 'testCase' in the caller's workspace.
-            %       FLAGS - Indicate additional arguments. It can be:
-            %           'html' - Outputs the diagnostic in html format (can be input with 'limit' flag).
+            %   Name-Value Arguments
+            %       html (logical) - Output diagnostic in html format. Default = true.
+            %       output (char) - Change how much information should be output in the diagnostic:
+            %           'full' (default) - Output full comparison information.
             %           'limit' - Only ouput which variables are incorrect instead of a comparison.
             %           'none' - No output text.
             
-            if nargin == 0 || ~isa(varargin{1}, 'matlab.unittest.TestCase')
-                try
-                    testCase = evalin('caller', 'testCase');
-                catch
-                    error('A testCase object must be input to the function or must exist in the caller''s workspace.');
-                end
-            else
-                testCase = varargin{1};
+            arguments
+                options.html (1, 1) logical = true
+                options.output char = 'full'
             end
+
+            try
+                testCase = evalin('caller', 'testCase');
+            catch
+                error('A testCase object must exist in the caller''s workspace.');
+            end
+
             vars = evalin('caller', 'who');
-            solns = vars(endsWith(vars, '_soln'));
+            solns = vars(endsWith(vars, '_soln')); % Extract variable names
+
+            % Loop through variables and compare each one
             for i = 1:length(solns)
                 try
                     student = evalin('caller', vars{strcmp(vars, extractBefore(solns{i}, '_soln'))});
                 catch
                     error('Variable %s (and possibly others) was not found', extractBefore(solns{i}, '_soln'));
                 end
-                soln = evalin('caller', solns{i});
-                if any(strcmpi(varargin, 'none'))
-                    testCase.verifyEqual(student, soln, "AbsTol", 0.001);
+                soln = evalin('caller', solns{i}); % Extract variable data
+                if strcmpi(options.output, 'none')
                     continue
-                end
-                if any(strcmpi(varargin, 'limit'))
+                elseif strcmpi(options.output, 'limit')
                     msg = sprintf('Variable %s does not match the solution''s.', extractBefore(solns{i}, '_soln'));
-                elseif any(strcmpi(varargin, 'html'))
-                    msg = ['<u>', extractBefore(solns{i}, '_soln'), '</u>\n', '    Actual output (' class(student) '):\n    ' TesterHelper.toChar(student, 'h') '\n    Expected output (' class(soln) '):\n    ' TesterHelper.toChar(soln, 'h')];
-                else
-                    msg = sprintf('Actual output:\n%s\nExpected output:\n%s', TesterHelper.toChar(student), TesterHelper.toChar(soln));
+                elseif strcmpi(options.output, 'full')
+                    if options.html
+                        msg = ['<u>', extractBefore(solns{i}, '_soln'), '</u>\n', '    Actual output (' class(student) '):\n    ' TesterHelper.toChar(student, html=true) '\n    Expected output (' class(soln) '):\n    ' TesterHelper.toChar(soln, html=true)];
+                    else
+                        msg = sprintf('Actual output:\n%s\nExpected output:\n%s', TesterHelper.toChar(student), TesterHelper.toChar(soln));
+                    end
                 end
                 testCase.verifyEqual(student, soln, msg, "AbsTol", 0.001);
             end
         end
 
         function [hasPassed, msg] = checkCalls(varargin, additional)
-
+            
             % CHECKCALLS - Check a function file's calls.
             %   This function will check if the function in question calls or does not call certain functions or use
-            %   certain operations. A list of banned functions and operations should be specified in a file called
-            %   'Banned_Functions.json'. 
+            %   certain operations. A list of allowed functions and operations should be specified in a file called
+            %   'Allowed_Functions.json'. Operations are defined the keywords that appear when the function iskeyword is 
+            %   called, and must be in all caps. If no output arguments are specified, then it is assumed the
+            %   function is being used in a testing environment and a testCase object exists in the caller. 
             %
             %   Syntax
             %       [tf, msg] = checkCalls(func)
-            %       [tf, msg] = checkCalls(func, FLAG=LIST, ___)
-            %       checkCalls(testCase, func, FLAG=LIST, ___)
-            %       checkCalls(FLAG=LIST)
-            %       checkCalls(___)
+            %       [tf, msg] = checkCalls(func, Name=Value)
+            %       checkCalls(func, Name=Value)
+            %       checkCalls(Name=Value)
             %
-            %    Input Arguments
+            %   Input Arguments
             %       func - Name of the function to test as a character vector. If unspecified, it retrieves the name of
-            %              the caller function and uses the appropriate substring (assumes the caller function is named FUNCNAME_TEST#).
-            %       FLAG - Specify either 'banned', 'include', or 'allow' functions.
-            %       LIST - List of functions corresponding to the flag before it. Must be a cell array of character
-            %              vectors. Operations (such as 'IF', 'SWITCH', 'FOR', 'WHILE', 'TRY') must
-            %              be in caps.
-            %       testCase - testCase object to run the verifyEqual function on. If unspecified and there are no
-            %                  output arguments, it looks for a variable called 'testCase' in the caller's workspace.
+            %              the caller function and uses the appropriate substring (called should be named FUNCNAME_TEST#).
+            %
+            %   Name-Value Arguments
+            %       banned (cell) - List of additional banned functions.
+            %       include (cell) - List of functions that must be included.
+            %       allow (cell) - List of functions that should bypass the ban restriction.
             %
             %   Output Arguments
             %       tf - True if the function passed all checks, and false if a banned function is present or an
@@ -94,13 +97,14 @@ classdef TesterHelper
                 varargin
             end
             arguments
-                additional.banned cell={}
-                additional.include cell={}
-                additional.allow cell={}
+                additional.banned cell = {}
+                additional.include cell = {}
+                additional.allow cell = {}
             end
 
-            if nargin > 0 && ischar(varargin{end}) && ~strcmpi(varargin, 'html')
-                funcFile = varargin{end};
+            % Find name of function to test
+            if nargin > 0 && ischar(varargin{1})
+                funcFile = varargin{1};
             else
                 try
                     stack = dbstack;
@@ -109,14 +113,17 @@ classdef TesterHelper
                     error('Error retrieving the name of the function being tested.');
                 end
             end
+
+            % Create full list of banned and allowed functions
             list = jsondecode(fileread('Allowed_Functions.json'));
             allowed = [list.ALLOWED; list.ALLOWED_OPS; additional.allow'];
             msg = [];
             banned = additional.banned';
             include = additional.include;
 
-            calls = TesterHelper.getCalls(which(funcFile));
-            
+            calls = TesterHelper.getCalls(which(funcFile)); % Get list of function calls
+
+            % Find banned functions and unused functions
             bannedCalls = [calls(ismember(calls, banned)), calls(~ismember(calls, allowed))];
             includeCalls = cellstr(setdiff(include, calls));
             if isempty(bannedCalls) && isempty(includeCalls)
@@ -124,10 +131,10 @@ classdef TesterHelper
             else
                 hasPassed = false;
                 if ~isempty(bannedCalls)
-                    msg = sprintf('The following banned functions were used: %s.', strjoin(bannedCalls, ', '));
+                    msg = sprintf('The following banned function(s) were used: %s.', strjoin(bannedCalls, ', '));
                 end
                 if ~isempty(includeCalls)
-                    temp = sprintf('The following functions must be included: %s.', strjoin(includeCalls, ', '));
+                    temp = sprintf('The following function(s) must be included: %s.', strjoin(includeCalls, ', '));
                     if isempty(msg)
                         msg = temp;
                     else
@@ -136,15 +143,13 @@ classdef TesterHelper
                 end
             end
 
-            if nargin > 0 && isa(varargin{1}, 'matlab.unittest.TestCase')
-                testCase = varargin{1};
-                testCase.verifyTrue(hasPassed, msg);
-            elseif nargout == 0
+            % Run tester
+            if nargout == 0
                 try
                     testCase = evalin('caller', 'testCase');
                     testCase.verifyTrue(hasPassed, msg);
                 catch
-                    error('If no outputs are specified, a testCase object must be input to the function or be present in the caller''s workspace.');
+                    error('If no outputs are specified, a testCase object must be present in the caller''s workspace.');
                 end
             end
         end
@@ -153,16 +158,12 @@ classdef TesterHelper
 
             % CHECKFILESCLOSED - Check if all files have been properly closed.
             %   This function will check to ensure that all files have been closed using fclose. If any files are still
-            %   open, it will close them.
+            %   open, it will close them. If no output arguments are specified, then it is assumed the function is being 
+            %   used in a testing environment and a testCase object exists in the caller.
             %
             %   Syntax
             %       [tf, msg] = checkFilesClosed()
-            %       checkFilesClosed(testCase, 'html')
-            %       checkFilesClosed(___)
-            %
-            %   Input Arguments
-            %       testCase - testCase object to run the verifyEqual function on. If unspecified and there are no
-            %                  output arguments, it looks for a variable called 'testCase' in the caller's workspace.
+            %       checkFilesClosed()
             %
             %   Output Arguments
             %       tf - True if all files were properly closed, and false if not.
@@ -177,93 +178,100 @@ classdef TesterHelper
                 isClosed = true;
                 msg = '';
             end
-            if nargin > 0 && isa(varargin{1}, 'matlab.unittest.TestCase')
-                testCase = varargin{1};
-                testCase.verifyTrue(isClosed, msg);
-            elseif nargout == 0
-                testCase = evalin('caller', 'testCase');
-                testCase.verifyTrue(isClosed, msg);
+            if nargout == 0
+                try
+                    testCase = evalin('caller', 'testCase');
+                    testCase.verifyTrue(isClosed, msg);
+                catch
+                    error('If no outputs are specified, a testCase object must be present in the caller''s workspace.');
+                end
             end
-
         end
 
-        function [hasPassed, msg] = checkImages(varargin)
+        function [hasPassed, msg] = checkImages(user_fn, options)
 
             % CHECKIMAGES - Check and compare an image against the solution's.
             %   This function will read in an image filename and compare it to its corresponding image solution with a
-            %   small tolerance. If no output arguments are specified, it instead displays a figure comparison of the
-            %   two images.
+            %   small tolerance. If no output arguments are specified and html = false, it instead displays a figure 
+            %   comparison of the two images. If no output arguments are specified and html = true, then it is assumed 
+            %   the function is being used in a testing environment and a testCase object exists in the caller.
             %
             %   Syntax
-            %       [tf, msg] = checkImages(file)
-            %       [tf, msg] = checkImages(user, expected)
-            %       [tf, msg] = checkImages(___, FLAGS)
-            %       checkImages(___)
-            %       checkImages(testCase,___)      
-            %       checkImages(___, FLAGS)
+            %       [tf, msg] = checkImages(user_fn)
+            %       [tf, msg] = checkImages(user_fn, Name=Value)
+            %       checkImages(user_fn)    
+            %       checkImages(user_fn, Name=Value)
             %
             %   Input Arguments
-            %       file - Filename of the student's image. This will compare it to the solution image, which is the
-            %              filname with '_soln' attached.
-            %       user, expected - Filename of the student's image and the expected image.
-            %       testCase - testCase object to run the verifyEqual function on. If unspecified and there are no
-            %                  output arguments, it looks for a variable called 'testCase' in the caller's workspace.
-            %       FLAGS - Indicate additional arguments. It can be:
-            %           'html' - Adds the figure comparison as embedded html data (base64) to the output msg variable. 
-            %                    If this argument is specified and there are no output arguments, it looks for a variable 
-            %                    called 'testCase' in the caller's workspace to run verifyEqual.
-            %           'limit' - Only ouput which variables are incorrect instead of a comparison.
-            %           'none' - No output text.
+            %       user_fn - Filename of the student's image. It will assume the solution image is the filename with '_soln' attached.
+            %
+            %   Name-Value Arguments
+            %       html (logical) - This adds the figure comparison as embedded html data (base64) to the output msg 
+            %                        variable. It also calls verifyEqual. If there are no output arguments, its default 
+            %                        is true. Otherwise, it is false.
+            %       output (char) - Change how much information is contained in msg:
+            %           'full' (default) - Output full comparison data, including image.
+            %           'limit' - Only output error text.
+            %           'none' - Don't output any message.
+            %       tolerance (double) - Add RGB value tolerance to the function. Default = 5.
             %       
             %   Output Arguments
             %       tf - True if the images matched, and false if not.
             %       msg - Character message indicating why the test failed, along with a hyperlink to display the
             %             figure comparison. Is empty if tf is true.
 
-            if any(contains(varargin, 'html'))
-                html = true;
-            else
-                html = false;
+            arguments
+                user_fn char
+                options.html (1, 1) logical
+                options.output char = 'full'
+                options.tolerance (1, 1) double = 5
             end
 
-            if isa(varargin{1}, 'matlab.unittest.TestCase')
-                testCase = varargin{1};
-                varargin{1} = [];
-            elseif nargout == 0 && html
+            % Input validation
+            if ~isfield(options, 'html')
+                if nargout == 0
+                    options.html = true;
+                else
+                    options.html = false;
+                end
+            end
+            if nargout == 0 && options.html
                 try
                     testCase = evalin('caller', 'testCase');
                 catch
-                    error('If html is specified and there are no output arguments, a testCase object must be input to the function or be present in the caller''s workspace.');
+                    error('If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
                 end
             end
 
-            if nargin >= 2 || ~exist(varargin{2}, 'file')
-                user_fn = varargin{1};
-                [file, ext] = strtok(varargin{1}, '.');
-                expected_fn = [file '_soln' ext];
-            else
-                user_fn = varargin{1};
-                expected_fn = varargin{2};
-            end
+            % Solution file name
+            [file, ext] = strtok(user_fn, '.');
+            expected_fn = [file '_soln' ext];
             
-            if (~exist(user_fn, 'file') || ~exist(expected_fn, 'file')) 
+            % Check if images can be accessed
+            if ~exist(expected_fn, 'file')
+                error('The solution image does not exist');
+            elseif ~exist(user_fn, 'file')
                 hasPassed = false;
-                msg = 'The image(s) do not exist or are in a different directory.';
+                if options.html
+                    msg = 'Your image doesn''t exist. Was it created properly with the right filename?';
+                else
+                    msg = 'The image does not exist or is in a different directory.';
+                end
                 return;
             end
-            if nargout == 0 && ~html
-                TesterHelper.compareImg(user_fn, expected_fn);
+            if nargout == 0 && ~options.html
+                TesterHelper.compareImg(user_fn, expected_fn); % Open figure comparison
                 shg;
                 return;
             else
+                % Image comparsion
                 user = imread(user_fn);
                 expected = imread(expected_fn);
-                tolerance = 25;
                 [rUser,cUser,lUser] = size(user);
                 [rExp,cExp,lExp] = size(expected);
                 if rUser == rExp && cUser == cExp && lUser == lExp
                     diff = abs(double(user) - double(expected));
-                    isDiff = any(diff(:) > tolerance);
+                    isDiff = any(diff(:) > options.tolerance);
                     if isDiff
                         hasPassed = false;
                         msg = 'The image output does not match the expected image.';
@@ -277,10 +285,11 @@ classdef TesterHelper
                     msg = sprintf('The dimensions of the image do not match the expected image.\nActual size: %dx%dx%d\nExpected size: %dx%dx%d', rUser, cUser, lUser, rExp, cExp, lExp);
                 end
 
-                if any(strcmpi(varargin, 'none'))
+                % Output
+                if strcmpi(options.output, 'none')
                     msg = '';
-                elseif ~any(strcmpi(varargin, 'limit'))
-                    if html
+                elseif strcmpi(options.output, 'full')
+                    if options.html
                         base64string = TesterHelper.compareImg(user_fn, expected_fn);
                         msg = strrep(msg, newline, '\n');
                         msg = sprintf('%s\\n%s', msg, base64string);
@@ -295,27 +304,28 @@ classdef TesterHelper
             end
         end
 
-        function [hasPassed, msg] = checkPlots(varargin)
+        function [hasPassed, msg] = checkPlots(options)
             
             % CHECKPLOTS - Check and compare a plot against the solution's.
             %   This function will read in the currently open figures and compare them. For the function to work, all
             %   figures must be closed and then at least 2 figures must be opened. The student plot should be created
             %   first, followed by the solution plot. The solution plot must not override the student's, so 'figure'
-            %   must be called.
+            %   must be called. If no output arguments are specified and html is true, then it is assumed the function 
+            %   is being used in a testing environment and a testCase object exists in the caller.
             %
             %   Syntax
             %       [tf, msg] = checkPlots()
-            %       [tf, msg] = checkPlots('html')
-            %       checkPlots(testCase, ___)
-            %       checkPlots(___)
+            %       [tf, msg] = checkPlots(Name=Value)
+            %       checkPlots(Name=Value)
             %
-            %   Input Arguments
-            %       testCase - testCase object to run the verifyEqual function on. If unspecified and there are no
-            %                  output arguments, it looks for a variable called 'testCase' in the caller's workspace.
-            %       FLAGS - Indicate additional arguments. It can be:
-            %           'html' - Adds the figure comparison as embedded html data (base64) to the output msg variable. 
-            %           'limit' - Only ouput which variables are incorrect instead of a comparison.
-            %           'none' - No output text.
+            %   Name-ValueInput Arguments
+            %       html (logical) - This adds the figure comparison as embedded html data (base64) to the output msg 
+            %                        variable. It also calls verifyEqual. If there are no output arguments, its default 
+            %                        is true. Otherwise, it is false.
+            %       output (char) - Change how much information is contained in msg:
+            %           'full' (default) - Output full comparison data, including image.
+            %           'limit' - Only output error text.
+            %           'none' - Don't output any message.
             %
             %   Output Arguments
             %       tf - True if the plots matched, false if not.
@@ -323,9 +333,9 @@ classdef TesterHelper
             %
             %   Example
             %       close all;
-            %       studentFunc();
+            %       func();
             %       figure;
-            %       solutionFunc();
+            %       func_soln();
             %       [tf, msg] = checkPlots();
             %
             %   checkPlots does not current support or check the following:
@@ -336,6 +346,20 @@ classdef TesterHelper
             %       - Box styling, tick marks, tick labels, and similar
             %       - Similar plots with a margin of error
 
+            arguments
+                options.html (1, 1) logical
+                options.output char = 'full'
+            end
+
+            if ~isfield(options, 'html')
+                if nargout == 0
+                    options.html = true;
+                else
+                    options.html = false;
+                end
+            end
+
+            % Check if figures are open
             if length(findobj('type', 'figure')) < 2
                 error('There must be at least 2 figures displayed.');
             end
@@ -385,8 +409,7 @@ classdef TesterHelper
             % Subplot grid check               
             sAxesPos = {sAxes.Position}';
             cAxesPos = {cAxes.Position}';
-            % We use strings to represent subplot locations. Sort them to ensure plotting out of
-            % order still works.
+            % We use strings to represent subplot locations. Sort them to ensure plotting out of order still works.
             [sAxesPos, sInd] = sort(join([string(cellfun(@(pos) round(pos(1), 2), sAxesPos)), string(cellfun(@(pos) round(pos(2), 2), sAxesPos))], ','));
             [cAxesPos, cInd] = sort(join([string(cellfun(@(pos) round(pos(1), 2), cAxesPos)), string(cellfun(@(pos) round(pos(2), 2), cAxesPos))], ',')); 
             if any(sAxesPos ~= cAxesPos)
@@ -424,7 +447,6 @@ classdef TesterHelper
                 end
             end
             
-
             % Other checks
             for i = 1:numel(cAxes)
                 if ~strcmp(char(sAxes(i).XLabel.String), char(cAxes(i).XLabel.String))
@@ -469,83 +491,82 @@ classdef TesterHelper
                 if strcmp(msg(1:2), '\n')
                     msg = msg(3:end);
                 end
-                if nargin > 0
-                    if any(strcmpi(varargin, 'html'))
-                        base64string = TesterHelper.compareImg(sFig, cFig);
-                        msg = strrep(msg, '\n', '\n    ');
-                        msg = sprintf('%s\\n%s', msg, base64string);             
-                    end
+                if options.html
+                    base64string = TesterHelper.compareImg(sFig, cFig);
+                    msg = strrep(msg, '\n', '\n    ');
+                    msg = sprintf('%s\\n%s', msg, base64string);             
                 end
             else
                 hasPassed = true;
             end
 
-            if isa(varargin{1}, 'matlab.unittest.TestCase')
-                testCase = varargin{1};
-                testCase.verifyTrue(hasPassed, msg);
-            elseif nargout == 0
+            if nargout == 0 && options.html
                 try
                     testCase = evalin('caller', 'testCase');
                     testCase.verifyTrue(hasPassed, msg);
                 catch
-                    error('If there are no output arguments, a testCase object must be input to the function or be present in the caller''s workspace.');
+                    error('If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
                 end
             end
         end
 
-        function [hasPassed, msg] = checkTxtFiles(varargin)
+        function [hasPassed, msg] = checkTxtFiles(user_fn, options)
 
             % CHECKTXTFILES - Check and compare a text file against the solution's.
             %   This function will read in two text files and compare them. By default, it will ignore an extra newline
             %   at the end of any text file.
             %
             %   Syntax
-            %       [tf, msg] = checkTxtFiles(file)
-            %       [tf, msg] = checkTxtFiles(user, expected)
-            %       [tf, msg] = checkTxtFiles(___, FLAG)
-            %       checkTxtFiles(testCase,___)
-            %       checkTxtFiles(___)
+            %       [tf, msg] = checkTxtFiles(user_fn)
+            %       [tf, msg] = checkTxtFiles(___, Name=Value)
+            %       checkTxtFiles(___, Name=Value)
             %
             %   Input Arguments
-            %       file - Filename of the student's text file. This will compare it to the solution file, which is the
-            %              filname with '_soln' attached.
-            %       user, expected - Filename of the student's text file and the expected text file.
-            %       testCase - testCase object to run the verifyEqual function on. If unspecified and there are no
-            %                  output arguments, it looks for a variable called 'testCase' in the caller's workspace.
-            %       FLAGS - Indicate additional arguments. It can be:
+            %       user_fn - Filename of the student's text file. It will assume the solution image is the filename with 
+            %              '_soln' attached.
+            %
+            %   Name-Value Arguments
+            %       rule (char) - Indicates how to compare the two text files.
+            %           'default' (default) - Compares the two text files character by character, ignoring an extra
+            %                                 newline at the end of any text file.
             %           'strict' - Don't ignore the newline at the end of a text file.
-            %           'loose' - Ignore capitilization in the check.
-            %           'limit' - Don't output the full text comparison in msg.
-            %           'none' - No output text.
-            %           'uncap' - Disable the 15 line per text file cap in msg.
-            %           'html' - Output the comparison in html format.
+            %           'loose' - Ignore capitilization and the newline.
+            %       output (char) - Change how much information is contained in msg:
+            %           'full' (default) - Output full comparison data, including line by line comparison.
+            %           'limit' - Only output error text.
+            %           'none' - Don't output any message.
+            %       cap (logical) - Indiate whether to cap the output comparsion to 15 lines. Default = false.
+            %       html (logical) - Output the comparsion in html format. If there are no output arguments, it's
+            %                        default is true. Otherwise, it is false.
             %
             %   Output Arguments
             %       tf - True if the text files matched, false if not.
             %       msg - Character message indicating why the test failed, along with a comparison of the two text
-            %       files with the different lines bolded. Is empty if tf is true.
+            %       files with the different lines bolded/highlighted. Is empty if tf is true.
 
-            if isa(varargin{1}, 'matlab.unittest.TestCase')
-                testCase = varargin{1};
-                varargin{1} = [];
-            elseif nargout == 0
-                try
-                    testCase = evalin('caller', 'testCase');
-                catch
-                    error('If there are no output arguments, a testCase object must be input to the function or be present in the caller''s workspace.');
+            arguments
+                user_fn char
+                options.rule char = 'default'
+                options.output char = 'full'
+                options.cap (1, 1) logical = false
+                options.html (1, 1) logical
+            end
+
+            if ~isfield(options, 'html')
+                if nargout == 0
+                    options.html = true;
+                else
+                    options.html = false;
                 end
             end
             
-            if numel(varargin) > 1 && endsWith(varargin{2}, '.txt')
-                student_fn = varargin{1};
-                soln_fn = varargin{2};
-            else
-                student_fn = varargin{1};
-                soln_fn = [student_fn(1:end-4) '_soln.txt'];
-            end
-            student = readlines(student_fn);
+            % Read in files
+            soln_fn = [user_fn(1:end-4) '_soln.txt'];
+            student = readlines(user_fn);
             soln = readlines(soln_fn);
-            if ~any(strcmpi(varargin, 'strict'))
+
+            % Compare using defined rules
+            if ~strcmpi(options.rule, 'strict')
                 if isempty(char(student(end)))
                     student(end) = [];
                 end
@@ -554,14 +575,12 @@ classdef TesterHelper
                 end
             end
             n_st = length(student);
-            n_sol = length(soln);
-                
-            if any(strcmpi(varargin, 'loose'))
+            n_sol = length(soln);       
+            if strcmpi(options.rule, 'loose')
                 same = strcmpi(student(1:min(n_st, n_sol)), soln(1:min(n_st, n_sol)));
             else
                 same = strcmp(student(1:min(n_st, n_sol)), soln(1:min(n_st, n_sol)));
             end
-
             if n_st ~= n_sol
                 hasPassed = false;
                 msg = sprintf('The output text has %d lines when %d lines are expected.', length(student), length(soln));
@@ -573,13 +592,14 @@ classdef TesterHelper
                 msg = '';
             end
 
-            if any(strcmpi(varargin, 'none'))
+            % Output
+            if strcmpi(options.output, 'none')
                 msg = '';
-            elseif ~hasPassed && ~any(strcmpi(varargin, 'limit'))
-                if n_st > 15 && ~any(strcmpi(varargin, 'uncap'))
+            elseif ~hasPassed && strcmpi(options.output, 'full')
+                if n_st > 15 && options.cap
                     student = [student(1:15); "Additional rows have been suppressed."];
                 end
-                if n_sol > 15 && ~any(strcmpi(varargin, 'uncap'))
+                if n_sol > 15 && options.cap
                     soln = [soln(1:15); "Additional rows have been suppressed."];
                 end
                 student(~same) = strcat("<strong>", student(~same), "</strong>");
@@ -591,16 +611,22 @@ classdef TesterHelper
                 end
                 msg = sprintf('%s\n%s\nActual text file:\n%s\n%s\n%s\nExpected text file:\n%s\n%s', ...
                         msg, repelem('-', 17), repelem('-', 17), char(strjoin(student, '\n')), repelem('-', 17), repelem('-', 17), char(strjoin(soln, '\n')));
-                if any(strcmpi(varargin, 'html'))
+                if options.html
                     msg(msg == '"') = '''';
-                    msg = strrep(msg, '<strong>', '<mark>');
+                    msg = strrep(msg, '<strong>', '<mark>'); % Replace with highlight in html
                     msg = strrep(msg, '</strong>', '</mark>');
                     msg = strrep(msg, newline, '\n    ');
                 end
             end
 
-            if exist('testCase', 'var')  
-                testCase.verifyTrue(hasPassed, msg);
+            % Run tester
+            if nargout == 0 && options.html
+                try
+                    testCase = evalin('caller', 'testCase');
+                    testCase.verifyTrue(hasPassed, msg);
+                catch
+                    error('If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
+                end
             end
         end
 
@@ -633,6 +659,7 @@ classdef TesterHelper
                 if nargin < 2
                     error('You must have at least 1 output or two inputs.');
                 else
+                    % Extract relevant data
                     if isa(varargin{1}, 'matlab.ui.Figure')
                         user = getframe(varargin{1}).cdata;
                         expected = getframe(varargin{2}).cdata;
@@ -644,6 +671,7 @@ classdef TesterHelper
                     else
                         error('The inputs must either be figures or image files.');
                     end
+                    % Plots
                     close all;
                     subplot(1, 2, 1);
                     imshow(user);
@@ -668,8 +696,9 @@ classdef TesterHelper
                     return;
                 end
             else
+                % Open figure comparsion, then save the figure data using base64
                 if nargin == 2
-                    TesterHelper.compareImg(varargin{:}, 'html');
+                    TesterHelper.compareImg(varargin{:}); % Recursive call to display figures
                 end
                 set(gcf, 'Position', [100, 100, 600, 200]); % Size of output image
                 saveas(gcf, 'figure.jpg');
@@ -678,9 +707,9 @@ classdef TesterHelper
                 fclose(fid);
                 delete('figure.jpg');
                 close;
-                encoder = org.apache.commons.codec.binary.Base64;
+                encoder = org.apache.commons.codec.binary.Base64; % base64 encoder
                 base64string = char(encoder.encode(bytes))';
-                varargout{1} = sprintf('<img src=''data:image/png;base64,%s'' width = ''900'' height = ''300''>', base64string);
+                varargout{1} = sprintf('<img src=''data:image/png;base64,%s'' width = ''900'' height = ''300''> \n<em>Please use Matlab to view your figure in higher quality.</em>', base64string);
             end
         end
 
@@ -688,8 +717,8 @@ classdef TesterHelper
 
             % GETCALLS - Return all built-in function calls and operations that a function used.
             %   This function will output all built-in functions and operations that a particular function called in a
-            %   cell array of characters. All operations ('BANG', 'PARFOR', 'SPMD', 'GLOBAL', 'IF', 'SWITCH', 'FOR', 'WHILE')
-            %   are indicated in caps. Intended as a helper function for checkCalls.
+            %   cell array of characters. All operations (use iskeyword() for a list) are indicated in caps. 
+            %   Intended as a helper function for checkCalls.
             %
             %   Syntax
             %       C = getCalls(path)
@@ -714,8 +743,7 @@ classdef TesterHelper
             calls = [calls, atCalls];
             calls(ismember(calls, innerFunctions)) = [];
         
-            % For any calls that exist in our current directory, recursively
-            % collect their builtin calls
+            % For any calls that exist in our current directory, recursively collect their builtin calls
             localFuns = dir([fld filesep '*.m']);
             localFuns = {localFuns.name};
             localFuns = cellfun(@(s)(s(1:end-2)), localFuns, 'uni', false);
@@ -725,8 +753,8 @@ classdef TesterHelper
                 calls = [calls getCalls([fld filesep localCalls{l} '.m'])]; %#ok<AGROW>
             end
         
-            % add any operations
-            OPS = {'BANG', 'PARFOR', 'SPMD', 'GLOBAL', 'IF', 'SWITCH', 'FOR', 'WHILE', 'TRY', 'CONTINUE', 'BREAK'};
+            % Add operations
+            OPS = cellfun(@upper, iskeyword, 'UniformOutput', false);
             calls = [calls reshape(string(info.mtfind('Kind', OPS).kinds), 1, [])];
             calls = unique(calls);
         end
@@ -741,30 +769,34 @@ classdef TesterHelper
             %   an exception).
             %
             %   Syntax
-            %       C = genreateString()
+            %       C = generateString()
+            %       C = generateString(NAME=VALUE)
             %
             %   Name-Value Arguments
             %       maxLength (double) - Maximum length of the output. Default = 20.
             %       minLength (double) - Minimum length of the output. Default = 5.
             %       length (double) - Specify specific length of output.
+            %       maxHeight (double) - Maximum height (number of rows) of the output. Default = 1.
+            %       height (double) - Specify specific height (number of rows) of output.
             %       uppercase (logical) - Add uppercase letters to output. Default = false.
-            %       special (logical/char) - Add certain special characters to output. If only
-            %       certain special characters are desired, input them as a char vector. Default =
-            %       false.
+            %       special (logical/char) - Add certain special characters to output. If only certain special characters 
+            %                                are desired, input them as a char vector. Default = false.
             %       numbers (logical) - Add digits 0-9 to output. Default = false.
-            %       sentence (logical) - Adds spaces at a frequency to replicate sentence structure. 
-            %       Default = false.  
+            %       sentence (logical) - Adds spaces at a frequency to replicate sentence structure. Default = false.  
 
             arguments
                 options.maxLength (1, 1) double = 20
                 options.minLength (1, 1) double = 5
                 options.length (1, 1) double
+                options.maxHeight (1, 1) double = 1
+                options.height (1, 1) double
                 options.uppercase (1, 1) logical = false
                 options.special (1, 1) = false
                 options.numbers (1, 1) logical = false
                 options.sentence (1, 1) logical = false
             end
 
+            % Define character pool
             pool = 'abcdefghijklmnopqrstuvwxyz';
             if options.uppercase
                 pool = [pool 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
@@ -778,14 +810,22 @@ classdef TesterHelper
                 pool = [pool '0123456789'];
             end
 
+            % Define size
             if isfield(options, 'length')
-                out = char(zeros([1, options.length]));
+                c = options.length;
             else
-                out = char(zeros([1, randi([options.minLength, options.maxLength])]));
+                c = randi([options.minLength, options.maxLength]);
             end
+            if isfield(options, 'height')
+                r = options.height;
+            else
+                r = randi([1, options.maxHeight]);
+            end
+            out = char(zeros([r, c]));
 
+            % Fill array
             prob = 0;
-            for i = 1:length(out)
+            for i = 1:numel(out)
                 if options.sentence
                     r = rand();
                     if r < prob
@@ -795,14 +835,17 @@ classdef TesterHelper
                         out(i) = pool(randi(numel(pool)));
                         prob = prob + 0.05;
                     end
-                    
                 else
                     out(i) = pool(randi(numel(pool)));
                 end
             end
             
-            if out(end) == ' '
+            % Remove ending space if needed
+            if r == 1 && out(end) == ' '
                 out(end) = [];
+                if length(out) < options.minLength
+                    out(end+1) = pool(randi(numel(pool)));
+                end
             end
         end
 
@@ -844,6 +887,7 @@ classdef TesterHelper
                     data = repelem(data, numel(key), 1);
                     map = insert(map, key, data);
                 end
+
                 % Add all segments
                 if ~strcmp(line.LineStyle, 'none')
                     key = [line.XData(1:end-1)', line.YData(1:end-1)', line.XData(2:end)', line.YData(2:end)'];
@@ -855,7 +899,7 @@ classdef TesterHelper
             end
         end
 
-        function out = toChar(in, varargin)
+        function out = toChar(in, options)
 
             % TOCHAR - Convert the input into a character.
             %   This function takes in any input and converts it into a character vector.
@@ -867,29 +911,32 @@ classdef TesterHelper
             %           - Any input that leads to more than twenty rows of characters will have additional rows suppressed.
             %
             %   Syntax
-            %       C = toChar(A, FLAG)
+            %       C = toChar(A, Name=Value)
             %
-            %   Arguments
+            %   Input/Output Arguments
             %       A - Any input that should be converted into a char.
             %       C - The output character vector representing A.
-            %       FLAG - Indicate additional arguments. It can be:
-            %           'i' - Interactive output. If the input is a complex data type (not a char,
-            %                 numeric, or logical) and exists as a variable, it instead outputs a clickable
-            %                 hyperlink to open that variable in Matlab. Alternatively, if the input is a
-            %                 string that indicates an existing file, it will also output a hyperlink to open
-            %                 that file in Matlab. Files with image extensions '.png', '.jpg', and '.jpeg'
-            %                 will display as a figure in Matlab if the hyperlink is clicked.
-            %           'h' - html output. Reformats the output to be purely in html format.
-            %           's' - Sort fields. Sorts the fields if the input is a structure.
-            %           'u' - Uncapped length. Ignores the 20 row limit.
+            %
+            %   Name-Value Arguments
+            %       interactive (char) - If the input is a complex data type (not a char, numeric, or logical) and 
+            %                            exists as a variable, it instead outputs a clickable hyperlink to open that 
+            %                            variable in Matlab. Alternatively, if the input is a string that indicates an 
+            %                            existing file, it will also output a hyperlink to open that file in Matlab. 
+            %                            Files with image extensions '.png', '.jpg', and '.jpeg' will display as a figure 
+            %                            in Matlab if the hyperlink is clicked. Default = false.
+            %       html (logical) - Outputs in html format. Default = false.
+            %       cap (logical) - Caps the output to 20 rows. Default = true.
+
+            arguments
+                in
+                options.interactive = false
+                options.html = false
+                options.cap = true
+            end
 
             if isempty(in)
                 out = '[]';
-            elseif isstruct(in) && ~any(strcmpi(varargin, 'i'))
-                % Order structures if sorting is desired
-                if any(strcmpi(varargin, 's'))
-                    in = orderfields(in);
-                end
+            elseif isstruct(in) && ~options.interactive
                 try
                     out = struct2table(in);
                 catch
@@ -903,7 +950,7 @@ classdef TesterHelper
                 end
                 [r, ~] = size(in);
                 % Interactive inputs
-                if r == 1 && any(strcmpi(varargin, 'i')) && exist(in, 'file')
+                if r == 1 && options.interactive && exist(in, 'file')
                     if contains(in, '.png') || contains(in, '.jpg') || contains(in, '.jpeg')
                         out = sprintf('<a href="matlab: cd(''%s'');clf;imgDisp=imread(''%s'');imshow(imgDisp);clear imgDisp;shg">%s</a>', pwd, in, in);
                     else
@@ -946,31 +993,24 @@ classdef TesterHelper
                     out = ['[' out(3:end-1) ']'];
                 end
             else
-                % Additional inputs
-                if any(strcmpi(varargin, 'i')) && ~isempty(inputname(1))
-                    % Open a file in interactive
-                    out = sprintf('<a href="matlab: cd(''%s'');open(''%s'')">%s</a>', pwd, inputname(1), inputname(1));
-                else
-                    out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
-                end
+                out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
             end
 
             if out(end) == newline
                 out(end) = [];
             end
-            if ~any(strcmpi(varargin, 'u'))
+            if options.cap
                 new = strfind(out, newline);
                 if numel(new) > 20
                     out = out(1:new(20));
                     out = [out '<strong>Additional rows have been suppressed.</strong>'];
                 end 
             end
-            if any(strcmpi(varargin, 'h'))
+            if options.html
                 out = ['   ' out];
                 out(out == '"') = '''';
                 out = strrep(out, newline, '\n       ');
             end
         end
-
     end
 end

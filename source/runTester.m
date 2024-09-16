@@ -40,12 +40,16 @@ for i = 1:length(tests)
     results(i).passed = tests(i).Passed;
     if tests(i).Incomplete
         out = tests(i).Details.DiagnosticRecord.Report;
-        out = strrep(out, newline, '\n');
-        out = strrep(out, '"', '''');
-        out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in H'));
-        out(out < 32) = '�'; % Remove illegal ascii characters
-        out = strrep(out, '%', '%%'); % fprintf percent sign fix
-        results(i).output = ['An error occured while running your function.\n    --------------\n    Error Details:\n    --------------\n' out];
+        if contains(out, 'Error in TesterHelper')
+            results(i).output = 'The autograder ran into an error while running your function. Please contact the TAs for assistance.';
+        else
+            out = strrep(out, newline, '\n');
+            out = strrep(out, '"', '''');
+            out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in H'));
+            out(out < 32) = '�'; % Remove illegal ascii characters
+            out = strrep(out, '%', '%%'); % fprintf percent sign fix
+            results(i).output = ['An error occured while running your function.\n    --------------\n    Error Details:\n    --------------\n' out];
+        end
     elseif tests(i).Failed
         out = ['Verification failed in ' results(i).name '.\n    ----------------\n    Test Diagnostic:'];
         for j = 1:length(tests(i).Details.DiagnosticRecord)

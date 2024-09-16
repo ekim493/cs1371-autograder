@@ -85,5 +85,11 @@
         ["WHILE",
         "FOR",
         "IF",
-        "SWITCH"]
+        "ELSE",
+        "ELSEIF",
+        "SWITCH",
+        "OTHERWISE",
+        "CASE",
+        "END",
+        "FUNCTION"]
 }
