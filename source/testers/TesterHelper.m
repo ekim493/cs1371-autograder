@@ -50,8 +50,10 @@ classdef TesterHelper
                 elseif strcmpi(options.output, 'limit')
                     msg = sprintf('Variable %s does not match the solution''s.', extractBefore(solns{i}, '_soln'));
                 elseif strcmpi(options.output, 'full')
+                    [r, c] = size(student);
+                    [r_e, c_e] = size(soln);
                     if options.html
-                        msg = ['<u>', extractBefore(solns{i}, '_soln'), '</u>\n', '    Actual output (' class(student) '):\n    ' TesterHelper.toChar(student, html=true) '\n    Expected output (' class(soln) '):\n    ' TesterHelper.toChar(soln, html=true)];
+                        msg = ['<u>', extractBefore(solns{i}, '_soln'), '</u>\n', '    Actual output (' sprintf('%dx%d %s', r, c, class(student)) '):\n    ' TesterHelper.toChar(student, html=true) '\n    Expected output (' sprintf('%dx%d %s', r_e, c_e, class(soln)) '):\n    ' TesterHelper.toChar(soln, html=true)];
                     else
                         msg = sprintf('Actual output:\n%s\nExpected output:\n%s', TesterHelper.toChar(student), TesterHelper.toChar(soln));
                     end
@@ -827,8 +829,8 @@ classdef TesterHelper
             prob = 0;
             for i = 1:numel(out)
                 if options.sentence
-                    r = rand();
-                    if r < prob
+                    p = rand();
+                    if p < prob
                         out(i) = ' ';
                         prob = 0;
                     else
@@ -842,10 +844,7 @@ classdef TesterHelper
             
             % Remove ending space if needed
             if r == 1 && out(end) == ' '
-                out(end) = [];
-                if length(out) < options.minLength
-                    out(end+1) = pool(randi(numel(pool)));
-                end
+                out(end) = pool(randi(numel(pool)));
             end
         end
 
