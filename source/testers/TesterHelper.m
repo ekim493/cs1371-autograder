@@ -79,7 +79,7 @@ classdef TesterHelper
             %
             %   Input Arguments
             %       func - Name of the function to test as a character vector. If unspecified, it retrieves the name of
-            %              the caller function and uses the appropriate substring (called should be named FUNCNAME_TEST#).
+            %              the caller function and uses the appropriate substring (caller should be named FUNCNAME_TEST#).
             %
             %   Name-Value Arguments
             %       banned (cell) - List of additional banned functions.
@@ -767,8 +767,7 @@ classdef TesterHelper
             %   This function generates a random string of characters based on the input options. By
             %   default, it generates a string of length 5 <= L <= 20, with uppercase characters,
             %   and no special characters, numbers, or spaces. The generator works by pulling from a
-            %   pool of valid characters, with each character getting equal probability (space being
-            %   an exception).
+            %   pool of valid characters, with each character getting equal probability.
             %
             %   Syntax
             %       C = generateString()
@@ -779,13 +778,15 @@ classdef TesterHelper
             %                         specific length, or enter a 1x2 vector in the [MIN, MAX] format. Default = [5, 20]
             %       height (double) - Specify the height (number of rows) of output. Input a single number for a
             %                         specific height, or enter a 1x2 vector in the [MIN, MAX] format. Default = 1.
+            %       pool (char) - Define a specific character pool for the generator to pull from. Elements within this
+            %                     pool have an equal probability to be picked, if no other options are specified. By
+            %                     default, this pool contains a single instance of all lowercase letters.
             %       uppercase (logical) - Add uppercase letters to character pool. Default = false.
-            %       special (logical/char) - Adds certain special characters to character pool. If only certain special 
-            %                                characters are desired, input them as a char vector. Default = false.
+            %       special (logical) - Adds certain special characters to character pool. Default = false.
             %       numbers (logical) - Add digits 0-9 to the character pool. Default = false.
             %       sentence (logical) - Adds spaces at a frequency to replicate sentence structure. Default = false.
             %       match (char) - Create a pseudorandom string by matching character patterns from the input. Specify any
-            %                      characters with 'a'. This pool of characters is modified by the other arguments. 
+            %                      characters from the pool with 'a'. This pool of characters is modified by the other arguments. 
             %                      Specify consonants as 'c' or 'C', vowels as 'v' or 'V', digits as 'd', special 
             %                      characters as 's', and any other character by inputting it directly. Escape the 
             %                      characters using '\'. Escape characters only work when r == 1. y is defined as a consonant.
@@ -794,24 +795,25 @@ classdef TesterHelper
                 options.length (1, :) double = [5, 20]
                 options.height (1, :) double = 1
                 options.uppercase (1, 1) logical = false
-                options.special (1, :) = false
+                options.special (1, 1) logical = false
                 options.numbers (1, 1) logical = false
                 options.sentence (1, 1) logical = false
                 options.match char = ''
+                options.pool (1, :) char = 'abcdefghijklmnopqrstuvwxyz'
             end
 
             % Define character pool
-            s_pool = 'abcdefghijklmnopqrstuvwxyz';
+            c_pool = options.pool;
             if options.uppercase
-                s_pool = [s_pool 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+                c_pool = [c_pool 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
             end
             if ~islogical(options.special)
-                s_pool = [s_pool options.special];
+                c_pool = [c_pool options.special];
             elseif options.special
-                s_pool = [s_pool '!#$%&()*+-./:;<=>?@'];
+                c_pool = [c_pool '!#$%&()*+-./:;<=>?@'];
             end
             if options.numbers
-                s_pool = [s_pool '0123456789'];
+                c_pool = [c_pool '0123456789'];
             end
 
             if isempty(options.match)
@@ -827,7 +829,7 @@ classdef TesterHelper
                     r = randi(options.height);
                 end
                 out = char(zeros([r, c]));
-                exp = char(out + 'a'); % All characters can be any character input defined by s_pool
+                exp = char(out + 'a'); % All characters can be any character input defined by c_pool
             else
                 % If a match string is given, simply define the output size.
                 exp = options.match;
@@ -850,7 +852,7 @@ classdef TesterHelper
                             i = i + 1;
                             out(j) = exp(i);
                         case 'a'
-                            pool = s_pool;
+                            pool = c_pool;
                             out(j) = pool(randi(numel(pool)));
                         case 'A'
                             pool = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -889,13 +891,13 @@ classdef TesterHelper
                         out(i) = ' ';
                         prob = 0;
                     else
-                        out(i) = s_pool(randi(numel(s_pool)));
+                        out(i) = c_pool(randi(numel(c_pool)));
                         prob = prob + 0.05;
                     end
                 end
                 % Remove ending space if needed
                 if r == 1 && out(end) == ' '
-                    out(end) = s_pool(randi(numel(s_pool)));
+                    out(end) = c_pool(randi(numel(c_pool)));
                 end
             end
             
