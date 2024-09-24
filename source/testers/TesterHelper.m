@@ -775,77 +775,130 @@ classdef TesterHelper
             %       C = generateString(NAME=VALUE)
             %
             %   Name-Value Arguments
-            %       maxLength (double) - Maximum length of the output. Default = 20.
-            %       minLength (double) - Minimum length of the output. Default = 5.
-            %       length (double) - Specify specific length of output.
-            %       maxHeight (double) - Maximum height (number of rows) of the output. Default = 1.
-            %       height (double) - Specify specific height (number of rows) of output.
-            %       uppercase (logical) - Add uppercase letters to output. Default = false.
-            %       special (logical/char) - Add certain special characters to output. If only certain special characters 
-            %                                are desired, input them as a char vector. Default = false.
-            %       numbers (logical) - Add digits 0-9 to output. Default = false.
-            %       sentence (logical) - Adds spaces at a frequency to replicate sentence structure. Default = false.  
+            %       length (double) - Specify the length (or number of columns) of output. Input a single number for a
+            %                         specific length, or enter a 1x2 vector in the [MIN, MAX] format. Default = [5, 20]
+            %       height (double) - Specify the height (number of rows) of output. Input a single number for a
+            %                         specific height, or enter a 1x2 vector in the [MIN, MAX] format. Default = 1.
+            %       uppercase (logical) - Add uppercase letters to character pool. Default = false.
+            %       special (logical/char) - Adds certain special characters to character pool. If only certain special 
+            %                                characters are desired, input them as a char vector. Default = false.
+            %       numbers (logical) - Add digits 0-9 to the character pool. Default = false.
+            %       sentence (logical) - Adds spaces at a frequency to replicate sentence structure. Default = false.
+            %       match (char) - Create a pseudorandom string by matching character patterns from the input. Specify any
+            %                      characters with 'a'. This pool of characters is modified by the other arguments. 
+            %                      Specify consonants as 'c' or 'C', vowels as 'v' or 'V', digits as 'd', special 
+            %                      characters as 's', and any other character by inputting it directly. Escape the 
+            %                      characters using '\'. Escape characters only work when r == 1. y is defined as a consonant.
 
             arguments
-                options.maxLength (1, 1) double = 20
-                options.minLength (1, 1) double = 5
-                options.length (1, 1) double
-                options.maxHeight (1, 1) double = 1
-                options.height (1, 1) double
+                options.length (1, :) double = [5, 20]
+                options.height (1, :) double = 1
                 options.uppercase (1, 1) logical = false
-                options.special (1, 1) = false
+                options.special (1, :) = false
                 options.numbers (1, 1) logical = false
                 options.sentence (1, 1) logical = false
+                options.match char = ''
             end
 
             % Define character pool
-            pool = 'abcdefghijklmnopqrstuvwxyz';
+            s_pool = 'abcdefghijklmnopqrstuvwxyz';
             if options.uppercase
-                pool = [pool 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+                s_pool = [s_pool 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
             end
             if ~islogical(options.special)
-                pool = [pool options.special];
+                s_pool = [s_pool options.special];
             elseif options.special
-                pool = [pool '!#$%&()*+-./:;<=>?@'];
+                s_pool = [s_pool '!#$%&()*+-./:;<=>?@'];
             end
             if options.numbers
-                pool = [pool '0123456789'];
+                s_pool = [s_pool '0123456789'];
             end
 
-            % Define size
-            if isfield(options, 'length')
-                c = options.length;
+            if isempty(options.match)
+                % If no match string is given, define size.
+                if isscalar(options.length)
+                    c = options.length;
+                else
+                    c = randi(options.length);
+                end
+                if isscalar(options.height)
+                    r = options.height;
+                else
+                    r = randi(options.height);
+                end
+                out = char(zeros([r, c]));
+                exp = char(out + 'a'); % All characters can be any character input defined by s_pool
             else
-                c = randi([options.minLength, options.maxLength]);
+                % If a match string is given, simply define the output size.
+                exp = options.match;
+                [r, c] = size(exp);
+                if r == 1
+                    len = length(exp) - numel(strfind(exp, '\'));
+                    out = char(zeros([1, len]));
+                else
+                    out = char(zeros([r, c]));
+                end
             end
-            if isfield(options, 'height')
-                r = options.height;
-            else
-                r = randi([1, options.maxHeight]);
-            end
-            out = char(zeros([r, c]));
 
-            % Fill array
-            prob = 0;
-            for i = 1:numel(out)
-                if options.sentence
+            if ~options.sentence
+                % Not sentence option. Have 2 indicies in case escape character used.
+                i = 1; % Index of exp
+                j = 1; % Index of out
+                while i <= numel(exp)
+                    switch exp(i)
+                        case '\'
+                            i = i + 1;
+                            out(j) = exp(i);
+                        case 'a'
+                            pool = s_pool;
+                            out(j) = pool(randi(numel(pool)));
+                        case 'A'
+                            pool = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                            out(j) = pool(randi(numel(pool)));
+                        case 'c'
+                            pool = 'bcdfghjklmnpqrstvwxyz';
+                            out(j) = pool(randi(numel(pool)));
+                        case 'C'
+                            pool = 'BCDFGHJKLMNPQRSTVWXYZ';
+                            out(j) = pool(randi(numel(pool)));
+                        case 'v'
+                            pool = 'aeiou';
+                            out(j) = pool(randi(numel(pool)));
+                        case 'V'
+                            pool = 'AEIOU';
+                            out(j) = pool(randi(numel(pool)));
+                        case 'd'
+                            pool = '0123456789';
+                            out(j) = pool(randi(numel(pool)));
+                        case 's'
+                            pool = '!#$%&()*+-./:;<=>?@';
+                            out(j) = pool(randi(numel(pool)));
+                        otherwise
+                            out(j) = exp(i);
+                    end      
+                    i = i + 1;
+                    j = j + 1;
+                end
+                return
+            else
+                % Sentence option. Iterate through string, increasing space probability every time.
+                prob = 0;
+                for i = 1:numel(out)
                     p = rand();
                     if p < prob
                         out(i) = ' ';
                         prob = 0;
                     else
-                        out(i) = pool(randi(numel(pool)));
+                        out(i) = s_pool(randi(numel(s_pool)));
                         prob = prob + 0.05;
                     end
-                else
-                    out(i) = pool(randi(numel(pool)));
+                end
+                % Remove ending space if needed
+                if r == 1 && out(end) == ' '
+                    out(end) = s_pool(randi(numel(s_pool)));
                 end
             end
             
-            % Remove ending space if needed
-            if r == 1 && out(end) == ' '
-                out(end) = pool(randi(numel(pool)));
-            end
         end
 
         function map = mapPlot(lines)
