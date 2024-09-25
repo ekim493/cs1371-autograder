@@ -215,7 +215,7 @@ classdef TesterHelper
             %           'full' (default) - Output full comparison data, including image.
             %           'limit' - Only output error text.
             %           'none' - Don't output any message.
-            %       tolerance (double) - Add RGB value tolerance to the function. Default = 5.
+            %       tolerance (double) - Add RGB value tolerance to the function. Default = 10.
             %       
             %   Output Arguments
             %       tf - True if the images matched, and false if not.
@@ -226,7 +226,7 @@ classdef TesterHelper
                 user_fn char
                 options.html (1, 1) logical
                 options.output char = 'full'
-                options.tolerance (1, 1) double = 5
+                options.tolerance (1, 1) double = 10
             end
 
             % Input validation
@@ -320,7 +320,7 @@ classdef TesterHelper
             %       [tf, msg] = checkPlots(Name=Value)
             %       checkPlots(Name=Value)
             %
-            %   Name-ValueInput Arguments
+            %   Name-Value Arguments
             %       html (logical) - This adds the figure comparison as embedded html data (base64) to the output msg 
             %                        variable. It also calls verifyEqual. If there are no output arguments, its default 
             %                        is true. Otherwise, it is false.
@@ -778,7 +778,7 @@ classdef TesterHelper
             %                         specific length, or enter a 1x2 vector in the [MIN, MAX] format. Default = [5, 20]
             %       height (double) - Specify the height (number of rows) of output. Input a single number for a
             %                         specific height, or enter a 1x2 vector in the [MIN, MAX] format. Default = 1.
-            %       pool (char) - Define a specific character pool for the generator to pull from. Elements within this
+            %       pool (char) - Define a character pool for the generator to pull from. Elements within this
             %                     pool have an equal probability to be picked, if no other options are specified. By
             %                     default, this pool contains a single instance of all lowercase letters.
             %       uppercase (logical) - Add uppercase letters to character pool. Default = false.
@@ -969,7 +969,7 @@ classdef TesterHelper
             %
             %   Input/Output Arguments
             %       A - Any input that should be converted into a char.
-            %       C - The output character vector representing A.
+            %       C - The output character array representing A.
             %
             %   Name-Value Arguments
             %       interactive (char) - If the input is a complex data type (not a char, numeric, or logical) and 
