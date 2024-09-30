@@ -810,7 +810,7 @@ classdef TesterHelper
             if ~islogical(options.special)
                 c_pool = [c_pool options.special];
             elseif options.special
-                c_pool = [c_pool '!#$%&()*+-./:;<=>?@'];
+                c_pool = [c_pool '!#$%()*+-./:;=?@'];
             end
             if options.numbers
                 c_pool = [c_pool '0123456789'];
@@ -873,7 +873,7 @@ classdef TesterHelper
                             pool = '0123456789';
                             out(j) = pool(randi(numel(pool)));
                         case 's'
-                            pool = '!#$%&()*+-./:;<=>?@';
+                            pool = '!#$%()*+-./:;=?@';
                             out(j) = pool(randi(numel(pool)));
                         otherwise
                             out(j) = exp(i);
