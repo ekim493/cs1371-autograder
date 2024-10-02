@@ -1038,13 +1038,18 @@ classdef TesterHelper
             elseif islogical(in)
                 [~, c] = size(in);
                 out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
-                out(out == ' ') = [];
-                if c > 1
-                    % Logical vectors and arrays
-                    out = replace(out, 'true', ', true');
-                    out = replace(out, 'false', ', false');
-                    out = replace(out, [newline ', '], [newline ' ']);
-                    out = ['[' out(3:end-1) ']'];
+                if contains(out, 'Columns')
+                    out = [' [' out(3:end-1) ']'];
+                else
+                    % Single logical
+                    out(out == ' ') = [];
+                    if c > 1
+                        % Logical vectors and arrays
+                        out = replace(out, 'true', ', true');
+                        out = replace(out, 'false', ', false');
+                        out = replace(out, [newline ', '], [newline ' ']);
+                        out = ['[' out(3:end-1) ']'];
+                    end
                 end
             else
                 out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
