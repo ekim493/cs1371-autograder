@@ -12,7 +12,8 @@ assignment_name = submission.assignment.title;
 
 
 %% Run tester
-suite = testsuite(sprintf('./testers/%sTester.m', assignment_name));
+addpath('./testers')
+suite = testsuite(sprintf('%sTester', assignment_name));
 runner = testrunner();
 tests = run(runner, suite);
 
@@ -34,7 +35,7 @@ tests = run(runner, suite);
 % 'Error in HWX... line is cut off.
 
 results = struct();
-json = jsondecode(fileread(sprintf('./testers/%sScores.json', assignment_name)));
+json = jsondecode(fileread(sprintf('%sScores.json', assignment_name)));
 for i = 1:length(tests)
     results(i).name = extractAfter(tests(i).Name, '/');
     results(i).passed = tests(i).Passed;

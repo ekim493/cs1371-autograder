@@ -11,6 +11,19 @@ if "%customTag%"=="" (
 
 echo Pulling from repository %baseDir% and updating to %repoName%:%customTag%
 
+REM Prompt user for encryption
+set /p encrypt="Encrypt matlab files? (Y/N, default Y): "
+if /i "%encrypt%"=="" set encrypt=Y
+if /i "%encrypt%"=="Y" (
+    echo Encrypting files...
+    matlab -batch encrypt
+) else if /i "%encrypt%"=="N" (
+    xcopy "source" "sourceP" /e /i /y /q
+) else (
+    echo Invalid input. Please enter Y or N.
+    exit /b 1
+)
+
 REM Default Docker execution location
 set dockerExePath="C:\Program Files\Docker\Docker\Docker Desktop.exe"  
 
