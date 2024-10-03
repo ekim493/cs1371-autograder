@@ -45,6 +45,7 @@ for i = 1:length(tests)
             results(i).output = 'The autograder ran into an error while running your function. Please contact the TAs for assistance.';
         else
             out = erase(out, [newline '    Error using evalc']);
+            out = regexprep(out, '(\\)(?!n)', '\\\\'); % \ char fix
             out = strrep(out, newline, '\n');
             out = strrep(out, '"', '''');
             out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in H'));
@@ -57,6 +58,7 @@ for i = 1:length(tests)
         for j = 1:length(tests(i).Details.DiagnosticRecord)
             % Temp string created in case multiple verifications were run for one test case.
             temp = tests(i).Details.DiagnosticRecord(j).Report;
+            temp = regexprep(temp, '(\\)(?!n)', '\\\\'); % \ char fix
             temp = strrep(temp, newline, '\n');
             temp = strrep(temp, '"', '''');
             temp = char(extractBetween(temp, 'Test Diagnostic:\n    ----------------\n', '\n    ---------------------\n    Framework Diagnostic'));
