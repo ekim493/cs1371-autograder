@@ -1025,8 +1025,8 @@ classdef TesterHelper
                         out = num2str(in, 12);
                     else
                         % Numeric vector
-                        out = join(string(in), ', ');
-                        out = ['[' char(out) ']'];
+                        out = mat2str(in, 10);
+                        out = strrep(out, ' ', ', ');
                     end
                 else
                     % Numeric array
