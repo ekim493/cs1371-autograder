@@ -1,3 +1,4 @@
 *.m
 *.json
 !encrypt.m
+!submission_metadata.json

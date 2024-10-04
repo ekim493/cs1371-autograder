@@ -42,36 +42,32 @@ for i = 1:length(tests)
     if tests(i).Incomplete
         out = tests(i).Details.DiagnosticRecord.Report;
         if contains(out, 'Error in TesterHelper')
-            results(i).output = 'The autograder ran into an error while running your function. Please contact the TAs for assistance.';
+            results(i).output = 'The autograder ran into an unexpected error while running your function. Please contact the TAs for assistance.';
         else
             out = erase(out, [newline '    Error using evalc']);
-            out = regexprep(out, '(\\)(?!n)', '\\\\'); % \ char fix
             out = strrep(out, newline, '\n');
-            out = strrep(out, '"', '''');
             out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in H'));
-            out(out < 32) = '�'; % Remove illegal ascii characters
-            out = strrep(out, '%', '%%'); % fprintf percent sign fix
-            results(i).output = ['An error occured while running your function.\n    --------------\n    Error Details:\n    --------------\n' out];
+            out = ['An error occured while running your function.\n    --------------\n    Error Details:\n    --------------\n' out];
         end
     elseif tests(i).Failed
         out = ['Verification failed in ' results(i).name '.\n    ----------------\n    Test Diagnostic:'];
         for j = 1:length(tests(i).Details.DiagnosticRecord)
             % Temp string created in case multiple verifications were run for one test case.
             temp = tests(i).Details.DiagnosticRecord(j).Report;
-            temp = regexprep(temp, '(\\)(?!n)', '\\\\'); % \ char fix
             temp = strrep(temp, newline, '\n');
-            temp = strrep(temp, '"', '''');
             temp = char(extractBetween(temp, 'Test Diagnostic:\n    ----------------\n', '\n    ---------------------\n    Framework Diagnostic'));
             if isempty(temp) % If there is an issue and no output diagnostic is provided, simply skip output display.
                 out = [];
                 continue;
             end
             out = [out '\n    ----------------\n' temp];
-            out(out < 32) = '�'; % Remove illegal ascii characters
-            out = strrep(out, '%', '%%'); % fprintf percent sign fix
         end
-        results(i).output = out; % Out stores a string with the output message to display to students.
     end
+    out = regexprep(out, '(\\)(?!n)', '\\\\'); % Blackslash error fix
+    out = strrep(out, '"', ''''); % Replace double quotes with single
+    out(out < 32) = '�'; % Remove illegal ascii characters
+    out = strrep(out, '%', '%%'); % fprintf percent sign fix
+    results(i).output = out; % Out stores a string with the output message to display to students.
 end
 
 %% Determine the points per test case
