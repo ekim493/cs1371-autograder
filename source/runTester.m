@@ -39,6 +39,7 @@ json = jsondecode(fileread(sprintf('%sScores.json', assignment_name)));
 for i = 1:length(tests)
     results(i).name = extractAfter(tests(i).Name, '/');
     results(i).passed = tests(i).Passed;
+    out = ''; % Add default success message
     if tests(i).Incomplete
         out = tests(i).Details.DiagnosticRecord.Report;
         if contains(out, 'Error in TesterHelper')
