@@ -43,7 +43,7 @@ for i = 1:length(tests)
     if tests(i).Incomplete
         out = tests(i).Details.DiagnosticRecord.Report;
         if contains(out, 'Error in TesterHelper')
-            results(i).output = 'The autograder ran into an unexpected error while running your function. Please contact the TAs for assistance.';
+            out = 'The autograder ran into an unexpected error while running your function. Please contact the TAs for assistance.';
         else
             out = erase(out, [newline '    Error using evalc']);
             out = strrep(out, newline, '\n');
