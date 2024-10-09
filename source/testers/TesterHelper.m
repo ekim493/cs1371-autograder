@@ -3,7 +3,65 @@ classdef TesterHelper
     %                for a full list of functions and descriptions.
 
     methods (Static)
-        %% Check functions
+        %% Run student funcion
+
+        function varargout = run(varargin)
+            try
+                stack = dbstack;
+                funcFile = char(extractBetween(stack(2).name, '.', '_Test'));
+            catch
+                error('Error retrieving the name of the function being tested.');
+            end
+            
+            if ~exist(funcFile, 'file')
+                error('Undefined function or script ''%s''. Was this file submitted?', funcFile);
+            else
+                file = sprintf('%s.m', funcFile);
+                t = mtree(file, '-file');
+                if isequal(t.FileType, 'FunctionFile')
+                    % If it is a function file, create the function file with timeout if it doesn''t exist.
+                    file_t = sprintf('%s_t.m', funcFile);
+                    if ~exist(file_t, 'file')
+                        lines = readlines(file);
+                        info = mtree(file, '-file');
+                        loops = info.mtfind('Kind', {'WHILE', 'FOR'}).lineno;
+                        loops = loops';
+                        for i = loops(end:-1:1)
+                            lines = [lines(1:i); "if toc > 20; error('HWTester:infLoop', 'The function took more than 20 seconds to run. Is there an infinite loop?'); end"; lines(i+1:end)];
+                        end
+                        lines = [lines(1); "tic"; lines(2:end)];
+                        [fileLoc, ~, ~] = fileparts(which(file));
+                        fh = fopen(fullfile(fileLoc, file_t), 'w');
+                        lines = char(join(lines, '\n'));
+                        lines = strrep(lines, '%', '%%');
+                        fprintf(fh, char(join(lines, '\n')));
+                        fclose(fh);
+                    end
+                    % Attempt to run the timeout function. If it errors, re-run the function to collect the correct error msg
+                    try
+                        [~, varargout{1:nargout}] = evalc(sprintf('%s_t(varargin{:})', funcFile));
+                    catch ME
+                        if ~strcmp(ME.identifier, 'HWTester:infLoop') && strcmpi(ME.stack(1).name, sprintf('%s_t', funcFile))
+                            lines_t = readlines(file_t);
+                            line = lines_t(ME.stack(1).line);
+                            lines = readlines(file);
+                            li = find(strcmp(lines, line));
+                            error('%s\n\nError in %s (line %d)\n%s', ME.message, funcFile, li, strtrim(line));
+                        elseif contains(ME.message, 'Invalid expression')
+                            [~, varargout{1:nargout}] = evalc(sprintf('%s(varargin{:})', funcFile));
+                        else
+                            throw(ME)
+                        end
+                    end
+                else
+                    % If it is a script, simply call the function in the caller
+                    evalin('caller', funcFile)
+                end
+            end
+
+        end
+
+        %% Check Functions
 
         function checkAllEqual(options)
 

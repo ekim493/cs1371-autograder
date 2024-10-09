@@ -13,9 +13,10 @@ assignment_name = submission.assignment.title;
 
 %% Run tester
 addpath('./testers')
+addpath('/autograder/submission');
 suite = testsuite(sprintf('%sTester', assignment_name));
 runner = testrunner();
-tests = run(runner, suite);
+tests = runInParallel(runner, suite);
 
 %% Parse through the results of the tester and create a structure with relevant data
 % Store the results in the results structure
@@ -42,12 +43,19 @@ for i = 1:length(tests)
     out = ''; % Add default success message
     if tests(i).Incomplete
         out = tests(i).Details.DiagnosticRecord.Report;
-        if contains(out, 'Error in TesterHelper')
+        if contains(out, 'Error in TesterHelper') && ~contains(out, 'Error in TesterHelper.run')
             out = 'The autograder ran into an unexpected error while running your function. Please contact the TAs for assistance.';
         else
             out = erase(out, [newline '    Error using evalc']);
             out = strrep(out, newline, '\n');
             out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in H'));
+            if contains(out, 'Error in TesterHelper.run')
+                out = extractBefore(out, '\n    \n    Error in TesterHelper.run');
+            elseif contains(out, 'Error using TesterHelper.run (') % No encryption, has lineno
+                out = regexprep(out, 'Error using TesterHelper\.run \(line \d+\)\\n', '');
+            elseif contains(out, 'Error using TesterHelper.run') % Encrypted TesterHelper outputs no line
+                out = extractAfter(out, 'Error using TesterHelper.run\n');
+            end
             out = ['An error occured while running your function.\n    --------------\n    Error Details:\n    --------------\n' out];
         end
     elseif tests(i).Failed
@@ -65,7 +73,7 @@ for i = 1:length(tests)
         end
     end
     out = regexprep(out, '(\\)(?!n)', '\\\\'); % Blackslash error fix
-    out = strrep(out, '"', ''''); % Replace double quotes with single
+    out = strrep(out, '"', '\"'); % Escape double quotes
     out(out < 32) = '�'; % Remove illegal ascii characters
     out = strrep(out, '%', '%%'); % fprintf percent sign fix
     results(i).output = out; % Out stores a string with the output message to display to students.
