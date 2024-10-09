@@ -6,6 +6,17 @@ classdef TesterHelper
         %% Run student funcion
 
         function varargout = run(varargin)
+
+            % RUN - Run the student's function.
+            %   This should be used in place of running the student's function. This function should only be used in a
+            %   testing environment, and it identifies the student function using the caller's name (assuming the caller
+            %   is called FUNCNAME_TEST#). It prevents a student's code from having an infinite loop by creating and
+            %   running an identical function with a timeout injected after any WHILE or FOR loop. It will also suppress
+            %   any stdout from the student's code due to missing semicolons.
+            %
+            %   Arguments
+            %       varargin - Input arguments as if directly calling a student's function.
+            %       varargout - Outputs will be the same as the student's function.
             try
                 stack = dbstack;
                 funcFile = char(extractBetween(stack(2).name, '.', '_Test'));
@@ -27,9 +38,15 @@ classdef TesterHelper
                         loops = info.mtfind('Kind', {'WHILE', 'FOR'}).lineno;
                         loops = loops';
                         for i = loops(end:-1:1)
-                            lines = [lines(1:i); "if toc > 20; error('HWTester:infLoop', 'The function took more than 20 seconds to run. Is there an infinite loop?'); end"; lines(i+1:end)];
+                            lines = [lines(1:i); "if toc > 30; error('HWTester:infLoop', 'This function didn't stop execution after 30 seconds. Is there an infinite loop?'); end"; lines(i+1:end)];
                         end
-                        lines = [lines(1); "tic"; lines(2:end)];
+                        try
+                            if length(lines) >= 2
+                                lines = [lines(1); "tic"; lines(2:end)];
+                            end
+                        catch
+                            error('There was an error reading your file. Please contact the TAs or check the submission file.')
+                        end
                         [fileLoc, ~, ~] = fileparts(which(file));
                         fh = fopen(fullfile(fileLoc, file_t), 'w');
                         lines = char(join(lines, '\n'));

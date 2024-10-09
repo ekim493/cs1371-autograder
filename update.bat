@@ -1,6 +1,6 @@
 @echo off
 REM Defaults. Edit if necessary
-set baseDir=ekim493/cs1371-autograder:stable
+set baseDir=ekim493/cs1371-autograder:stablev2
 set repoName=ekim493/cs1371-autograder
 
 REM Prompt user for customTag
