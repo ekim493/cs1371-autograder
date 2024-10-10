@@ -43,7 +43,7 @@ for i = 1:length(tests)
     out = ''; % Add default success message
     if tests(i).Incomplete
         out = tests(i).Details.DiagnosticRecord.Report;
-        if contains(out, 'Error in TesterHelper') && ~contains(out, 'Error in TesterHelper.run')
+        if contains(out, 'HWTester') || (contains(out, 'MATLAB:') && ~contains(out, 'TesterHelper.run'))
             out = 'The autograder ran into an unexpected error while running your function. Please contact the TAs for assistance.';
         else
             out = erase(out, [newline '    Error using evalc']);

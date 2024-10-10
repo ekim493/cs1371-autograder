@@ -4,7 +4,7 @@ DELAY=30 # Set time in seconds
 
 # Function to run the commands with a timeout
 run_commands() {
-  timeout 8m bash -c "
+  timeout 7m bash -c "
     cd /autograder/source || exit 1
     matlab -licmode onlinelicensing -batch runTester -nosplash || exit 1
     cp /autograder/source/results.json /autograder/results/results.json || exit 1

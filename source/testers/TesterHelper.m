@@ -21,11 +21,11 @@ classdef TesterHelper
                 stack = dbstack;
                 funcFile = char(extractBetween(stack(2).name, '.', '_Test'));
             catch
-                error('Error retrieving the name of the function being tested.');
+                error('HWTester:funcName', 'Error retrieving the name of the function being tested.');
             end
             
             if ~exist(funcFile, 'file')
-                error('Undefined function or script ''%s''. Was this file submitted?', funcFile);
+                error('HWStudent:noFunc', 'Undefined function or script ''%s''. Was this file submitted?', funcFile);
             else
                 file = sprintf('%s.m', funcFile);
                 t = mtree(file, '-file');
@@ -38,14 +38,14 @@ classdef TesterHelper
                         loops = info.mtfind('Kind', {'WHILE', 'FOR'}).lineno;
                         loops = loops';
                         for i = loops(end:-1:1)
-                            lines = [lines(1:i); "if toc > 30; error('HWTester:infLoop', 'This function didn't stop execution after 30 seconds. Is there an infinite loop?'); end"; lines(i+1:end)];
+                            lines = [lines(1:i); "if toc > 30; error('HWStudent:infLoop', 'This function timed out because it took longer than 30 seconds to run. Is there an infinite loop?'); end"; lines(i+1:end)];
                         end
                         try
                             if length(lines) >= 2
                                 lines = [lines(1); "tic"; lines(2:end)];
                             end
                         catch
-                            error('There was an error reading your file. Please contact the TAs or check the submission file.')
+                            error('HWStudent:fileRead', 'There was an error reading your file. Please contact the TAs or check the submission file.')
                         end
                         [fileLoc, ~, ~] = fileparts(which(file));
                         fh = fopen(fullfile(fileLoc, file_t), 'w');
@@ -55,15 +55,16 @@ classdef TesterHelper
                         fclose(fh);
                     end
                     % Attempt to run the timeout function. If it errors, re-run the function to collect the correct error msg
+                    pause(0.2); % Pause in case a parallel branch is creating the file
                     try
                         [~, varargout{1:nargout}] = evalc(sprintf('%s_t(varargin{:})', funcFile));
                     catch ME
-                        if ~strcmp(ME.identifier, 'HWTester:infLoop') && strcmpi(ME.stack(1).name, sprintf('%s_t', funcFile))
+                        if ~strcmp(ME.identifier, 'HWStudent:infLoop') && strcmpi(ME.stack(1).name, sprintf('%s_t', funcFile))
                             lines_t = readlines(file_t);
                             line = lines_t(ME.stack(1).line);
                             lines = readlines(file);
                             li = find(strcmp(lines, line));
-                            error('%s\n\nError in %s (line %d)\n%s', ME.message, funcFile, li, strtrim(line));
+                            error('HWStudent:function', '%s\n\nError in %s (line %d)\n%s', ME.message, funcFile, li, strtrim(line));
                         elseif contains(ME.message, 'Invalid expression')
                             [~, varargout{1:nargout}] = evalc(sprintf('%s(varargin{:})', funcFile));
                         else
@@ -106,7 +107,7 @@ classdef TesterHelper
             try
                 testCase = evalin('caller', 'testCase');
             catch
-                error('A testCase object must exist in the caller''s workspace.');
+                error('HWTester:noTestCase', 'A testCase object must exist in the caller''s workspace.');
             end
 
             vars = evalin('caller', 'who');
@@ -117,7 +118,7 @@ classdef TesterHelper
                 try
                     student = evalin('caller', vars{strcmp(vars, extractBefore(solns{i}, '_soln'))});
                 catch
-                    error('Variable %s (and possibly others) was not found', extractBefore(solns{i}, '_soln'));
+                    error('HWStudent:varNotAssigned', 'Variable %s (and possibly others) was not found', extractBefore(solns{i}, '_soln'));
                 end
                 soln = evalin('caller', solns{i}); % Extract variable data
                 if strcmpi(options.output, 'none')
@@ -133,7 +134,11 @@ classdef TesterHelper
                         msg = sprintf('Actual output:\n%s\nExpected output:\n%s', TesterHelper.toChar(student), TesterHelper.toChar(soln));
                     end
                 end
-                testCase.verifyEqual(student, soln, msg, "AbsTol", 0.001);
+                if isempty(soln)
+                    testCase.verifyEmpty(student, msg);
+                else
+                    testCase.verifyEqual(student, soln, msg, "AbsTol", 0.001);
+                end
             end
         end
 
@@ -187,7 +192,7 @@ classdef TesterHelper
                     stack = dbstack;
                     funcFile = char(extractBetween(stack(2).name, '.', '_Test'));
                 catch
-                    error('Error retrieving the name of the function being tested.');
+                    error('HWTester:funcName', 'Error retrieving the name of the function being tested.');
                 end
             end
 
@@ -226,7 +231,7 @@ classdef TesterHelper
                     testCase = evalin('caller', 'testCase');
                     testCase.verifyTrue(hasPassed, msg);
                 catch
-                    error('If no outputs are specified, a testCase object must be present in the caller''s workspace.');
+                    error('HWTester:noTestCase', 'If no outputs are specified, a testCase object must be present in the caller''s workspace.');
                 end
             end
         end
@@ -260,7 +265,7 @@ classdef TesterHelper
                     testCase = evalin('caller', 'testCase');
                     testCase.verifyTrue(isClosed, msg);
                 catch
-                    error('If no outputs are specified, a testCase object must be present in the caller''s workspace.');
+                    error('HWTester:noTestCase', 'If no outputs are specified, a testCase object must be present in the caller''s workspace.');
                 end
             end
         end
@@ -316,7 +321,7 @@ classdef TesterHelper
                 try
                     testCase = evalin('caller', 'testCase');
                 catch
-                    error('If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
+                    error('HWTester:noTestCase', 'If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
                 end
             end
 
@@ -326,7 +331,7 @@ classdef TesterHelper
             
             % Check if images can be accessed
             if ~exist(expected_fn, 'file')
-                error('The solution image does not exist');
+                error('HWTester:noImage', 'The solution image does not exist');
             elseif ~exist(user_fn, 'file')
                 hasPassed = false;
                 if options.html
@@ -438,7 +443,8 @@ classdef TesterHelper
 
             % Check if figures are open
             if length(findobj('type', 'figure')) < 2
-                error('There must be at least 2 figures displayed.');
+                msg = 'Your code did not create a plot when one is required.';
+                return
             end
             
             % sFig - Student, cFig - Correct figure. Need to check next plot in case 'figure' was called in the function.
@@ -582,7 +588,7 @@ classdef TesterHelper
                     testCase = evalin('caller', 'testCase');
                     testCase.verifyTrue(hasPassed, msg);
                 catch
-                    error('If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
+                    error('HWTester:noTestCase', 'If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
                 end
             end
         end
@@ -702,7 +708,7 @@ classdef TesterHelper
                     testCase = evalin('caller', 'testCase');
                     testCase.verifyTrue(hasPassed, msg);
                 catch
-                    error('If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
+                    error('HWTester:noTestCase', 'If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
                 end
             end
         end
@@ -734,7 +740,7 @@ classdef TesterHelper
 
             if nargout == 0
                 if nargin < 2
-                    error('You must have at least 1 output or two inputs.');
+                    error('HWTester:arguments', 'You must have at least 1 output or two inputs.');
                 else
                     % Extract relevant data
                     if isa(varargin{1}, 'matlab.ui.Figure')
@@ -746,7 +752,7 @@ classdef TesterHelper
                         expected = imread(varargin{2});
                         type = 'Image';
                     else
-                        error('The inputs must either be figures or image files.');
+                        error('HWTester:arguments', 'The inputs must either be figures or image files.');
                     end
                     % Plots
                     close all;
