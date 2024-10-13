@@ -31,7 +31,7 @@ classdef TesterHelper
                 t = mtree(file, '-file');
                 if isequal(t.FileType, 'FunctionFile')
                     % If it is a function file, create the function file with timeout if it doesn''t exist.
-                    file_t = sprintf('%s_t.m', funcFile);
+                    file_t = sprintf('%s_funcTimeout.m', funcFile);
                     if ~exist(file_t, 'file')
                         lines = readlines(file);
                         info = mtree(file, '-file');
@@ -56,17 +56,26 @@ classdef TesterHelper
                     end
                     % Attempt to run the timeout function. If it errors, re-run the function to collect the correct error msg
                     pause(0.2); % Pause in case a parallel branch is creating the file
+                    % Display inputs
+                    disp(sprintf('\nTestcase: %s', extractAfter(stack(2).name, '.'))) %#ok<DSPSP>
+                    for i = 1:length(varargin)
+                        disp(sprintf('\n%s =\n%s', inputname(i), TesterHelper.toChar(varargin{i}))) %#ok<DSPSP>
+                    end
                     try
-                        [~, varargout{1:nargout}] = evalc(sprintf('%s_t(varargin{:})', funcFile));
+                        [~, varargout{1:nargout}] = evalc(sprintf('%s_funcTimeout(varargin{:})', funcFile));
                     catch ME
-                        if ~strcmp(ME.identifier, 'HWStudent:infLoop') && strcmpi(ME.stack(1).name, sprintf('%s_t', funcFile))
+                        if ~strcmp(ME.identifier, 'HWStudent:infLoop') && strcmpi(ME.stack(1).name, sprintf('%s_funcTimeout', funcFile))
                             lines_t = readlines(file_t);
                             line = lines_t(ME.stack(1).line);
                             lines = readlines(file);
                             li = find(strcmp(lines, line));
+                            if numel(li) > 1
+                                li = li(li < ME.stack(1).line);
+                                li = max(li);
+                            end
                             error('HWStudent:function', '%s\n\nError in %s (line %d)\n%s', ME.message, funcFile, li, strtrim(line));
                         elseif contains(ME.message, 'Invalid expression')
-                            [~, varargout{1:nargout}] = evalc(sprintf('%s(varargin{:})', funcFile));
+                            [~, varargout{1:nargout}] = evalc(sprintf('%s(varargin{:})', funcFile)); % Should error
                         else
                             throw(ME)
                         end

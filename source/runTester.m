@@ -10,7 +10,6 @@ else
 end
 assignment_name = submission.assignment.title;
 
-
 %% Run tester
 addpath('./testers')
 addpath('/autograder/submission');
@@ -47,6 +46,7 @@ for i = 1:length(tests)
             out = 'The autograder ran into an unexpected error while running your function. Please contact the TAs for assistance.';
         else
             out = erase(out, [newline '    Error using evalc']);
+            out = erase(out, '_funcTimeout');
             out = strrep(out, newline, '\n');
             out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in H'));
             if contains(out, 'Error in TesterHelper.run')
