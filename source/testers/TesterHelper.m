@@ -82,7 +82,11 @@ classdef TesterHelper
                     end
                 else
                     % If it is a script, simply call the function in the caller
-                    evalin('caller', funcFile)
+                    if nargout == 0 && nargin == 0
+                        evalin('caller', funcFile)
+                    else
+                        error('HWStudent:scriptAsFunc', 'A function with %d input(s) and %d output(s) was expected, but you submitted a script instead.', nargin, nargout);
+                    end    
                 end
             end
 

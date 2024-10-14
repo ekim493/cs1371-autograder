@@ -15,7 +15,12 @@ addpath('./testers')
 addpath('/autograder/submission');
 suite = testsuite(sprintf('%sTester', assignment_name));
 runner = testrunner();
-tests = runInParallel(runner, suite);
+% Run in parallel if running on linux, run in series if on local device
+if isunix && ~ismac
+    tests = runInParallel(runner, suite);
+else
+    tests = run(runner, suite);
+end
 
 %% Parse through the results of the tester and create a structure with relevant data
 % Store the results in the results structure
