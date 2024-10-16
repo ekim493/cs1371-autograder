@@ -114,8 +114,7 @@ end
 totalScore = 0;
 try
     for i = 1:length(results)
-        toFind = split(results(i).name, '_');
-        toFind = toFind{1};
+        toFind = extractBefore(results(i).name, '_Test');
         if results(i).passed
             results(i).score = json.tests(strcmp({json.tests.name}, toFind)).points_per_test;
             results(i).status = 'passed';
