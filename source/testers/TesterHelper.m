@@ -694,10 +694,10 @@ classdef TesterHelper
                 msg = '';
             elseif ~hasPassed && strcmpi(options.output, 'full')
                 if n_st > 15 && options.cap
-                    student = [student(1:15); "Additional rows have been suppressed."];
+                    student = [student(1:15); "Additional lines have been suppressed."];
                 end
                 if n_sol > 15 && options.cap
-                    soln = [soln(1:15); "Additional rows have been suppressed."];
+                    soln = [soln(1:15); "Additional lines have been suppressed."];
                 end
                 student(~same) = strcat("<strong>", student(~same), "</strong>");
                 soln(~same) = strcat("<strong>", soln(~same), "</strong>");
@@ -880,7 +880,7 @@ classdef TesterHelper
             %                              [0, 100].
             %       stringIsSent (logical) - Specify whether the strings should be generated in a sentence like format.
             %                                This will include spaces and increase the length to 20 to 40. Default = false.
-            
+
             arguments
                 options.rows (1, :) double = 1
                 options.columns (1, :) double = [3, 5]
@@ -1226,7 +1226,7 @@ classdef TesterHelper
                 new = strfind(out, newline);
                 if numel(new) > 20
                     out = out(1:new(20));
-                    out = [out '<strong>Additional rows have been suppressed.</strong>'];
+                    out = [out '<strong>Additional lines have been suppressed.</strong>'];
                 end 
             end
             if options.html

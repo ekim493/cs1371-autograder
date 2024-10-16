@@ -135,8 +135,7 @@ end
 % If any of the level 0s failed a test case, then half the total score.
 
 level_0 = {json.tests([json.tests.level] == 0).name};
-prefixes = cellfun(@(x) split(x, '_'), {results.name}, 'UniformOutput', false);
-prefixes = cellfun(@(x) x{1}, prefixes, 'UniformOutput', false);
+prefixes = cellfun(@(x) extractBefore(x, '_Test'), {results.name}, 'UniformOutput', false);
 isL0 = ismember(prefixes, level_0);
 
 if ~(all([results(isL0).passed]))
