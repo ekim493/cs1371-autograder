@@ -42,8 +42,9 @@ classdef TesterHelper
                             lines = [lines(1:i); "if toc > 30; error('HWStudent:infLoop', 'This function timed out because it took longer than 30 seconds to run. Is there an infinite loop?'); end"; lines(i+1:end)];
                         end
                         try
-                            if length(lines) >= 2
-                                lines = [lines(1); "tic"; lines(2:end)];
+                            funcStart = info.mtfind('Kind', {'FUNCTION'}).lineno;
+                            if ~isempty(funcStart)
+                                lines = [lines(1:funcStart); "tic"; lines(funcStart+1:end)];
                             end
                         catch
                             error('HWStudent:fileRead', 'There was an error reading your file. Please contact the TAs or check the submission file.')
