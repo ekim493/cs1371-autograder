@@ -57,7 +57,7 @@ for i = 1:length(tests)
             if contains(out, 'Error in TesterHelper.run')
                 out = extractBefore(out, '\n    \n    Error in TesterHelper.run');
             elseif contains(out, 'Error using TesterHelper.run (') % No encryption, has lineno
-                out = regexprep(out, 'Error using TesterHelper\.run \(line \d+\)\\n', '');
+                out = regexprep(out, 'Error using TesterHelper\.run \(line \d+\)\\n    ', '');
             elseif contains(out, 'Error using TesterHelper.run') % Encrypted TesterHelper outputs no line
                 out = extractAfter(out, 'Error using TesterHelper.run\n');
             end

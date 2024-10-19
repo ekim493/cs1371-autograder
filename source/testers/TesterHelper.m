@@ -66,16 +66,23 @@ classdef TesterHelper
                     try
                         [~, varargout{1:nargout}] = evalc(sprintf('%s_funcTimeout(varargin{:})', funcFile));
                     catch ME
-                        if ~strcmp(ME.identifier, 'HWStudent:infLoop') && strcmpi(ME.stack(1).name, sprintf('%s_funcTimeout', funcFile))
+                        if ~strcmp(ME.identifier, 'HWStudent:infLoop') && any(strcmpi({ME.stack(1:2).name}, sprintf('%s_funcTimeout', funcFile)))
                             lines_t = readlines(file_t);
-                            line = lines_t(ME.stack(1).line);
                             lines = readlines(file);
+                            stackLevel = find(strcmpi({ME.stack(1:2).name}, sprintf('%s_funcTimeout', funcFile)), 1);
+                            line = lines_t(ME.stack(stackLevel).line);
                             li = find(strcmp(lines, line));
                             if numel(li) > 1
-                                li = li(li < ME.stack(1).line);
+                                li = li(li < ME.stack(stackLevel).line);
                                 li = max(li);
                             end
-                            error('HWStudent:function', '%s\n\nError in %s (line %d)\n%s', ME.message, funcFile, li, strtrim(line));
+                            if stackLevel == 1
+                                msg = ME.message;
+                            else
+                                msg = sprintf('Error using %s\n%s', ME.stack(1).name, ME.message);
+                            end
+                            
+                            error('HWStudent:function', '%s\n\nError in %s (line %d)\n%s', msg, funcFile, li, strtrim(line));
                         elseif contains(ME.message, 'Invalid expression')
                             [~, varargout{1:nargout}] = evalc(sprintf('%s(varargin{:})', funcFile)); % Should error
                         else
