@@ -1,7 +1,7 @@
 # Source
 This section contains all the relevant files to run the autograder.
 
-`run_autograder` is the bash script that is run by Gradescope when a student file is submitted.
+`run_autograder` is the bash script that is run by Gradescope when a student file is submitted. It will attempt to run `runTester.m` up to 3 times (in case of rare segmentation fault issue). For each attempt, if Matlab takes too long to run, it will automatically timeout.
 `runTester.m` is the main Matlab driver to run the test cases and output the results as a results.json.
 - The function has no inputs nor outputs. The assignment name is read in from Gradescope metadata, and the relevant testers and solutions are pulled and run directly.
 - It will generate a results.json file, which Gradescope will then read to display the output.

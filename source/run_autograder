@@ -4,7 +4,7 @@ DELAY=30 # Set time in seconds
 
 # Function to run the commands with a timeout
 run_commands() {
-  timeout 5m bash -c "
+  timeout 7m bash -c "
     cd /autograder/source || exit 1
     matlab -licmode onlinelicensing -batch runTester -nosplash || exit 1
     cp /autograder/source/results.json /autograder/results/results.json || exit 1
@@ -27,7 +27,7 @@ while [ $attempt -le $max_retries ]; do
     break
   elif [ $exit_code -eq 124 ]; then
     echo "Execution timed out."
-    echo '{ "score": 0, "output": "The autograder failed to run within sufficient time. Check for infinite loops or try re-running the autograder by re-submitting your work. If you believe this is an error, please contact the TAs." }' > /autograder/results/results.json
+    echo '{ "score": 0, "output": "The autograder started successfully but failed to run within sufficient time. Check for infinite loops or try re-running the autograder by re-submitting your work. If you believe this is an error, please contact the TAs." }' > /autograder/results/results.json
     exit 124
   else
     if [ $attempt -lt $max_retries ]; then

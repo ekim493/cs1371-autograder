@@ -1,10 +1,10 @@
 # To specify which MATLAB release to install in the container, edit the value of the MATLAB_RELEASE argument.
 # Use lowercase to specify the release, for example: ARG MATLAB_RELEASE=r2021b
-ARG MATLAB_RELEASE=r2024a
+ARG MATLAB_RELEASE=r2024b
 
 # Specify the list of products to install into MATLAB.
 # If additional packages are necessary, specify them here
-ARG MATLAB_PRODUCT_LIST="MATLAB"
+ARG MATLAB_PRODUCT_LIST="MATLAB Parallel_Computing_Toolbox"
 
 # Specify MATLAB Install Location.
 ARG MATLAB_INSTALL_LOCATION="/opt/matlab/${MATLAB_RELEASE}"
@@ -17,19 +17,22 @@ ARG MATLAB_RELEASE
 ARG MATLAB_PRODUCT_LIST
 ARG MATLAB_INSTALL_LOCATION
 
-ENV DEBIAN_FRONTEND="noninteractive" TZ="US/Eastern"
+ENV DEBIAN_FRONTEND="noninteractive" TZ="America/New_York"
 
 # Download necessary Matlab dependencies
 RUN apt-get update
 RUN apt-get install -y ca-certificates \
 libasound2 \
+libatomic1 \
 libc6 \
 libcairo-gobject2 \
 libcairo2 \
 libcap2 \
+libcrypt1 \
 libcups2 \
 libdrm2 \
 libfontconfig1 \
+libfribidi0 \
 libgbm1 \
 libgdk-pixbuf-2.0-0 \
 libgl1 \
@@ -39,13 +42,16 @@ libgstreamer1.0-0 \
 libgtk-3-0 \
 libice6 \
 libltdl7 \
+libnettle8 \
 libnspr4 \
 libnss3 \
 libpam0g \
 libpango-1.0-0 \
 libpangocairo-1.0-0 \
 libpangoft2-1.0-0 \
+libpixman-1-0 \
 libsndfile1 \
+libtirpc3 \
 libudev1 \
 libuuid1 \
 libwayland-client0 \
@@ -53,6 +59,7 @@ libxcomposite1 \
 libxcursor1 \
 libxdamage1 \
 libxfixes3 \
+libxfont2 \
 libxft2 \
 libxinerama1 \
 libxrandr2 \
@@ -77,6 +84,7 @@ RUN wget -q https://www.mathworks.com/mpm/glnxa64/mpm \
     --release=${MATLAB_RELEASE} \
     --destination=${MATLAB_INSTALL_LOCATION} \
     --products ${MATLAB_PRODUCT_LIST} \
+    --no-gpu \
     || (echo "MPM Installation Failure. See below for more information:" && cat /tmp/mathworks_root.log && false) \
     && sudo rm -rf mpm /tmp/mathworks_root.log ${HOME}/.MathWorks \
     && sudo ln -s ${MATLAB_INSTALL_LOCATION}/bin/matlab /usr/local/bin/matlab

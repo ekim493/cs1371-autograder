@@ -3,7 +3,105 @@ classdef TesterHelper
     %                for a full list of functions and descriptions.
 
     methods (Static)
-        %% Check functions
+        %% Run student funcion
+
+        function varargout = run(varargin)
+
+            % RUN - Run the student's function.
+            %   This should be used in place of running the student's function. This function should only be used in a
+            %   testing environment, and it identifies the student function using the caller's name (assuming the caller
+            %   is called FUNCNAME_TEST#). It prevents a student's code from having an infinite loop by creating and
+            %   running an identical function with a timeout injected after any WHILE or FOR loop. It will also suppress
+            %   any stdout from the student's code due to missing semicolons.
+            %
+            %   Arguments
+            %       varargin - Input arguments as if directly calling a student's function.
+            %       varargout - Outputs will be the same as the student's function.
+
+            try
+                stack = dbstack;
+                funcFile = char(extractBetween(stack(2).name, '.', '_Test'));
+            catch
+                error('HWTester:funcName', 'Error retrieving the name of the function being tested.');
+            end
+            
+            if ~exist(funcFile, 'file')
+                error('HWStudent:noFunc', 'Undefined function or script ''%s''. Was this file submitted?', funcFile);
+            else
+                file = sprintf('%s.m', funcFile);
+                t = mtree(file, '-file');
+                if isequal(t.FileType, 'FunctionFile')
+                    % If it is a function file, create the function file with timeout if it doesn''t exist.
+                    file_t = sprintf('%s_funcTimeout.m', funcFile);
+                    if ~exist(file_t, 'file')
+                        lines = readlines(file);
+                        info = mtree(file, '-file');
+                        loops = info.mtfind('Kind', {'WHILE', 'FOR'}).lineno;
+                        loops = loops';
+                        for i = loops(end:-1:1)
+                            lines = [lines(1:i); "if toc > 30; error('HWStudent:infLoop', 'This function timed out because it took longer than 30 seconds to run. Is there an infinite loop?'); end"; lines(i+1:end)];
+                        end
+                        try
+                            funcStart = info.mtfind('Kind', {'FUNCTION'}).lineno;
+                            if ~isempty(funcStart)
+                                lines = [lines(1:funcStart); "tic"; lines(funcStart+1:end)];
+                            end
+                        catch
+                            error('HWStudent:fileRead', 'There was an error reading your file. Please contact the TAs or check the submission file.')
+                        end
+                        [fileLoc, ~, ~] = fileparts(which(file));
+                        fh = fopen(fullfile(fileLoc, file_t), 'w');
+                        lines = char(join(lines, '\n'));
+                        lines = strrep(lines, '%', '%%');
+                        fprintf(fh, char(join(lines, '\n')));
+                        fclose(fh);
+                    end
+                    % Attempt to run the timeout function. If it errors, re-run the function to collect the correct error msg
+                    pause(0.2); % Pause in case a parallel branch is creating the file
+                    % Display inputs
+                    disp(sprintf('\nTestcase: %s', extractAfter(stack(2).name, '.'))) %#ok<DSPSP>
+                    for i = 1:length(varargin)
+                        disp(sprintf('\n%s =\n%s', inputname(i), TesterHelper.toChar(varargin{i}))) %#ok<DSPSP>
+                    end
+                    try
+                        [~, varargout{1:nargout}] = evalc(sprintf('%s_funcTimeout(varargin{:})', funcFile));
+                    catch ME
+                        if ~strcmp(ME.identifier, 'HWStudent:infLoop') && any(strcmpi({ME.stack(1:2).name}, sprintf('%s_funcTimeout', funcFile)))
+                            lines_t = readlines(file_t);
+                            lines = readlines(file);
+                            stackLevel = find(strcmpi({ME.stack(1:2).name}, sprintf('%s_funcTimeout', funcFile)), 1);
+                            line = lines_t(ME.stack(stackLevel).line);
+                            li = find(strcmp(lines, line));
+                            if numel(li) > 1
+                                li = li(li < ME.stack(stackLevel).line);
+                                li = max(li);
+                            end
+                            if stackLevel == 1
+                                msg = ME.message;
+                            else
+                                msg = sprintf('Error using %s\n%s', ME.stack(1).name, ME.message);
+                            end
+                            
+                            error('HWStudent:function', '%s\n\nError in %s (line %d)\n%s', msg, funcFile, li, strtrim(line));
+                        elseif contains(ME.message, 'Invalid expression')
+                            [~, varargout{1:nargout}] = evalc(sprintf('%s(varargin{:})', funcFile)); % Should error
+                        else
+                            throw(ME)
+                        end
+                    end
+                else
+                    % If it is a script, simply call the function in the caller
+                    if nargout == 0 && nargin == 0
+                        evalin('caller', funcFile)
+                    else
+                        error('HWStudent:scriptAsFunc', 'A function with %d input(s) and %d output(s) was expected, but you submitted a script instead.', nargin, nargout);
+                    end    
+                end
+            end
+
+        end
+
+        %% Check Functions
 
         function checkAllEqual(options)
 
@@ -31,7 +129,7 @@ classdef TesterHelper
             try
                 testCase = evalin('caller', 'testCase');
             catch
-                error('A testCase object must exist in the caller''s workspace.');
+                error('HWTester:noTestCase', 'A testCase object must exist in the caller''s workspace.');
             end
 
             vars = evalin('caller', 'who');
@@ -42,7 +140,7 @@ classdef TesterHelper
                 try
                     student = evalin('caller', vars{strcmp(vars, extractBefore(solns{i}, '_soln'))});
                 catch
-                    error('Variable %s (and possibly others) was not found', extractBefore(solns{i}, '_soln'));
+                    error('HWStudent:varNotAssigned', 'Variable %s (and possibly others) was not found', extractBefore(solns{i}, '_soln'));
                 end
                 soln = evalin('caller', solns{i}); % Extract variable data
                 if strcmpi(options.output, 'none')
@@ -58,7 +156,11 @@ classdef TesterHelper
                         msg = sprintf('Actual output:\n%s\nExpected output:\n%s', TesterHelper.toChar(student), TesterHelper.toChar(soln));
                     end
                 end
-                testCase.verifyEqual(student, soln, msg, "AbsTol", 0.001);
+                if isempty(soln)
+                    testCase.verifyEmpty(student, msg);
+                else
+                    testCase.verifyEqual(student, soln, msg, "AbsTol", 0.001);
+                end
             end
         end
 
@@ -112,7 +214,7 @@ classdef TesterHelper
                     stack = dbstack;
                     funcFile = char(extractBetween(stack(2).name, '.', '_Test'));
                 catch
-                    error('Error retrieving the name of the function being tested.');
+                    error('HWTester:funcName', 'Error retrieving the name of the function being tested.');
                 end
             end
 
@@ -151,7 +253,7 @@ classdef TesterHelper
                     testCase = evalin('caller', 'testCase');
                     testCase.verifyTrue(hasPassed, msg);
                 catch
-                    error('If no outputs are specified, a testCase object must be present in the caller''s workspace.');
+                    error('HWTester:noTestCase', 'If no outputs are specified, a testCase object must be present in the caller''s workspace.');
                 end
             end
         end
@@ -185,7 +287,7 @@ classdef TesterHelper
                     testCase = evalin('caller', 'testCase');
                     testCase.verifyTrue(isClosed, msg);
                 catch
-                    error('If no outputs are specified, a testCase object must be present in the caller''s workspace.');
+                    error('HWTester:noTestCase', 'If no outputs are specified, a testCase object must be present in the caller''s workspace.');
                 end
             end
         end
@@ -241,7 +343,7 @@ classdef TesterHelper
                 try
                     testCase = evalin('caller', 'testCase');
                 catch
-                    error('If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
+                    error('HWTester:noTestCase', 'If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
                 end
             end
 
@@ -251,7 +353,7 @@ classdef TesterHelper
             
             % Check if images can be accessed
             if ~exist(expected_fn, 'file')
-                error('The solution image does not exist');
+                error('HWTester:noImage', 'The solution image does not exist');
             elseif ~exist(user_fn, 'file')
                 hasPassed = false;
                 if options.html
@@ -363,7 +465,8 @@ classdef TesterHelper
 
             % Check if figures are open
             if length(findobj('type', 'figure')) < 2
-                error('There must be at least 2 figures displayed.');
+                msg = 'Your code did not create a plot when one is required.';
+                return
             end
             
             % sFig - Student, cFig - Correct figure. Need to check next plot in case 'figure' was called in the function.
@@ -507,7 +610,7 @@ classdef TesterHelper
                     testCase = evalin('caller', 'testCase');
                     testCase.verifyTrue(hasPassed, msg);
                 catch
-                    error('If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
+                    error('HWTester:noTestCase', 'If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
                 end
             end
         end
@@ -599,10 +702,10 @@ classdef TesterHelper
                 msg = '';
             elseif ~hasPassed && strcmpi(options.output, 'full')
                 if n_st > 15 && options.cap
-                    student = [student(1:15); "Additional rows have been suppressed."];
+                    student = [student(1:15); "Additional lines have been suppressed."];
                 end
                 if n_sol > 15 && options.cap
-                    soln = [soln(1:15); "Additional rows have been suppressed."];
+                    soln = [soln(1:15); "Additional lines have been suppressed."];
                 end
                 student(~same) = strcat("<strong>", student(~same), "</strong>");
                 soln(~same) = strcat("<strong>", soln(~same), "</strong>");
@@ -627,7 +730,7 @@ classdef TesterHelper
                     testCase = evalin('caller', 'testCase');
                     testCase.verifyTrue(hasPassed, msg);
                 catch
-                    error('If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
+                    error('HWTester:noTestCase', 'If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
                 end
             end
         end
@@ -659,7 +762,7 @@ classdef TesterHelper
 
             if nargout == 0
                 if nargin < 2
-                    error('You must have at least 1 output or two inputs.');
+                    error('HWTester:arguments', 'You must have at least 1 output or two inputs.');
                 else
                     % Extract relevant data
                     if isa(varargin{1}, 'matlab.ui.Figure')
@@ -671,7 +774,7 @@ classdef TesterHelper
                         expected = imread(varargin{2});
                         type = 'Image';
                     else
-                        error('The inputs must either be figures or image files.');
+                        error('HWTester:arguments', 'The inputs must either be figures or image files.');
                     end
                     % Plots
                     close all;
@@ -759,6 +862,75 @@ classdef TesterHelper
             OPS = cellfun(@upper, iskeyword, 'UniformOutput', false);
             calls = [calls reshape(string(info.mtfind('Kind', OPS).kinds), 1, [])];
             calls = unique(calls);
+        end
+
+        function out = generateCellArray(options)
+
+            % GENERATECELLARRAY - Generates a simple cell array containing various data types.
+            %   This function generates a cell array containing a random data type, including doubles, vectors, logical
+            %   vectors, and strings. By default, it will generate all of them with a size of c = [3, 5] and r = 1.
+            %
+            %   Name-Value Arguments
+            %       rows (double) - Specify the number of rows the cell array should have. Specify a range of possible
+            %                       values by inputing a (1, 2) double vector. Default = 1.
+            %       columns (double) - Specify the number of rows the cell array should have. Specify a range of possible
+            %                          values by inputing a (1, 2) double vector. Default = [3, 5].
+            %       doubles (logical) - Specify whether the cell array should contain single doubles. These doubles will 
+            %                           be random integers in the range specified by doubleRange. Default = true.
+            %       vectors (logical) - Specify whether the cell array should contain vectors of doubles. These doubles
+            %                           will be random integers in the range specified by doubleRange, and the vector 
+            %                           will be 1 to 5 in length. Default = true.
+            %       strings (logical) - Specify whether the cell array should contain vectors of chars. These chars will
+            %                           be a random string of 5 to 10 lowercase letters. Default = true.
+            %       logicals (logicals) - Specify whether the cell array should contain vectors of logicals. The length
+            %                             of this vector will be 1 to 5. Default = true.
+            %       doubleRange (double) - Specify a range of values for all random double number generation. Default =
+            %                              [0, 100].
+            %       stringIsSent (logical) - Specify whether the strings should be generated in a sentence like format.
+            %                                This will include spaces and increase the length to 20 to 40. Default = false.
+
+            arguments
+                options.rows (1, :) double = 1
+                options.columns (1, :) double = [3, 5]
+                options.vectors (1, 1) logical = true
+                options.doubles (1, 1) logical = true
+                options.strings (1, 1) logical = true
+                options.logicals (1, 1) logical = true
+                options.doubleRange (1, 2) double = [0, 100]
+                options.stringIsSent (1, 1) logical = false
+            end
+
+            if isscalar(options.rows)
+                r = options.rows;
+            else
+                r = randi(options.rows);
+            end
+            if isscalar(options.columns)
+                c = options.columns;
+            else
+                c = randi(options.columns);
+            end
+            ca = cell([r, c]);
+            pos = 'vdsl';
+            pos = pos([options.vectors, options.doubles, options.strings, options.logicals]);
+            for i = 1:numel(ca)
+                type = pos(randi(numel(pos)));
+                switch type
+                    case 'v'
+                        ca{i} = randi(options.doubleRange, [1, randi(5)]);
+                    case 'd'
+                        ca{i} = randi(options.doubleRange);
+                    case 's'
+                        if options.stringIsSent
+                            ca{i} = TesterHelper.generateString(sentence=true, length=[20, 40]);
+                        else
+                            ca{i} = TesterHelper.generateString(length=[5, 10]);
+                        end
+                    case 'l'
+                        ca{i} = logical(randi([0, 1], [1, randi(5)]));
+                end
+            end
+            out = ca;
         end
 
         function out = generateString(options)
@@ -1062,7 +1234,7 @@ classdef TesterHelper
                 new = strfind(out, newline);
                 if numel(new) > 20
                     out = out(1:new(20));
-                    out = [out '<strong>Additional rows have been suppressed.</strong>'];
+                    out = [out '<strong>Additional lines have been suppressed.</strong>'];
                 end 
             end
             if options.html
