@@ -7,34 +7,37 @@ The name of the scoring rubric should be the gradescope assignment name + 'Score
 All testers should inherit the `matlab.unittest.TestCase` class and should implement test cases under the `Test` methods.
 All testers should have have a `TestClassSetup` method where the following function is implemented:
 
-**Make sure the first addpath() call points to the relevant folder (ie. HW0)**
+**Make sure the addpath() call points to the relevant folder (ie. HW0)**
 ```
 function add_path(testCase)
-    addpath('../solutions/HW0/');
-    addpath('/autograder/submission');
+    addpath('/autograder/source/solutions/HW0');
 end
 ```
 All test cases should be name `FUNCTION_Test#`, where `FUNCTION` is replaced with the function name it is testing, and # is an identifier for the test case.
 
-Because all auto-generated diagnostics are cut-off, any diagnostics must be provided by the tester.
-Example:
-```
-function example1_Test1(testCase)
-    vec = rand(1,9)*100+1;
-    out1 = example1(vec);
-    out1_soln = example1_soln(vec);
-    testCase.verifyEqual(out1, out1_soln, sprintf('Actual output: %d\nExpected output: %d',out1, out1_soln));
-end
-```
-The `TesterHelper.m` contains a `TesterHelper` class which contains static helper functions that can be used by any Tester. It currently contains the following checks:
+The `TesterHelper.m` contains a `TesterHelper` class which contains static helper functions that can be used by any Tester. The following is a list of useful check and helper functions. For full details, read the documentation contained in `TesterHelper.m`.
+- run -> Run the student's code with a timeout and display inputs to stdout.
 - checkAllEqual	-> Check and compare all solution variables against the student's.
 - checkCalls -> Check a function file's calls.
 - checkFilesClosed -> Check if all files have been properly closed.
 - checkImages -> Check and compare an image against the solution's.
 - checkPlots -> Check and compare a plot against the solution's.
 - checkTxtFiles -> Check and compare a text file against the solution's.
+- generateCellArray -> Generate a pseudorandom cell array with various options.
+- generateString -> Generate a character array with various options.
+- toChar -> Turn the input into a character vector for Gradescope diagnosis.
 
-For full details, see file.
+The following is a recommended implementation of a test case. See `HW0Tester.m` for more examples.
+```
+function example1_Test1(testCase)
+    vec = [1 2 3 4 5];
+    out1 = TesterHelper.run(vec);
+    out1_soln = example1_soln(vec);
+    TesterHelper.checkCalls();
+    TesterHelper.checkAllEqual();
+end
+```
+
 ## Scoring Rubric Specifications
 All scoring rubrics should be a .json file with at minimum a 'tests' field. This field should contain a list of every function that is to be tested, with the field 'name' assigned to the name of the function, and the field 'level' assigned the level/difficulty for that problem.
 - Level 1 problems are assigned 1 point, level 2 = 2 points, and level 3 = 3 points.

@@ -6,6 +6,7 @@ Currently, the Docker is hosted by me at `ekim493/cs1371-autograder`. To follow 
 - Add all necessary files (solution codes, tester, and scores.json) for the HW.
     - See the [Structure](https://github.gatech.edu/ekim493/cs1371-autograder#stucture) section below for more info. Also see the [testers readme](https://github.gatech.edu/ekim493/cs1371-autograder/tree/master/source/testers#testers) for info on how to structure the tester and json.
 - Run the `update.bat` script (this script will only work on Windows).
+    - There is an optional setting (enabled by default) that will add encryption. This will p-code all solution and tester files before creating and uploading the Docker container.
     - If you have created your own repository, edit the `RepoName` variable at the top of the `update.bat` file.
     - You must have Docker installed and be logged in.
 - Enter a tag for the docker image (ex. HW01).
