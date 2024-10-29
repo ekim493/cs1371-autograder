@@ -598,9 +598,9 @@ classdef TesterHelper
                     msg = msg(3:end);
                 end
                 if options.html
-                    base64string = TesterHelper.compareImg(sFig, cFig);
+                    filename = TesterHelper.compareImg(sFig, cFig);
                     msg = strrep(msg, '\n', '\n    ');
-                    msg = sprintf('%s\\n%s', msg, base64string);             
+                    msg = sprintf('%s\\nIMAGEFILE:%s', msg, filename);             
                 end
             else
                 hasPassed = true;
@@ -742,22 +742,22 @@ classdef TesterHelper
 
             % COMPAREIMG - Compare two images or figures.
             %   This function will read in two figures or two image filenames and displays a figure comparison between
-            %   them. This function can also be used to convert this comparison into html base64 data. Intended as a
-            %   helper function for checkImages and checkPlots.
+            %   them. This function can also save the figure comparsion as a jpg image. Intended as a helper function 
+            %   for checkImages and checkPlots.
             %
             %   Syntax
             %       compareImg(user, expected)
-            %       H = compareImg(user, expected)
-            %       H = compareImg()
+            %       F = compareImg(user, expected)
+            %       F = compareImg()
             %
             %   Input Arguments
             %       user, expected - Filename of the student's image and the expected image OR the student's figure and
-            %       the expected figure. If no input arguments are specified, it will output embedded html data of the
-            %       currently open figure window.
+            %       the expected figure. If no input arguments are specified, it will save the currently open figure
+            %       window as a jpg.
             %   
             %   Output Arguments
-            %       H - Embedded html data of the figure comparison using base64. If no output arguments are specified,
-            %       it will display the comparison as a figure.
+            %       F - Filename of the comparsion image as a jpg. If no output arguments are specified, it will display 
+            %           the comparison as a figure.
             %
             %   See also checkImages, checkPlots
 
@@ -811,18 +811,12 @@ classdef TesterHelper
                 if nargin == 2
                     TesterHelper.compareImg(varargin{:}, 'call'); % Recursive call to display figures
                 end
-                set(gcf, 'Position', [100, 100, 500, 150]); % Size of output image
+                set(gcf, 'Position', [100, 100, 480, 145]); % Size of output image
                 set(gcf, 'PaperPositionMode', 'auto');
                 filename = [tempname, '.jpg'];
-                print(gcf, '-djpeg', '-r150', filename);
-                fid = fopen(filename,'rb');
-                bytes = fread(fid);
-                fclose(fid);
-                delete(filename);
-                close;
-                encoder = org.apache.commons.codec.binary.Base64; % base64 encoder
-                base64string = char(encoder.encode(bytes))';
-                varargout{1} = sprintf('<img src=''data:image/png;base64,%s'' width = ''750'' height = ''225''> \n<em>Please use Matlab to view your figure in higher quality.</em>', base64string);
+                saveas(gcf, filename);
+                close all
+                varargout{1} = filename;
             end
         end
 
