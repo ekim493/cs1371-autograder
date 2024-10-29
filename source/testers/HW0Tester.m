@@ -73,7 +73,7 @@ classdef HW0Tester < matlab.unittest.TestCase
             example5_soln(filename);
             TesterHelper.checkFilesClosed();
             TesterHelper.checkCalls();
-            TesterHelper.checkTxtFiles('new.txt');
+            TesterHelper.checkTxtFiles('example.txt');
         end
         % Structures Example
         function example6_Test1(testCase)
@@ -87,12 +87,12 @@ classdef HW0Tester < matlab.unittest.TestCase
         end
         % Images Example (bonus)
         function example7_Test1(testCase)
-            img = 'image.png'
+            img = 'imageExample.png'
             num = TesterHelper.run(img);
             num_soln = example7_soln(img);
             TesterHelper.checkCalls();
             TesterHelper.checkAllEqual();
-            TesterHelper.checkImages('image_updated.png');
+            TesterHelper.checkImages('imageExample_updated.png');
         end
     end
 

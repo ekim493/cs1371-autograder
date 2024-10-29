@@ -39,7 +39,7 @@ classdef TesterHelper
                         loops = info.mtfind('Kind', {'WHILE', 'FOR'}).lineno;
                         loops = loops';
                         for i = loops(end:-1:1)
-                            lines = [lines(1:i); "if toc > 30; error('HWStudent:infLoop', 'This function timed out because it took longer than 30 seconds to run. Is there an infinite loop?'); end"; lines(i+1:end)];
+                            lines = [lines(1:i); "if toc > 30; error('HWStudent:infLoop', 'This function timed out because it took longer than 30 seconds to run. Is there an infinite loop?'); else; pause(0.001); end"; lines(i+1:end)];
                         end
                         try
                             funcStart = info.mtfind('Kind', {'FUNCTION'}).lineno;
@@ -51,9 +51,10 @@ classdef TesterHelper
                         end
                         [fileLoc, ~, ~] = fileparts(which(file));
                         fh = fopen(fullfile(fileLoc, file_t), 'w');
-                        lines = char(join(lines, '\n'));
                         lines = strrep(lines, '%', '%%');
-                        fprintf(fh, char(join(lines, '\n')));
+                        lines = strrep(lines, '\n', '\\n');
+                        lines = char(join(lines, '\n'));
+                        fprintf(fh, lines);
                         fclose(fh);
                     end
                     % Attempt to run the timeout function. If it errors, re-run the function to collect the correct error msg
@@ -615,16 +616,16 @@ classdef TesterHelper
             end
         end
 
-        function [hasPassed, msg] = checkTxtFiles(user_fn, options)
+        function [hasPassed, msg] = checkTextFiles(user_fn, options)
 
-            % CHECKTXTFILES - Check and compare a text file against the solution's.
+            % CHECKTEXTFILES - Check and compare a text file against the solution's.
             %   This function will read in two text files and compare them. By default, it will ignore an extra newline
             %   at the end of any text file.
             %
             %   Syntax
-            %       [tf, msg] = checkTxtFiles(user_fn)
-            %       [tf, msg] = checkTxtFiles(___, Name=Value)
-            %       checkTxtFiles(___, Name=Value)
+            %       [tf, msg] = checkTextFiles(user_fn)
+            %       [tf, msg] = checkTextFiles(___, Name=Value)
+            %       checkTextFiles(___, Name=Value)
             %
             %   Input Arguments
             %       user_fn - Filename of the student's text file. It will assume the solution image is the filename with 
@@ -715,7 +716,7 @@ classdef TesterHelper
                     soln(n_st+1:end) = strcat("<strong>", soln(n_st+1:end), "</strong>");
                 end
                 msg = sprintf('%s\n%s\nActual text file:\n%s\n%s\n%s\nExpected text file:\n%s\n%s', ...
-                        msg, repelem('-', 17), repelem('-', 17), char(strjoin(student, '\n')), repelem('-', 17), repelem('-', 17), char(strjoin(soln, '\n')));
+                        msg, repelem('-', 16), repelem('-', 16), char(strjoin(student, '\n')), repelem('-', 16), repelem('-', 16), char(strjoin(soln, '\n')));
                 if options.html
                     msg(msg == '"') = '''';
                     msg = strrep(msg, '<strong>', '<mark>'); % Replace with highlight in html
@@ -766,6 +767,10 @@ classdef TesterHelper
                 else
                     % Extract relevant data
                     if isa(varargin{1}, 'matlab.ui.Figure')
+                        fig1 = varargin{1};
+                        fig2 = varargin{2};
+                        set(fig1, 'Position', [100, 100, 300, 200]);
+                        set(fig2, 'Position', [100, 100, 300, 200]);
                         user = getframe(varargin{1}).cdata;
                         expected = getframe(varargin{2}).cdata;
                         type = 'Plot';
@@ -778,14 +783,15 @@ classdef TesterHelper
                     end
                     % Plots
                     close all;
-                    subplot(1, 2, 1);
+                    tiledlayout(1, 2, 'TileSpacing', 'none', 'Padding', 'tight');
+                    nexttile
                     imshow(user);
                     if nargin == 3
                         title(sprintf('Student %s', type), 'FontSize', 8);
                     else
                         title(sprintf('Student %s', type));
                     end
-                    subplot(1, 2, 2);
+                    nexttile
                     imshow(expected);
                     if nargin == 3
                         title(sprintf('Solution %s', type), 'FontSize', 8);
@@ -803,18 +809,20 @@ classdef TesterHelper
             else
                 % Open figure comparsion, then save the figure data using base64
                 if nargin == 2
-                    TesterHelper.compareImg(varargin{:}); % Recursive call to display figures
+                    TesterHelper.compareImg(varargin{:}, 'call'); % Recursive call to display figures
                 end
-                set(gcf, 'Position', [100, 100, 600, 200]); % Size of output image
-                saveas(gcf, 'figure.jpg');
-                fid = fopen('figure.jpg','rb');
+                set(gcf, 'Position', [100, 100, 500, 150]); % Size of output image
+                set(gcf, 'PaperPositionMode', 'auto');
+                filename = [tempname, '.jpg'];
+                print(gcf, '-djpeg', '-r150', filename);
+                fid = fopen(filename,'rb');
                 bytes = fread(fid);
                 fclose(fid);
-                delete('figure.jpg');
+                delete(filename);
                 close;
                 encoder = org.apache.commons.codec.binary.Base64; % base64 encoder
                 base64string = char(encoder.encode(bytes))';
-                varargout{1} = sprintf('<img src=''data:image/png;base64,%s'' width = ''900'' height = ''300''> \n<em>Please use Matlab to view your figure in higher quality.</em>', base64string);
+                varargout{1} = sprintf('<img src=''data:image/png;base64,%s'' width = ''750'' height = ''225''> \n<em>Please use Matlab to view your figure in higher quality.</em>', base64string);
             end
         end
 
@@ -931,6 +939,40 @@ classdef TesterHelper
                 end
             end
             out = ca;
+        end
+
+        function out = generateSpec(options)
+
+            % GENERATESPEC - Generates a random specification for plotting.
+            %   This function generates a string of characters which can be used as plotting specifications.
+            %
+            %   Syntax
+            %       C = generateSpec(NAME=VALUE)
+            %
+            %   Name-Value Arguments
+            %       lines (logical) - Specify whether line specs should be included (default = true)
+            %       points (logical) - Specify whether point specs should be included (default = true)
+            %       colors (logical) - Specify whether color specs should be included (default = true)
+
+            arguments
+                options.lines (1, 1) logical = true
+                options.points (1, 1) logical = true
+                options.colors (1, 1) logical = true
+            end
+
+            out = [];
+            if options.lines
+                lineSpecs = {'-', ':', '-.', '--'};
+                out = [lineSpecs{randi(numel(lineSpecs))}];
+            end
+            if options.points
+                pointSpecs = '.ox+*sdp';
+                out = [out pointSpecs(randi(numel(pointSpecs)))];
+            end
+            if options.colors
+                colorSpecs = 'rgbcmyk';
+                out = [out colorSpecs(randi(numel(colorSpecs)))];
+            end
         end
 
         function out = generateString(options)
