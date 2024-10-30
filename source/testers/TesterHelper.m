@@ -541,9 +541,9 @@ classdef TesterHelper
                     % Check if any points are outside x and y bounds
                     xLim = sAxes(i).XLim;
                     yLim = sAxes(i).YLim;
-                    for j = 1:numel(sMap)
-                        if any([sAxesPlots(i).XData] > xLim(2)) || any([sAxesPlots(i).XData] < xLim(1))...
-                            || any([sAxesPlots(i).YData] > yLim(2)) || any([sAxesPlots(i).YData] < yLim(1))
+                    for j = 1:numel(sAxesPlots)
+                        if any([sAxesPlots(j).XData] > xLim(2)) || any([sAxesPlots(j).XData] < xLim(1))...
+                            || any([sAxesPlots(j).YData] > yLim(2)) || any([sAxesPlots(j).YData] < yLim(1))
                             msg = sprintf('%s\\nThere seems to be data outside of the plot boundaries', msg);
                         end
                     end
