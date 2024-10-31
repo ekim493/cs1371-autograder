@@ -535,9 +535,13 @@ classdef TesterHelper
                 sAxesPlots = findobj(sAxes(i), 'Type', 'Line');
                 cAxesPlots = findobj(cAxes(i), 'Type', 'Line');
                 sMap = TesterHelper.mapPlot(sAxesPlots);
-                cMap = TesterHelper.mapPlot(cAxesPlots);   
+                cMap = TesterHelper.mapPlot(cAxesPlots);
+                
                 if ~isequal(sMap, cMap)
                     msg = 'Incorrect data and/or style in plot(s)';
+                    if numel(sMap) ~= numel(cMap)
+                        msg = sprintf('%s\\nIn at least 1 plot, %d line(s) and/or point(s) were expected, but your solution had %d.', msg, numel(cMap), numel(sMap));
+                    end
                     % Check if any points are outside x and y bounds
                     xLim = sAxes(i).XLim;
                     yLim = sAxes(i).YLim;
@@ -556,13 +560,13 @@ classdef TesterHelper
             % Other checks
             for i = 1:numel(cAxes)
                 if ~strcmp(char(sAxes(i).XLabel.String), char(cAxes(i).XLabel.String))
-                    msg = sprintf('%s\\nIncorrect x-label(s)', msg);
+                    msg = sprintf('%s\\nIncorrect x-label(s) (Expected: %s, Actual: %s)', msg, char(cAxes(i).XLabel.String), char(sAxes(i).XLabel.String));
                 end
                 if ~strcmp(char(sAxes(i).YLabel.String), char(cAxes(i).YLabel.String))
-                    msg = sprintf('%s\\nIncorrect y-label(s)', msg);
+                    msg = sprintf('%s\\nIncorrect y-label(s) (Expected: %s, Actual: %s)', msg, char(cAxes(i).YLabel.String), char(sAxes(i).YLabel.String));
                 end
                 if ~strcmp(char(sAxes(i).Title.String), char(cAxes(i).Title.String))
-                    msg = sprintf('%s\\nIncorrect title(s)', msg);
+                    msg = sprintf('%s\\nIncorrect title(s) (Expected: %s, Actual: %s)', msg, char(cAxes(i).Title.String), char(sAxes(i).Title.String));
                 end
                 if ~isequal(sAxes(i).XLim, cAxes(i).XLim)
                     msg = sprintf('%s\\nIncorrect x limits', msg);
@@ -570,15 +574,15 @@ classdef TesterHelper
                 if ~isequal(sAxes(i).YLim, cAxes(i).YLim)
                     msg = sprintf('%s\\nIncorrect y limits', msg);
                 end
-                if ~isequal(sAxes(i).PlotBoxAspectRatio, cAxes(i).PlotBoxAspectRatio)
-                    msg = sprintf('%s\\nIncorrect aspect ratio', msg);
+                if ~all(abs(sAxes(i).PlotBoxAspectRatio - cAxes(i).PlotBoxAspectRatio) < 0.02)
+                    msg = sprintf('%s\\nIncorrect plot size', msg);
                 end
                 if ~isempty(cAxes(i).Legend)
                     if isempty(sAxes(i).Legend)
                         msg = sprintf('%s\\nMissing legend(s)', msg);
                     else
                         if ~strcmp(char(sAxes(i).Legend.String), char(cAxes(i).Legend.String))                            
-                            msg = sprintf('%s\\nIncorrect legend text(s)', msg);
+                            msg = sprintf('%s\\nIncorrect legend text(s) (Expected: %s, Actual: %s)', msg, char(cAxes(i).Legend.String), char(sAxes(i).Legend.String));
                         end
                         if ~strcmp(char(sAxes(i).Legend.Location), char(cAxes(i).Legend.Location)) 
                             msg = sprintf('%s\\nIncorrect legend location(s)', msg);

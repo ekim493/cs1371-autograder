@@ -35,10 +35,10 @@ cd("..")
 % Base dir
 files = dir();
 for i = 1:length(files)
-    if ~files(i).isdir && ~strcmp(files(i).name, 'run_autograder')
+    if ~files(i).isdir && ~strcmp(files(i).name, 'run_autograder') && ~strcmp(files(i).name, 'runTester.p')
         if strcmp(files(i).name, 'runTester.m')
             pcode(files(i).name);
-            delete(files(i).name);
+            delete('runTester.m');
         else
             delete(files(i).name);
         end

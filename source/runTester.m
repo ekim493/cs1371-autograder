@@ -77,7 +77,7 @@ for i = 1:length(tests)
                 delete(filename);
                 encoder = org.apache.commons.codec.binary.Base64; % base64 encoder
                 base64string = char(encoder.encode(bytes))';
-                temp = [extractBefore(temp, 'IMAGEFILE:'), sprintf('<img src=''data:image/png;base64,%s'' width = ''750'' height = ''225''> \\n    <em>Please use Matlab to view your figure in higher quality.</em>', base64string)];
+                temp = [extractBefore(temp, 'IMAGEFILE:'), sprintf('<img src=''data:image/png;base64,%s'' width = ''750'' height = ''225''> \\n    <em>Please run your function in Matlab to view your figure in higher quality.</em>', base64string)];
             end
             if isempty(temp) % If there is an issue and no output diagnostic is provided, simply skip output display.
                 out = [];
