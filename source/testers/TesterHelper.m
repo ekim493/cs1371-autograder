@@ -39,7 +39,7 @@ classdef TesterHelper
                         loops = info.mtfind('Kind', {'WHILE', 'FOR'}).lineno;
                         loops = loops';
                         for i = loops(end:-1:1)
-                            lines = [lines(1:i); "if toc > 30; error('HWStudent:infLoop', 'This function timed out because it took longer than 30 seconds to run. Is there an infinite loop?'); else; pause(0.001); end"; lines(i+1:end)];
+                            lines = [lines(1:i); "if toc > 30; error('HWStudent:infLoop', 'This function timed out because it took longer than 30 seconds to run. Is there an infinite loop?'); end"; lines(i+1:end)];
                         end
                         try
                             funcStart = info.mtfind('Kind', {'FUNCTION'}).lineno;
@@ -67,10 +67,10 @@ classdef TesterHelper
                     try
                         [~, varargout{1:nargout}] = evalc(sprintf('%s_funcTimeout(varargin{:})', funcFile));
                     catch ME
-                        if ~strcmp(ME.identifier, 'HWStudent:infLoop') && any(strcmpi({ME.stack(1:2).name}, sprintf('%s_funcTimeout', funcFile)))
+                        if ~strcmp(ME.identifier, 'HWStudent:infLoop') && any(strcmpi({ME.stack(:).name}, sprintf('%s_funcTimeout', funcFile)))
                             lines_t = readlines(file_t);
                             lines = readlines(file);
-                            stackLevel = find(strcmpi({ME.stack(1:2).name}, sprintf('%s_funcTimeout', funcFile)), 1);
+                            stackLevel = find(strcmpi({ME.stack(:).name}, sprintf('%s_funcTimeout', funcFile)), 1);
                             line = lines_t(ME.stack(stackLevel).line);
                             li = find(strcmp(lines, line));
                             if numel(li) > 1
@@ -80,7 +80,7 @@ classdef TesterHelper
                             if stackLevel == 1
                                 msg = ME.message;
                             else
-                                msg = sprintf('Error using %s\n%s', ME.stack(1).name, ME.message);
+                                msg = sprintf('Error using %s\n%s', ME.stack(stackLevel-1).name, ME.message);
                             end
                             
                             error('HWStudent:function', '%s\n\nError in %s (line %d)\n%s', msg, funcFile, li, strtrim(line));
@@ -431,6 +431,8 @@ classdef TesterHelper
             %           'full' (default) - Output full comparison data, including image.
             %           'limit' - Only output error text.
             %           'none' - Don't output any message.
+            %       reverse (logical) - If true, then the solution plot should be plotted first. Otherwise, and by
+            %                           default, the student plot should be plotted first.
             %
             %   Output Arguments
             %       tf - True if the plots matched, false if not.
@@ -454,6 +456,7 @@ classdef TesterHelper
             arguments
                 options.html (1, 1) logical
                 options.output char = 'full'
+                options.reverse (1, 1) logical = false
             end
 
             if ~isfield(options, 'html')
@@ -471,15 +474,29 @@ classdef TesterHelper
             end
             
             % sFig - Student, cFig - Correct figure. Need to check next plot in case 'figure' was called in the function.
-            sFig = figure(1);
-            if numel(sFig.Children) == 0
-                sFig = figure(2);
-                cFig = figure(3);
-            else
-                cFig = figure(2);
+            i = 1;
+            while true
+                if numel(figure(i).Children) ~= 0
+                    break
+                else
+                    i = i + 1;
+                end
             end
-            if numel(cFig.Children) == 0
-                cFig = figure(cFig.Number + 1);
+            j = i + 1;
+            while true
+                if numel(figure(i).Children) ~= 0
+                    break
+                else
+                    j = j + 1;
+                end
+            end
+
+            if options.reverse
+                cFig = figure(i);
+                sFig = figure(j);
+            else
+                sFig = figure(i);
+                cFig = figure(j);
             end
             msg = [];
 
@@ -582,7 +599,7 @@ classdef TesterHelper
                         msg = sprintf('%s\\nMissing legend(s)', msg);
                     else
                         if ~strcmp(char(sAxes(i).Legend.String), char(cAxes(i).Legend.String))                            
-                            msg = sprintf('%s\\nIncorrect legend text(s) (Expected: %s, Actual: %s)', msg, char(cAxes(i).Legend.String), char(sAxes(i).Legend.String));
+                            msg = sprintf('%s\\nIncorrect legend text(s)', msg);
                         end
                         if ~strcmp(char(sAxes(i).Legend.Location), char(cAxes(i).Legend.Location)) 
                             msg = sprintf('%s\\nIncorrect legend location(s)', msg);

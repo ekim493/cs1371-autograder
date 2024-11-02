@@ -185,7 +185,7 @@ end
 
 %% Write json structure to final results.json file
 json.tests = tests;
-json.score = totalScore;
+json.score = round(totalScore);
 json = jsonencode(json);
 fh = fopen(fullfile(pwd, 'results.json'), 'w');
 fprintf(fh, json);
