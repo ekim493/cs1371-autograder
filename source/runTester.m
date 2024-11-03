@@ -105,7 +105,7 @@ try
         if json.tests(i).level == 0 || json.tests(i).level > 3
             json.tests(i).points_per_test = 0;
         else
-            json.tests(i).points_per_test = round(json.tests(i).level / sum(contains({results.name}, json.tests(i).name)), 2);
+            json.tests(i).points_per_test = json.tests(i).level / sum(contains({results.name}, json.tests(i).name));
         end
     end
 catch
@@ -125,14 +125,14 @@ try
     for i = 1:length(results)
         toFind = extractBefore(results(i).name, '_Test');
         if results(i).passed
-            results(i).score = json.tests(strcmp({json.tests.name}, toFind)).points_per_test;
+            results(i).score = round(json.tests(strcmp({json.tests.name}, toFind)).points_per_test, 2);
             results(i).status = 'passed';
-            totalScore = totalScore + results(i).score;
+            totalScore = totalScore + json.tests(strcmp({json.tests.name}, toFind)).points_per_test;
         else
             results(i).score = 0;
             results(i).status = 'failed';
         end
-        results(i).max_score = json.tests(strcmp({json.tests.name}, toFind)).points_per_test;
+        results(i).max_score = round(json.tests(strcmp({json.tests.name}, toFind)).points_per_test, 2);
     end
 catch
     error('There was an error assigning each test case the proper number of points. Was there a typo somewhere in the json or tester?');
@@ -185,7 +185,7 @@ end
 
 %% Write json structure to final results.json file
 json.tests = tests;
-json.score = round(totalScore);
+json.score = totalScore;
 json = jsonencode(json);
 fh = fopen(fullfile(pwd, 'results.json'), 'w');
 fprintf(fh, json);
