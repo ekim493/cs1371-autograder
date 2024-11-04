@@ -484,7 +484,7 @@ classdef TesterHelper
             end
             j = i + 1;
             while true
-                if numel(figure(i).Children) ~= 0
+                if numel(figure(j).Children) ~= 0
                     break
                 else
                     j = j + 1;
