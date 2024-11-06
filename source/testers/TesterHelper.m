@@ -2,109 +2,188 @@ classdef TesterHelper
     % TESTERHELPER - This class includes methods to help grade and check HW functions. See documentation 
     %                for a full list of functions and descriptions.
 
-    methods (Static)
-        %% Run student funcion
+    properties
+        func (1, :) char
+        runCheckAllEqual (1, 1) logical = true
+        runCheckCalls (1, 1) logical = true
+        runCheckFilesClosed (1, 1) logical = false
+        runCheckImages char = ''
+        runCheckPlots (1, 1) logical = false
+        runCheckTextFiles char = ''
+        inputs
+        outputType char = 'full'
+        allowedFuncs cell = {}
+        bannedFuncs cell = {}
+        includeFuncs cell = {}
+        imageTolerance (1, 1) double = 10
+        textRule char = 'default'
+        outputNames
+        testCase
+    end
 
-        function varargout = run(varargin)
-
-            % RUN - Run the student's function.
-            %   This should be used in place of running the student's function. This function should only be used in a
-            %   testing environment, and it identifies the student function using the caller's name (assuming the caller
-            %   is called FUNCNAME_TEST#). It prevents a student's code from having an infinite loop by creating and
-            %   running an identical function with a timeout injected after any WHILE or FOR loop. It will also suppress
-            %   any stdout from the student's code due to missing semicolons.
-            %
-            %   Arguments
-            %       varargin - Input arguments as if directly calling a student's function.
-            %       varargout - Outputs will be the same as the student's function.
-
-            try
-                stack = dbstack;
-                funcFile = char(extractBetween(stack(2).name, '.', '_Test'));
-            catch
-                error('HWTester:funcName', 'Error retrieving the name of the function being tested.');
+    methods
+        function obj = TesterHelper(varargin, opts)
+            arguments (Repeating)
+                varargin
             end
-            
-            if ~exist(funcFile, 'file')
-                error('HWStudent:noFunc', 'Undefined function or script ''%s''. Was this file submitted?', funcFile);
-            else
-                file = sprintf('%s.m', funcFile);
-                t = mtree(file, '-file');
-                if isequal(t.FileType, 'FunctionFile')
-                    % If it is a function file, create the function file with timeout if it doesn''t exist.
-                    file_t = sprintf('%s_funcTimeout.m', funcFile);
-                    if ~exist(file_t, 'file')
-                        lines = readlines(file);
-                        info = mtree(file, '-file');
-                        loops = info.mtfind('Kind', {'WHILE', 'FOR'}).lineno;
-                        loops = loops';
-                        for i = loops(end:-1:1)
-                            lines = [lines(1:i); "if toc > 30; error('HWStudent:infLoop', 'This function timed out because it took longer than 30 seconds to run. Is there an infinite loop?'); end"; lines(i+1:end)];
-                        end
-                        try
-                            funcStart = info.mtfind('Kind', {'FUNCTION'}).lineno;
-                            if ~isempty(funcStart)
-                                lines = [lines(1:funcStart); "tic"; lines(funcStart+1:end)];
-                            end
-                        catch
-                            error('HWStudent:fileRead', 'There was an error reading your file. Please contact the TAs or check the submission file.')
-                        end
-                        [fileLoc, ~, ~] = fileparts(which(file));
-                        fh = fopen(fullfile(fileLoc, file_t), 'w');
-                        lines = strrep(lines, '%', '%%');
-                        lines = strrep(lines, '\n', '\\n');
-                        lines = char(join(lines, '\n'));
-                        fprintf(fh, lines);
-                        fclose(fh);
-                    end
-                    % Attempt to run the timeout function. If it errors, re-run the function to collect the correct error msg
-                    pause(0.2); % Pause in case a parallel branch is creating the file
-                    % Display inputs
-                    disp(sprintf('\nTestcase: %s', extractAfter(stack(2).name, '.'))) %#ok<DSPSP>
-                    for i = 1:length(varargin)
-                        disp(sprintf('\n%s =\n%s', inputname(i), TesterHelper.toChar(varargin{i}))) %#ok<DSPSP>
-                    end
-                    try
-                        [~, varargout{1:nargout}] = evalc(sprintf('%s_funcTimeout(varargin{:})', funcFile));
-                    catch ME
-                        if ~strcmp(ME.identifier, 'HWStudent:infLoop') && any(strcmpi({ME.stack(:).name}, sprintf('%s_funcTimeout', funcFile)))
-                            lines_t = readlines(file_t);
-                            lines = readlines(file);
-                            stackLevel = find(strcmpi({ME.stack(:).name}, sprintf('%s_funcTimeout', funcFile)), 1);
-                            line = lines_t(ME.stack(stackLevel).line);
-                            li = find(strcmp(lines, line));
-                            if numel(li) > 1
-                                li = li(li < ME.stack(stackLevel).line);
-                                li = max(li);
-                            end
-                            if stackLevel == 1
-                                msg = ME.message;
-                            else
-                                msg = sprintf('Error using %s\n%s', ME.stack(stackLevel-1).name, ME.message);
-                            end
-                            
-                            error('HWStudent:function', '%s\n\nError in %s (line %d)\n%s', msg, funcFile, li, strtrim(line));
-                        elseif contains(ME.message, 'Invalid expression')
-                            [~, varargout{1:nargout}] = evalc(sprintf('%s(varargin{:})', funcFile)); % Should error
-                        else
-                            throw(ME)
-                        end
-                    end
-                else
-                    % If it is a script, simply call the function in the caller
-                    if nargout == 0 && nargin == 0
-                        evalin('caller', funcFile)
-                    else
-                        error('HWStudent:scriptAsFunc', 'A function with %d input(s) and %d output(s) was expected, but you submitted a script instead.', nargin, nargout);
-                    end    
+            arguments
+                opts.?TesterHelper
+            end
+
+            obj.inputs = varargin;
+            try
+                obj.testCase = evalin('caller', 'testCase');
+            catch
+                error('HWTester:noTestCase', 'Error retrieving the testCase object from the caller.');
+            end
+            for prop = string(fieldnames(opts))'
+                obj.(prop) = opts.(prop);
+            end
+
+            if isempty(obj.func)
+                try
+                    stack = dbstack;
+                    obj.func = char(extractBetween(stack(2).name, '.', '_Test'));
+                catch
+                    error('HWTester:funcName', 'Error retrieving the name of the function being tested.');
+                end
+            end
+            if isempty(obj.testCase)
+                try
+                    obj.testCase = evalin('caller', 'testCase');
+                catch
+                    error('HWTester:noTestCase', 'A testCase object must exist in the caller''s workspace.');
                 end
             end
 
         end
 
+        function run(obj)
+
+            if ~exist([obj.func, '.m'], 'file')
+                error('HWStudent:noFunc', 'Undefined function or script ''%s''. Was this file submitted?', obj.func);
+            end
+
+            try 
+                nargout(which(sprintf('%s_soln', obj.func)));
+                loadVars = [];
+            catch
+                loadVars = tempname;
+                evalin('caller', sprintf('save(''%s'')', loadVars));
+            end
+
+            f = parfeval(@obj.runFunc, 4, loadVars);
+            ok = wait(f, 'finished', 32); % Modify timeout time here
+            if ~ok
+                error('HWStudent:infLoop', 'This function timed out because it took longer than 30 seconds to run. Is there an infinite loop?');
+            elseif ~isempty(f.Error)
+                try
+                    lines = readlines([obj.func '.m']);
+                    stackLevel = find(strcmpi({f.Error.stack(:).name}, obj.func), true);
+                    line = lines(f.Error.stack(stackLevel).line);
+                    li = find(strcmp(lines, line));
+                    if numel(li) > 1
+                        li = li(li < f.Error.stack(stackLevel).line);
+                        li = max(li);
+                    end
+                catch ME
+                    throw(f.Error);
+                end
+                error('HWStudent:function', '%s\n\nError in %s (line %d)\n%s', f.Error.message, obj.func, li, strtrim(line));
+            end
+
+            [outputs, solns, names, checks] = fetchOutputs(f);
+
+            if obj.runCheckCalls
+                obj.checkCalls();
+            end
+            if obj.runCheckAllEqual
+                obj.checkAllEqual(outputs, solns, names);
+            end
+            if obj.runCheckFilesClosed
+                obj.testCase.verifyTrue(checks.files{1}, checks.files{2});
+            end
+            if ~isempty(obj.runCheckTextFiles)
+                obj.checkTextFiles();
+            end
+            if obj.runCheckPlots
+                obj.testCase.verifyTrue(checks.plot{1}, checks.plot{2});
+            end
+            if ~isempty(obj.runCheckImages)
+                obj.checkImages();
+            end
+
+        end
+
+        function [outputs, solns, names, checks] = runFunc(obj, loadVars)
+
+            checks = struct();
+
+            % Run solution code
+            close all;
+            if ~exist(sprintf('%s_soln', obj.func), 'file')
+                error('HWTester:noSoln', 'The solution function wasn''t included');
+            end
+            if isempty(loadVars)
+                [~, solns{1:nargout(sprintf('%s_soln', obj.func))}] = evalc(sprintf('%s_soln(obj.inputs{:})', obj.func));
+            else
+                load(loadVars); %#ok<LOAD>
+                eval(sprintf('%s_soln', obj.func));
+                vars = who;
+                solnVars = vars(endsWith(vars, '_soln')); % Extract solutions var names
+            end
+
+            % Run student code
+            if obj.runCheckPlots
+                figure;
+            end
+            try
+                isFunc_student = isequal(mtree(which(obj.func), '-file').FileType, 'FunctionFile');
+            catch
+                error('HWStudent:fileRead', 'There was an error reading your file. Please contact the TAs or check the submission file.');
+            end
+            if isempty(loadVars) && ~isFunc_student
+                error('HWStudent:notFunc', 'A function was expected, but you submitted a script instead.');
+            elseif ~isempty(loadVars) && isFunc_student
+                error('HWStudent:notScript', 'A script was expected, but you submitted a function instead.');
+            else
+                if isFunc_student
+                    [~, outputs{1:nargout(obj.func)}] = evalc(sprintf('%s(obj.inputs{:})', obj.func));
+                    if isempty(obj.outputNames)
+                        names = arrayfun(@(x) ['output' num2str(x)], 1:numel(outputs), 'UniformOutput', false);
+                    else
+                        names = obj.outputNames;
+                    end
+                else
+                    load(loadVars); %#ok<LOAD>
+                    eval(obj.func);
+                    % If script, collect variables
+                    solns = cell(1, numel(solnVars));
+                    outputs = cell(1, numel(solnVars));
+                    names = cellfun(@(x) extractBefore(x, '_soln'), solnVars, 'UniformOutput', false);
+                    for i = 1:length(solnVars)
+                        try
+                            outputs(i) = {eval(names{i})};
+                        catch
+                            error('HWStudent:varNotAssigned', 'Variable ''%s'' (and possibly others) was not found', names{i});
+                        end
+                        solns(i) = {eval(solnVars{i})};
+                    end
+                end
+            end
+            if obj.runCheckPlots
+                [hasPassed, msg] = obj.checkPlots();
+                checks.plot = {hasPassed, msg};
+            end
+            if obj.runCheckFilesClosed
+                [hasPassed, msg] = obj.checkFilesClosed();
+                checks.files = {hasPassed, msg};
+            end
+        end
+
         %% Check Functions
 
-        function checkAllEqual(options)
+        function checkAllEqual(obj, outputs, solns, names)
 
             % CHECKALLEQUAL - Check and compare all solution variables against the student's.
             %   This function compares all variables in the caller's workspace that ends with '_soln' against the 
@@ -121,51 +200,29 @@ classdef TesterHelper
             %           'full' (default) - Output full comparison information.
             %           'limit' - Only ouput which variables are incorrect instead of a comparison.
             %           'none' - No output text.
-            
-            arguments
-                options.html (1, 1) logical = true
-                options.output char = 'full'
-            end
 
-            try
-                testCase = evalin('caller', 'testCase');
-            catch
-                error('HWTester:noTestCase', 'A testCase object must exist in the caller''s workspace.');
-            end
-
-            vars = evalin('caller', 'who');
-            solns = vars(endsWith(vars, '_soln')); % Extract variable names
-
-            % Loop through variables and compare each one
             for i = 1:length(solns)
-                try
-                    student = evalin('caller', vars{strcmp(vars, extractBefore(solns{i}, '_soln'))});
-                catch
-                    error('HWStudent:varNotAssigned', 'Variable %s (and possibly others) was not found', extractBefore(solns{i}, '_soln'));
-                end
-                soln = evalin('caller', solns{i}); % Extract variable data
-                if strcmpi(options.output, 'none')
+                soln = solns{i};
+                student = outputs{i};
+                if strcmpi(obj.outputType, 'none')
                     continue
-                elseif strcmpi(options.output, 'limit')
-                    msg = sprintf('Variable %s does not match the solution''s.', extractBefore(solns{i}, '_soln'));
-                elseif strcmpi(options.output, 'full')
+                elseif strcmpi(obj.outputType, 'limit')
+                    msg = sprintf('Variable ''%s'' does not match the solution''s.', names{i});
+                elseif strcmpi(obj.outputType, 'full')
                     [r, c] = size(student);
-                    [r_e, c_e] = size(soln);
-                    if options.html
-                        msg = ['<u>', extractBefore(solns{i}, '_soln'), '</u>\n', '    Actual output (' sprintf('%dx%d %s', r, c, class(student)) '):\n    ' TesterHelper.toChar(student, html=true) '\n    Expected output (' sprintf('%dx%d %s', r_e, c_e, class(soln)) '):\n    ' TesterHelper.toChar(soln, html=true)];
-                    else
-                        msg = sprintf('Actual output:\n%s\nExpected output:\n%s', TesterHelper.toChar(student), TesterHelper.toChar(soln));
-                    end
+                    [r_e, c_e] = size(solns);
+                    msg = ['<u>', names{i}, '</u>\n', '    Actual output (' sprintf('%dx%d %s', r, c, class(student)) '):\n    ' TesterHelper.toChar(student, html=true) '\n    Expected output (' sprintf('%dx%d %s', r_e, c_e, class(soln)) '):\n    ' TesterHelper.toChar(soln, html=true)];
                 end
                 if isempty(soln)
-                    testCase.verifyEmpty(student, msg);
+                    obj.testCase.verifyEmpty(student, msg);
                 else
-                    testCase.verifyEqual(student, soln, msg, "AbsTol", 0.001);
+                    obj.testCase.verifyEqual(student, soln, msg, "AbsTol", 0.001);
                 end
             end
+
         end
 
-        function [hasPassed, msg] = checkCalls(varargin, additional)
+        function checkCalls(obj)
             
             % CHECKCALLS - Check a function file's calls.
             %   This function will check if the function in question calls or does not call certain functions or use
@@ -198,33 +255,16 @@ classdef TesterHelper
             %       [tf, msg] = TesterHelper.checkCalls('myFunc', banned={'max', 'min'}, include={'WHILE'})
             %       TesterHelper.checkCalls()
             
-            arguments(Repeating)
-                varargin
-            end
-            arguments
-                additional.banned cell = {}
-                additional.include cell = {}
-                additional.allow cell = {}
-            end
 
             % Find name of function to test
-            if nargin > 0 && ischar(varargin{1})
-                funcFile = varargin{1};
-            else
-                try
-                    stack = dbstack;
-                    funcFile = char(extractBetween(stack(2).name, '.', '_Test'));
-                catch
-                    error('HWTester:funcName', 'Error retrieving the name of the function being tested.');
-                end
-            end
+            funcFile = obj.func;
 
             % Create full list of banned and allowed functions
             list = jsondecode(fileread('Allowed_Functions.json'));
-            allowed = [list.ALLOWED; list.ALLOWED_OPS; additional.allow'];
+            allowed = [list.ALLOWED; list.ALLOWED_OPS; obj.allowedFuncs'];
             msg = [];
-            banned = additional.banned';
-            include = additional.include;
+            banned = obj.bannedFuncs';
+            include = obj.includeFuncs;
 
             calls = TesterHelper.getCalls(which(funcFile)); % Get list of function calls
 
@@ -249,51 +289,10 @@ classdef TesterHelper
             end
 
             % Run tester
-            if nargout == 0
-                try
-                    testCase = evalin('caller', 'testCase');
-                    testCase.verifyTrue(hasPassed, msg);
-                catch
-                    error('HWTester:noTestCase', 'If no outputs are specified, a testCase object must be present in the caller''s workspace.');
-                end
-            end
+            obj.testCase.verifyTrue(hasPassed, msg);
         end
 
-        function [isClosed, msg] = checkFilesClosed(varargin)
-
-            % CHECKFILESCLOSED - Check if all files have been properly closed.
-            %   This function will check to ensure that all files have been closed using fclose. If any files are still
-            %   open, it will close them. If no output arguments are specified, then it is assumed the function is being 
-            %   used in a testing environment and a testCase object exists in the caller.
-            %
-            %   Syntax
-            %       [tf, msg] = checkFilesClosed()
-            %       checkFilesClosed()
-            %
-            %   Output Arguments
-            %       tf - True if all files were properly closed, and false if not.
-            %       msg - Character message indicating the number of files still left open. Is empty if tf is true.
-
-            stillOpen = openedFiles();
-            fclose all;
-            if ~isempty(stillOpen)
-                isClosed = false;
-                msg = sprintf('%d file(s) still open! (Did you fclose?)', length(stillOpen));
-            else
-                isClosed = true;
-                msg = '';
-            end
-            if nargout == 0
-                try
-                    testCase = evalin('caller', 'testCase');
-                    testCase.verifyTrue(isClosed, msg);
-                catch
-                    error('HWTester:noTestCase', 'If no outputs are specified, a testCase object must be present in the caller''s workspace.');
-                end
-            end
-        end
-
-        function [hasPassed, msg] = checkImages(user_fn, options)
+        function checkImages(obj)
 
             % CHECKIMAGES - Check and compare an image against the solution's.
             %   This function will read in an image filename and compare it to its corresponding image solution with a
@@ -325,30 +324,8 @@ classdef TesterHelper
             %       msg - Character message indicating why the test failed, along with a hyperlink to display the
             %             figure comparison. Is empty if tf is true.
 
-            arguments
-                user_fn char
-                options.html (1, 1) logical
-                options.output char = 'full'
-                options.tolerance (1, 1) double = 10
-            end
-
-            % Input validation
-            if ~isfield(options, 'html')
-                if nargout == 0
-                    options.html = true;
-                else
-                    options.html = false;
-                end
-            end
-            if nargout == 0 && options.html
-                try
-                    testCase = evalin('caller', 'testCase');
-                catch
-                    error('HWTester:noTestCase', 'If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
-                end
-            end
-
             % Solution file name
+            user_fn = obj.runCheckImages;
             [file, ext] = strtok(user_fn, '.');
             expected_fn = [file '_soln' ext];
             
@@ -356,60 +333,139 @@ classdef TesterHelper
             if ~exist(expected_fn, 'file')
                 error('HWTester:noImage', 'The solution image does not exist');
             elseif ~exist(user_fn, 'file')
-                hasPassed = false;
-                if options.html
-                    msg = 'Your image doesn''t exist. Was it created properly with the right filename?';
-                else
-                    msg = 'The image does not exist or is in a different directory.';
-                end
+                obj.testCase.verifyTrue(false, 'Your image doesn''t exist. Was it created properly with the right filename?');
                 return;
             end
-            if nargout == 0 && ~options.html
-                TesterHelper.compareImg(user_fn, expected_fn); % Open figure comparison
-                shg;
-                return;
-            else
-                % Image comparsion
-                user = imread(user_fn);
-                expected = imread(expected_fn);
-                [rUser,cUser,lUser] = size(user);
-                [rExp,cExp,lExp] = size(expected);
-                if rUser == rExp && cUser == cExp && lUser == lExp
-                    diff = abs(double(user) - double(expected));
-                    isDiff = any(diff(:) > options.tolerance);
-                    if isDiff
-                        hasPassed = false;
-                        msg = 'The image output does not match the expected image.';
-                    else
-                        hasPassed = true;
-                        msg = [];
-                        return;
-                    end
-                else
+            % Image comparsion
+            user = imread(user_fn);
+            expected = imread(expected_fn);
+            [rUser,cUser,lUser] = size(user);
+            [rExp,cExp,lExp] = size(expected);
+            if rUser == rExp && cUser == cExp && lUser == lExp
+                diff = abs(double(user) - double(expected));
+                isDiff = any(diff(:) > obj.imageTolerance);
+                if isDiff
                     hasPassed = false;
-                    msg = sprintf('The dimensions of the image do not match the expected image.\nActual size: %dx%dx%d\nExpected size: %dx%dx%d', rUser, cUser, lUser, rExp, cExp, lExp);
+                    msg = 'The image output does not match the expected image.';
+                else
+                    return;
                 end
-
-                % Output
-                if strcmpi(options.output, 'none')
-                    msg = '';
-                elseif strcmpi(options.output, 'full')
-                    if options.html
-                        base64string = TesterHelper.compareImg(user_fn, expected_fn);
-                        msg = strrep(msg, newline, '\n');
-                        msg = sprintf('%s\\n%s', msg, base64string);
-                    else
-                        msg = sprintf('%s\n<a href="matlab: cd(''%s'');TesterHelper.compareImg(''%s'', ''%s'')">Image comparison</a>', msg, pwd, user_fn, expected_fn);
-                    end
-                end
-
-                if exist('testCase', 'var')
-                    testCase.verifyTrue(hasPassed, msg);
-                end
+            else
+                hasPassed = false;
+                msg = sprintf('The dimensions of the image do not match the expected image.\nActual size: %dx%dx%d\nExpected size: %dx%dx%d', rUser, cUser, lUser, rExp, cExp, lExp);
             end
+
+            % Output
+            if strcmpi(obj.outputType, 'none')
+                msg = '';
+            elseif strcmpi(obj.outputType, 'full')
+                filename = TesterHelper.compareImg(user_fn, expected_fn);
+                msg = strrep(msg, newline, '\n');
+                msg = sprintf('%s\\nIMAGEFILE:%s', msg, filename);
+            end
+
+            obj.testCase.verifyTrue(hasPassed, msg);
+
         end
 
-        function [hasPassed, msg] = checkPlots(options)
+        function [hasPassed, msg] = checkTextFiles(obj)
+
+            % CHECKTEXTFILES - Check and compare a text file against the solution's.
+            %   This function will read in two text files and compare them. By default, it will ignore an extra newline
+            %   at the end of any text file.
+            %
+            %   Syntax
+            %       [tf, msg] = checkTextFiles(user_fn)
+            %       [tf, msg] = checkTextFiles(___, Name=Value)
+            %       checkTextFiles(___, Name=Value)
+            %
+            %   Input Arguments
+            %       user_fn - Filename of the student's text file. It will assume the solution image is the filename with 
+            %              '_soln' attached.
+            %
+            %   Name-Value Arguments
+            %       rule (char) - Indicates how to compare the two text files.
+            %           'default' (default) - Compares the two text files character by character, ignoring an extra
+            %                                 newline at the end of any text file.
+            %           'strict' - Don't ignore the newline at the end of a text file.
+            %           'loose' - Ignore capitilization and the newline.
+            %       output (char) - Change how much information is contained in msg:
+            %           'full' (default) - Output full comparison data, including line by line comparison.
+            %           'limit' - Only output error text.
+            %           'none' - Don't output any message.
+            %       cap (logical) - Indiate whether to cap the output comparsion to 15 lines. Default = false.
+            %       html (logical) - Output the comparsion in html format. If there are no output arguments, it's
+            %                        default is true. Otherwise, it is false.
+            %
+            %   Output Arguments
+            %       tf - True if the text files matched, false if not.
+            %       msg - Character message indicating why the test failed, along with a comparison of the two text
+            %       files with the different lines bolded/highlighted. Is empty if tf is true.
+
+            % Read in files
+            user_fn = obj.runCheckTextFiles;
+            soln_fn = [user_fn(1:end-4) '_soln.txt'];
+            student = readlines(user_fn);
+            soln = readlines(soln_fn);
+
+            % Compare using defined rules
+            if ~strcmpi(obj.textRule, 'strict')
+                if isempty(char(student(end)))
+                    student(end) = [];
+                end
+                if isempty(char(soln(end)))
+                    soln(end) = [];
+                end
+            end
+            n_st = length(student);
+            n_sol = length(soln);       
+            if strcmpi(obj.textRule, 'loose')
+                same = strcmpi(student(1:min(n_st, n_sol)), soln(1:min(n_st, n_sol)));
+            else
+                same = strcmp(student(1:min(n_st, n_sol)), soln(1:min(n_st, n_sol)));
+            end
+            if n_st ~= n_sol
+                hasPassed = false;
+                msg = sprintf('The output text has %d lines when %d lines are expected.', length(student), length(soln));
+            elseif ~all(same)
+                hasPassed = false;
+                msg = sprintf('The output text does not match the expected text file.');
+            else
+                hasPassed = true;
+                msg = '';
+            end
+
+            % Output
+            if strcmpi(obj.outputType, 'none')
+                msg = '';
+            elseif ~hasPassed && strcmpi(obj.outputType, 'full')
+                if n_st > 20
+                    student = [student(1:20); "Additional lines have been suppressed."];
+                end
+                if n_sol > 20
+                    soln = [soln(1:20); "Additional lines have been suppressed."];
+                end
+                student(~same) = strcat("<strong>", student(~same), "</strong>");
+                soln(~same) = strcat("<strong>", soln(~same), "</strong>");
+                if n_st > n_sol
+                    student(n_sol+1:end) = strcat("<strong>", student(n_sol+1:end), "</strong>");   
+                elseif n_sol > n_st
+                    soln(n_st+1:end) = strcat("<strong>", soln(n_st+1:end), "</strong>");
+                end
+                msg = sprintf('%s\n%s\nActual text file:\n%s\n%s\n%s\nExpected text file:\n%s\n%s', ...
+                        msg, repelem('-', 16), repelem('-', 16), char(strjoin(student, '\n')), repelem('-', 16), repelem('-', 16), char(strjoin(soln, '\n')));
+                msg(msg == '"') = '''';
+                msg = strrep(msg, '<strong>', '<mark>'); % Replace with highlight in html
+                msg = strrep(msg, '</strong>', '</mark>');
+                msg = strrep(msg, newline, '\n    ');
+            end
+
+            obj.testCase.verifyTrue(hasPassed, msg)
+        end
+    end
+        
+    methods (Static)
+        function [hasPassed, msg] = checkPlots()
             
             % CHECKPLOTS - Check and compare a plot against the solution's.
             %   This function will read in the currently open figures and compare them. For the function to work, all
@@ -453,20 +509,6 @@ classdef TesterHelper
             %       - Box styling, tick marks, tick labels, and similar
             %       - Similar plots with a margin of error
 
-            arguments
-                options.html (1, 1) logical
-                options.output char = 'full'
-                options.reverse (1, 1) logical = false
-            end
-
-            if ~isfield(options, 'html')
-                if nargout == 0
-                    options.html = true;
-                else
-                    options.html = false;
-                end
-            end
-
             % Check if figures are open
             if length(findobj('type', 'figure')) < 2
                 msg = 'Your code did not create a plot when one is required.';
@@ -491,13 +533,8 @@ classdef TesterHelper
                 end
             end
 
-            if options.reverse
-                cFig = figure(i);
-                sFig = figure(j);
-            else
-                sFig = figure(i);
-                cFig = figure(j);
-            end
+            cFig = figure(i);
+            sFig = figure(j);
             msg = [];
 
             % Plot check
@@ -618,145 +655,40 @@ classdef TesterHelper
                 if strcmp(msg(1:2), '\n')
                     msg = msg(3:end);
                 end
-                if options.html
-                    filename = TesterHelper.compareImg(sFig, cFig);
-                    msg = strrep(msg, '\n', '\n    ');
-                    msg = sprintf('%s\\nIMAGEFILE:%s', msg, filename);             
-                end
+                filename = TesterHelper.compareImg(sFig, cFig);
+                msg = strrep(msg, '\n', '\n    ');
+                msg = sprintf('%s\\nIMAGEFILE:%s', msg, filename);             
             else
                 hasPassed = true;
             end
-
-            if nargout == 0 && options.html
-                try
-                    testCase = evalin('caller', 'testCase');
-                    testCase.verifyTrue(hasPassed, msg);
-                catch
-                    error('HWTester:noTestCase', 'If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
-                end
-            end
         end
 
-        function [hasPassed, msg] = checkTextFiles(user_fn, options)
+        function [isClosed, msg] = checkFilesClosed(varargin)
 
-            % CHECKTEXTFILES - Check and compare a text file against the solution's.
-            %   This function will read in two text files and compare them. By default, it will ignore an extra newline
-            %   at the end of any text file.
+            % CHECKFILESCLOSED - Check if all files have been properly closed.
+            %   This function will check to ensure that all files have been closed using fclose. If any files are still
+            %   open, it will close them. If no output arguments are specified, then it is assumed the function is being 
+            %   used in a testing environment and a testCase object exists in the caller.
             %
             %   Syntax
-            %       [tf, msg] = checkTextFiles(user_fn)
-            %       [tf, msg] = checkTextFiles(___, Name=Value)
-            %       checkTextFiles(___, Name=Value)
-            %
-            %   Input Arguments
-            %       user_fn - Filename of the student's text file. It will assume the solution image is the filename with 
-            %              '_soln' attached.
-            %
-            %   Name-Value Arguments
-            %       rule (char) - Indicates how to compare the two text files.
-            %           'default' (default) - Compares the two text files character by character, ignoring an extra
-            %                                 newline at the end of any text file.
-            %           'strict' - Don't ignore the newline at the end of a text file.
-            %           'loose' - Ignore capitilization and the newline.
-            %       output (char) - Change how much information is contained in msg:
-            %           'full' (default) - Output full comparison data, including line by line comparison.
-            %           'limit' - Only output error text.
-            %           'none' - Don't output any message.
-            %       cap (logical) - Indiate whether to cap the output comparsion to 15 lines. Default = false.
-            %       html (logical) - Output the comparsion in html format. If there are no output arguments, it's
-            %                        default is true. Otherwise, it is false.
+            %       [tf, msg] = checkFilesClosed()
+            %       checkFilesClosed()
             %
             %   Output Arguments
-            %       tf - True if the text files matched, false if not.
-            %       msg - Character message indicating why the test failed, along with a comparison of the two text
-            %       files with the different lines bolded/highlighted. Is empty if tf is true.
+            %       tf - True if all files were properly closed, and false if not.
+            %       msg - Character message indicating the number of files still left open. Is empty if tf is true.
 
-            arguments
-                user_fn char
-                options.rule char = 'default'
-                options.output char = 'full'
-                options.cap (1, 1) logical = false
-                options.html (1, 1) logical
-            end
-
-            if ~isfield(options, 'html')
-                if nargout == 0
-                    options.html = true;
-                else
-                    options.html = false;
-                end
-            end
-            
-            % Read in files
-            soln_fn = [user_fn(1:end-4) '_soln.txt'];
-            student = readlines(user_fn);
-            soln = readlines(soln_fn);
-
-            % Compare using defined rules
-            if ~strcmpi(options.rule, 'strict')
-                if isempty(char(student(end)))
-                    student(end) = [];
-                end
-                if isempty(char(soln(end)))
-                    soln(end) = [];
-                end
-            end
-            n_st = length(student);
-            n_sol = length(soln);       
-            if strcmpi(options.rule, 'loose')
-                same = strcmpi(student(1:min(n_st, n_sol)), soln(1:min(n_st, n_sol)));
+            stillOpen = openedFiles();
+            fclose all;
+            if ~isempty(stillOpen)
+                isClosed = false;
+                msg = sprintf('%d file(s) still open! (Did you fclose?)', length(stillOpen));
             else
-                same = strcmp(student(1:min(n_st, n_sol)), soln(1:min(n_st, n_sol)));
-            end
-            if n_st ~= n_sol
-                hasPassed = false;
-                msg = sprintf('The output text has %d lines when %d lines are expected.', length(student), length(soln));
-            elseif ~all(same)
-                hasPassed = false;
-                msg = sprintf('The output text does not match the expected text file.');
-            else
-                hasPassed = true;
+                isClosed = true;
                 msg = '';
-            end
-
-            % Output
-            if strcmpi(options.output, 'none')
-                msg = '';
-            elseif ~hasPassed && strcmpi(options.output, 'full')
-                if n_st > 15 && options.cap
-                    student = [student(1:15); "Additional lines have been suppressed."];
-                end
-                if n_sol > 15 && options.cap
-                    soln = [soln(1:15); "Additional lines have been suppressed."];
-                end
-                student(~same) = strcat("<strong>", student(~same), "</strong>");
-                soln(~same) = strcat("<strong>", soln(~same), "</strong>");
-                if n_st > n_sol
-                    student(n_sol+1:end) = strcat("<strong>", student(n_sol+1:end), "</strong>");   
-                elseif n_sol > n_st
-                    soln(n_st+1:end) = strcat("<strong>", soln(n_st+1:end), "</strong>");
-                end
-                msg = sprintf('%s\n%s\nActual text file:\n%s\n%s\n%s\nExpected text file:\n%s\n%s', ...
-                        msg, repelem('-', 16), repelem('-', 16), char(strjoin(student, '\n')), repelem('-', 16), repelem('-', 16), char(strjoin(soln, '\n')));
-                if options.html
-                    msg(msg == '"') = '''';
-                    msg = strrep(msg, '<strong>', '<mark>'); % Replace with highlight in html
-                    msg = strrep(msg, '</strong>', '</mark>');
-                    msg = strrep(msg, newline, '\n    ');
-                end
-            end
-
-            % Run tester
-            if nargout == 0 && options.html
-                try
-                    testCase = evalin('caller', 'testCase');
-                    testCase.verifyTrue(hasPassed, msg);
-                catch
-                    error('HWTester:noTestCase', 'If html is not specified and there are no output arguments, a testCase object must be present in the caller''s workspace.');
-                end
             end
         end
-
+        
         %% Helper Functions
 
         function varargout = compareImg(varargin)

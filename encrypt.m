@@ -25,21 +25,18 @@ delete("*.md");
 files = {dir().name};
 files = files(4:end);
 for i = 1:length(files)
-    if contains(files(i), 'Tester')
+    if contains(files(i), 'Tester') && ~contains(files(i), 'TesterHelper')
         pcode(files{i}, '-inplace');
+        delete(sprintf("%s", files{i}));
     end
 end
-delete("*.m");
 
 cd("..")
 % Base dir
 files = dir();
 for i = 1:length(files)
     if ~files(i).isdir && ~strcmp(files(i).name, 'run_autograder') && ~strcmp(files(i).name, 'runTester.p')
-        if strcmp(files(i).name, 'runTester.m')
-            pcode(files(i).name);
-            delete('runTester.m');
-        else
+        if ~strcmp(files(i).name, 'runTester.m')
             delete(files(i).name);
         end
     end

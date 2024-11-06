@@ -2,11 +2,13 @@ function runTester
 if isunix && ~ismac
     try
         submission = jsondecode(fileread('/autograder/submission_metadata.json')); % Import assignment name from gradescope
+        copyfile(fullfile('./dir', '*'), '/autograder/source');
     catch
         error('The submission metadata wasn''t found.');
     end
 else
     submission = jsondecode(fileread('submission_metadata.json')); % For local testing
+    addpath("dir\");
 end
 assignment_name = submission.assignment.title;
 
@@ -47,21 +49,26 @@ for i = 1:length(tests)
     out = ''; % Add default success message
     if tests(i).Incomplete
         out = tests(i).Details.DiagnosticRecord.Report;
-        if contains(out, 'HWTester') || (contains(out, 'MATLAB:') && ~contains(out, 'TesterHelper.run'))
+        out = strrep(out, newline, '\n');
+        if contains(out, 'HWTester:')
             out = 'The autograder ran into an unexpected error while running your function. Please contact the TAs for assistance.';
         else
-            out = erase(out, [newline '    Error using evalc']);
-            out = erase(out, '_funcTimeout');
-            out = strrep(out, newline, '\n');
-            out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in H'));
-            if contains(out, 'Error in TesterHelper.run')
-                out = extractBefore(out, '\n    \n    Error in TesterHelper.run');
-            elseif contains(out, 'Error using TesterHelper.run (') % No encryption, has lineno
-                out = regexprep(out, 'Error using TesterHelper\.run \(line \d+\)\\n    ', '');
-            elseif contains(out, 'Error using TesterHelper.run') % Encrypted TesterHelper outputs no line
-                out = extractAfter(out, 'Error using TesterHelper.run\n');
+            if contains(out, 'Error using TesterHelper/runFunc')
+                out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in TesterHelper'));
+                if contains(out, 'Error using TesterHelper/runFunc (') % No encryption, has lineno
+                    out = regexprep(out, 'Error using TesterHelper/runFunc \(line \d+\)\\n    ', '');
+                elseif contains(out, 'Error using TesterHelper/runFunc') % Encrypted TesterHelper outputs no line
+                    out = extractAfter(out, 'Error using TesterHelper/runFunc\n');
+                end
+            else
+                out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in H'));
+                if contains(out, 'Error using TesterHelper/run (') % No encryption, has lineno
+                    out = regexprep(out, 'Error using TesterHelper/run \(line \d+\)\\n    ', '');
+                elseif contains(out, 'Error using TesterHelper/run') % Encrypted TesterHelper outputs no line
+                    out = extractAfter(out, 'Error using TesterHelper/run\n');
+                end
             end
-            out = ['An error occured while running your function.\n    --------------\n    Error Details:\n    --------------\n' out];
+            out = ['An error occured while running your function.\n    --------------\n    Error Details:\n    --------------\n' out];    
         end
     elseif tests(i).Failed
         out = ['Verification failed in ' results(i).name '.\n    ----------------\n    Test Diagnostic:'];
@@ -74,7 +81,6 @@ for i = 1:length(tests)
             if ~isempty(filename)
                 fid = fopen(filename,'rb');
                 bytes = fread(fid);
-                delete(filename);
                 encoder = org.apache.commons.codec.binary.Base64; % base64 encoder
                 base64string = char(encoder.encode(bytes))';
                 temp = [extractBefore(temp, 'IMAGEFILE:'), sprintf('<img src=''data:image/png;base64,%s'' width = ''750'' height = ''225''> \\n    <em>Please run your function in Matlab to view your figure in higher quality.</em>', base64string)];
