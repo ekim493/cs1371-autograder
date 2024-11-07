@@ -210,7 +210,7 @@ classdef TesterHelper
                     msg = sprintf('Variable ''%s'' does not match the solution''s.', names{i});
                 elseif strcmpi(obj.outputType, 'full')
                     [r, c] = size(student);
-                    [r_e, c_e] = size(solns);
+                    [r_e, c_e] = size(soln);
                     msg = ['<u>', names{i}, '</u>\n', '    Actual output (' sprintf('%dx%d %s', r, c, class(student)) '):\n    ' TesterHelper.toChar(student, html=true) '\n    Expected output (' sprintf('%dx%d %s', r_e, c_e, class(soln)) '):\n    ' TesterHelper.toChar(soln, html=true)];
                 end
                 if isempty(soln)
