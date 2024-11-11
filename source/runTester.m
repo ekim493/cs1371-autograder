@@ -2,7 +2,6 @@ function runTester
 if isunix && ~ismac
     try
         submission = jsondecode(fileread('/autograder/submission_metadata.json')); % Import assignment name from gradescope
-        copyfile(fullfile('./dir', '*'), '/autograder/source');
     catch
         error('The submission metadata wasn''t found.');
     end
@@ -19,7 +18,15 @@ suite = testsuite(sprintf('%sTester', assignment_name));
 runner = testrunner();
 % Run in parallel if running on linux, run in series if on local device
 if isunix && ~ismac
-    tests = runInParallel(runner, suite);
+    try
+        tests = runInParallel(runner, suite);
+    catch E
+        if strcmp(E.identifier, 'MATLAB:unittest:TestRunner:ParallelRunException')
+            disp(repelem('-', 30))
+            disp(E);
+            tests = run(runner, suite);
+        end
+    end
 else
     tests = run(runner, suite);
 end

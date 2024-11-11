@@ -18,6 +18,7 @@ classdef TesterHelper
         includeFuncs cell = {} % Functions that must be used by the student.
 
         inputs % The inputs to the function being tested.
+        solnInputs % The inputs to the solution function (if they are different).
         outputType char = 'full' % Amount of information that the output should display. Set to 'full', 'limit', or 'none'. Default = 'full'.
         outputNames cell % Add optional output names to variables instead of the default 'output#'.
         
@@ -44,6 +45,7 @@ classdef TesterHelper
             end
 
             obj.inputs = varargin;
+            obj.solnInputs = varargin;
 
             for prop = string(fieldnames(opts))'
                 obj.(prop) = opts.(prop);
@@ -124,7 +126,7 @@ classdef TesterHelper
                 obj.testCase.verifyTrue(checks.plot{1}, checks.plot{2});
             end
             if ~isempty(obj.runCheckImages)
-                obj.checkImages();
+                obj.checkImages(obj.runCheckImages, checks.images);
             end
 
         end
@@ -155,12 +157,22 @@ classdef TesterHelper
                 error('HWTester:noSoln', 'The solution function wasn''t included');
             end
             if isempty(loadVars)
-                [~, solns{1:nargout(sprintf('%s_soln', obj.func))}] = evalc(sprintf('%s_soln(obj.inputs{:})', obj.func));
+                [~, solns{1:nargout(sprintf('%s_soln', obj.func))}] = evalc(sprintf('%s_soln(obj.solnInputs{:})', obj.func));
             else
                 load(loadVars); %#ok<LOAD>
                 eval(sprintf('%s_soln', obj.func));
                 vars = who;
                 solnVars = vars(endsWith(vars, '_soln')); % Extract solutions var names
+            end
+
+            % Check if image was created
+            if ~isempty(obj.runCheckImages) && exist(obj.runCheckImages, 'file')
+                name = tempname;
+                copyfile(obj.runCheckImages, name);
+                checks.image = name;
+            else
+                [file, ext] = strtok(obj.runCheckImages);
+                checks.image = [file, '_soln', ext];
             end
 
             % Run student code
@@ -296,25 +308,23 @@ classdef TesterHelper
             obj.testCase.verifyTrue(hasPassed, msg);
         end
 
-        function checkImages(obj)
+        function checkImages(obj, user_fn, expected_fn)
 
             % CHECKIMAGES - Check and compare an image against the solution's.
             %   This function will read in an image filename (defined by the property runCheckImages) and compare it to 
             %   its corresponding image solution with a small tolerance. The final result is run through the testCase
             %   object using verifyTrue. The outputType property does affect this function, and the full output 
             %   includes an image comparison.
-
-            % Solution file name
-            user_fn = obj.runCheckImages;
-            [file, ext] = strtok(user_fn, '.');
-            expected_fn = [file '_soln' ext];
+            % 
+            %   Input Arguments
+            %       user_fn (char) - User image file name.
+            %       expected_fn (char) - Expected image file name.
             
             % Check if images can be accessed
             if ~exist(expected_fn, 'file')
                 error('HWTester:noImage', 'The solution image wasn''t found');
             elseif ~exist(user_fn, 'file')
-                obj.testCase.verifyTrue(false, ['Your solution did not produce an image when one was expected. ' ...
-                    'Was it created properly with the right filename?']);
+                obj.testCase.verifyTrue(false, sprintf('The image ''%s'' wasn''t found. Did you create an image with the right filename?', user_fn));
                 return;
             end
             % Image comparsion
