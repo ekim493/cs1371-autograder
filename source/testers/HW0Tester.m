@@ -1,4 +1,4 @@
-classdef HW0Tester < matlab.unittest.TestCase & handle
+classdef HW0Tester < matlab.unittest.TestCase
     methods(TestClassSetup)
         function add_path(testCase)
             addpath('/autograder/source/solutions/HW0');
@@ -7,7 +7,7 @@ classdef HW0Tester < matlab.unittest.TestCase & handle
     methods(Test)
         %% Test methods
         % ABC Example
-        function exampleABC_Test(testCase) 
+        function exampleABC_Test1(testCase) 
             t = TesterHelper();
             t.outputType = 'limit';
             t.run();
@@ -78,8 +78,6 @@ classdef HW0Tester < matlab.unittest.TestCase & handle
     end
 
     %#ok<*MANU>
-    %#ok<*NASGU>
-    %#ok<*ASGLU>
     %#ok<*NOPRT>
        
 end

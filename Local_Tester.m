@@ -1,7 +1,7 @@
-assignment_name = 'HW0'; % Edit
+assignment_name = input('Enter assignment name:    ');
 
 addpath("Submissions\")
-addpath(sprintf('source/solutions/%s', assignment_name))
+addpath(sprintf('source/solutions/%s', strrep(assignment_name, 'X', 'W')))
 cd("source\")
 metadata = jsondecode(fileread('../submission_metadata.json'));
 metadata.assignment.title = assignment_name;

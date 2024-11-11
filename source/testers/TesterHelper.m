@@ -1,28 +1,41 @@
 classdef TesterHelper
-    % TESTERHELPER - This class includes methods to help grade and check HW functions. See documentation 
-    %                for a full list of functions and descriptions.
+    % TESTERHELPER - This class includes methods to help grade and check HW functions. To use this class, create an
+    % instance and set the relevant properties, then call the run() method. See documention for more details.
 
     properties
-        func (1, :) char
-        runCheckAllEqual (1, 1) logical = true
-        runCheckCalls (1, 1) logical = true
-        runCheckFilesClosed (1, 1) logical = false
-        runCheckImages char = ''
-        runCheckPlots (1, 1) logical = false
-        runCheckTextFiles char = ''
-        inputs
-        outputType char = 'full'
-        allowedFuncs cell = {}
-        bannedFuncs cell = {}
-        includeFuncs cell = {}
-        imageTolerance (1, 1) double = 10
-        textRule char = 'default'
-        outputNames
-        testCase
+        func (1, :) char % Name of the function to be tested.
+        testCase % The testCase object to perform verifications on.
+
+        runCheckAllEqual (1, 1) logical = true % Whether the checkAllEqual method should be run. Default = true.
+        runCheckCalls (1, 1) logical = true % Whether the checkCalls method should be run. Default = true.
+        runCheckFilesClosed (1, 1) logical = false % Whether the checkFilesClosed method should be run. Default = false.
+        runCheckImages char = '' % The name of the image for checkImages to check. If empty, it will not run. Default = ''.
+        runCheckPlots (1, 1) logical = false % Whether the checkPlots method should be run. Default = false.
+        runCheckTextFiles char = '' % The name of the text file for checkTextFiles to check. If empty, it will not run. Default = ''.
+        
+        allowedFuncs cell = {} % Functions that are allowed to be used, regardless if they are not in the Allowed_Functions list.
+        bannedFuncs cell = {} % Functions that are banned, regardless if they are in the Allowed_Functions list.
+        includeFuncs cell = {} % Functions that must be used by the student.
+
+        inputs % The inputs to the function being tested.
+        outputType char = 'full' % Amount of information that the output should display. Set to 'full', 'limit', or 'none'. Default = 'full'.
+        outputNames cell % Add optional output names to variables instead of the default 'output#'.
+        
+        timeout (1, 1) double = 30 % Number of seconds before function execution should be timed out. Note that includes solution function time.
+        imageTolerance (1, 1) double = 10 % The tolerance level for checkImages. Default = 10.
+        textRule char = 'default' % How strict checkTextFiles should be. Set to 'default', 'strict', or 'loose'. Default = 'default'.
+        numTolerance (1, 1) double = 0.001 % Absolute tolerance for numerical comparisons in verifyEqual.
     end
 
     methods
         function obj = TesterHelper(varargin, opts)
+
+            % TESTERHELPER - Constructor for TESTERHELPER.
+            %   The inputs to this constructor should be the inputs to the student's function. Any object properties can
+            %   be set using the Name-Value pair format. If no function name is provided, it will attempt to retrieve it
+            %   from the caller's name (assumed it is called FUNCNAME_Test#). If no testCase object is provided, it will
+            %   attempt to retrieve it from the caller's workspace.
+
             arguments (Repeating)
                 varargin
             end
@@ -31,15 +44,17 @@ classdef TesterHelper
             end
 
             obj.inputs = varargin;
-            try
-                obj.testCase = evalin('caller', 'testCase');
-            catch
-                error('HWTester:noTestCase', 'Error retrieving the testCase object from the caller.');
-            end
+
             for prop = string(fieldnames(opts))'
                 obj.(prop) = opts.(prop);
             end
-
+            if isempty(obj.testCase)
+                try
+                    obj.testCase = evalin('caller', 'testCase');
+                catch
+                    error('HWTester:noTestCase', 'Error retrieving the testCase object from the caller.');
+                end
+            end
             if isempty(obj.func)
                 try
                     stack = dbstack;
@@ -48,17 +63,16 @@ classdef TesterHelper
                     error('HWTester:funcName', 'Error retrieving the name of the function being tested.');
                 end
             end
-            if isempty(obj.testCase)
-                try
-                    obj.testCase = evalin('caller', 'testCase');
-                catch
-                    error('HWTester:noTestCase', 'A testCase object must exist in the caller''s workspace.');
-                end
-            end
-
         end
 
+        %% Evaluation Functions
+
         function run(obj)
+
+            % RUN - Main Tester evaluation method.
+            %   This method will execute the runFunc method with a timeout, propagate any errors, and evaluate check 
+            %   functions as defined by the object's properties. The results of the check funtions will be executed
+            %   directly on the testCase object.
 
             if ~exist([obj.func, '.m'], 'file')
                 error('HWStudent:noFunc', 'Undefined function or script ''%s''. Was this file submitted?', obj.func);
@@ -73,9 +87,9 @@ classdef TesterHelper
             end
 
             f = parfeval(@obj.runFunc, 4, loadVars);
-            ok = wait(f, 'finished', 32); % Modify timeout time here
+            ok = wait(f, 'finished', obj.timeout); % Run function with timeout
             if ~ok
-                error('HWStudent:infLoop', 'This function timed out because it took longer than 30 seconds to run. Is there an infinite loop?');
+                error('HWStudent:infLoop', 'This function timed out because it took longer than %d seconds to run. Is there an infinite loop?', obj.timeout);
             elseif ~isempty(f.Error)
                 try
                     lines = readlines([obj.func '.m']);
@@ -116,6 +130,22 @@ classdef TesterHelper
         end
 
         function [outputs, solns, names, checks] = runFunc(obj, loadVars)
+
+            % RUNFUNC - Helper function for RUN. To be run in the background using parfeval.
+            %   This function run's the solution code (should be named FUNCNAME_soln), the student's code, checkPlots
+            %   (if desired), and checkFilesClosed (if desired).
+            %   
+            %   Input Arguments
+            %       loadVars (char) - Path to a mat file containing variable data from main caller. This is only
+            %       necessary if the code being checked is a script with inputs given in the tester file. The run
+            %       function will create this automatically if the code being tested is a script.
+            %
+            %   Output Arguments
+            %       outputs - Cell array of all student outputs.
+            %       solns - Cell array of all solution outputs.
+            %       names - Cell array of names of output variables. This is either by the outputNames property for functions,
+            %               the variable name in the solution script (VARNAME_soln), or by default it will be 'output#'.
+            %       checks - Structure containing the results of the checkPlots and checkFilesClosed methods.
 
             checks = struct();
 
@@ -186,20 +216,15 @@ classdef TesterHelper
         function checkAllEqual(obj, outputs, solns, names)
 
             % CHECKALLEQUAL - Check and compare all solution variables against the student's.
-            %   This function compares all variables in the caller's workspace that ends with '_soln' against the 
-            %   variables that don't with Matlab's unittest verifyEqual function. This function can only be used in a
-            %   testing environment and assumes a testCase object exists in the caller.
+            %   This function compares all data inside 'outputs' with the corresppnding data in 'solns' by running it
+            %   through the verifyEqual function on the testCase object with an absolute tolerance defined by numTolerance. 
+            %   It will also output a message with a level of detail given by obj.outputType. 'full' will output full 
+            %   comparison information, 'limit' will only output which variables are incorrect, and 'none' will have no output text.
             %
-            %   Syntax
-            %       checkAllEqual()
-            %       checkAllEqual(Name=Value)
-            %
-            %   Name-Value Arguments
-            %       html (logical) - Output diagnostic in html format. Default = true.
-            %       output (char) - Change how much information should be output in the diagnostic:
-            %           'full' (default) - Output full comparison information.
-            %           'limit' - Only ouput which variables are incorrect instead of a comparison.
-            %           'none' - No output text.
+            %   Input Arguments
+            %       outputs - Cell array of all student outputs.
+            %       solns - Cell array of all solution outputs.
+            %       names - Cell array of names of output variables.
 
             for i = 1:length(solns)
                 soln = solns{i};
@@ -216,7 +241,7 @@ classdef TesterHelper
                 if isempty(soln)
                     obj.testCase.verifyEmpty(student, msg);
                 else
-                    obj.testCase.verifyEqual(student, soln, msg, "AbsTol", 0.001);
+                    obj.testCase.verifyEqual(student, soln, msg, "AbsTol", obj.numTolerance);
                 end
             end
 
@@ -228,32 +253,11 @@ classdef TesterHelper
             %   This function will check if the function in question calls or does not call certain functions or use
             %   certain operations. A list of allowed functions and operations should be specified in a file called
             %   'Allowed_Functions.json'. Operations are defined the keywords that appear when the function iskeyword is 
-            %   called, and must be in all caps. If no output arguments are specified, then it is assumed the
-            %   function is being used in a testing environment and a testCase object exists in the caller. 
-            %
-            %   Syntax
-            %       [tf, msg] = checkCalls(func)
-            %       [tf, msg] = checkCalls(func, Name=Value)
-            %       checkCalls(func, Name=Value)
-            %       checkCalls(Name=Value)
-            %
-            %   Input Arguments
-            %       func - Name of the function to test as a character vector. If unspecified, it retrieves the name of
-            %              the caller function and uses the appropriate substring (caller should be named FUNCNAME_TEST#).
-            %
-            %   Name-Value Arguments
-            %       banned (cell) - List of additional banned functions.
-            %       include (cell) - List of functions that must be included.
-            %       allow (cell) - List of functions that should bypass the ban restriction.
-            %
-            %   Output Arguments
-            %       tf - True if the function passed all checks, and false if a banned function is present or an
-            %            included function is not.
-            %       msg - Character message indicating which functions are banned or missing. Is empty if tf is true.
-            % 
-            %   Examples
-            %       [tf, msg] = TesterHelper.checkCalls('myFunc', banned={'max', 'min'}, include={'WHILE'})
-            %       TesterHelper.checkCalls()
+            %   called, and must be in all caps. It will run the final result through the testCase object using
+            %   verifyTrue. The following object properties can be used to modify the list of calls this function checks:
+            %       bannedFuncs - List of additional banned functions.
+            %       includeFuncs - List of functions that must be included.
+            %       allowedFuncs - List of functions that should bypass the ban restriction.
             
 
             % Find name of function to test
@@ -295,34 +299,10 @@ classdef TesterHelper
         function checkImages(obj)
 
             % CHECKIMAGES - Check and compare an image against the solution's.
-            %   This function will read in an image filename and compare it to its corresponding image solution with a
-            %   small tolerance. If no output arguments are specified and html = false, it instead displays a figure 
-            %   comparison of the two images. If no output arguments are specified and html = true, then it is assumed 
-            %   the function is being used in a testing environment and a testCase object exists in the caller.
-            %
-            %   Syntax
-            %       [tf, msg] = checkImages(user_fn)
-            %       [tf, msg] = checkImages(user_fn, Name=Value)
-            %       checkImages(user_fn)    
-            %       checkImages(user_fn, Name=Value)
-            %
-            %   Input Arguments
-            %       user_fn - Filename of the student's image. It will assume the solution image is the filename with '_soln' attached.
-            %
-            %   Name-Value Arguments
-            %       html (logical) - This adds the figure comparison as embedded html data (base64) to the output msg 
-            %                        variable. It also calls verifyEqual. If there are no output arguments, its default 
-            %                        is true. Otherwise, it is false.
-            %       output (char) - Change how much information is contained in msg:
-            %           'full' (default) - Output full comparison data, including image.
-            %           'limit' - Only output error text.
-            %           'none' - Don't output any message.
-            %       tolerance (double) - Add RGB value tolerance to the function. Default = 10.
-            %       
-            %   Output Arguments
-            %       tf - True if the images matched, and false if not.
-            %       msg - Character message indicating why the test failed, along with a hyperlink to display the
-            %             figure comparison. Is empty if tf is true.
+            %   This function will read in an image filename (defined by the property runCheckImages) and compare it to 
+            %   its corresponding image solution with a small tolerance. The final result is run through the testCase
+            %   object using verifyTrue. The outputType property does affect this function, and the full output 
+            %   includes an image comparison.
 
             % Solution file name
             user_fn = obj.runCheckImages;
@@ -331,9 +311,10 @@ classdef TesterHelper
             
             % Check if images can be accessed
             if ~exist(expected_fn, 'file')
-                error('HWTester:noImage', 'The solution image does not exist');
+                error('HWTester:noImage', 'The solution image wasn''t found');
             elseif ~exist(user_fn, 'file')
-                obj.testCase.verifyTrue(false, 'Your image doesn''t exist. Was it created properly with the right filename?');
+                obj.testCase.verifyTrue(false, ['Your solution did not produce an image when one was expected. ' ...
+                    'Was it created properly with the right filename?']);
                 return;
             end
             % Image comparsion
@@ -368,138 +349,18 @@ classdef TesterHelper
 
         end
 
-        function [hasPassed, msg] = checkTextFiles(obj)
-
-            % CHECKTEXTFILES - Check and compare a text file against the solution's.
-            %   This function will read in two text files and compare them. By default, it will ignore an extra newline
-            %   at the end of any text file.
-            %
-            %   Syntax
-            %       [tf, msg] = checkTextFiles(user_fn)
-            %       [tf, msg] = checkTextFiles(___, Name=Value)
-            %       checkTextFiles(___, Name=Value)
-            %
-            %   Input Arguments
-            %       user_fn - Filename of the student's text file. It will assume the solution image is the filename with 
-            %              '_soln' attached.
-            %
-            %   Name-Value Arguments
-            %       rule (char) - Indicates how to compare the two text files.
-            %           'default' (default) - Compares the two text files character by character, ignoring an extra
-            %                                 newline at the end of any text file.
-            %           'strict' - Don't ignore the newline at the end of a text file.
-            %           'loose' - Ignore capitilization and the newline.
-            %       output (char) - Change how much information is contained in msg:
-            %           'full' (default) - Output full comparison data, including line by line comparison.
-            %           'limit' - Only output error text.
-            %           'none' - Don't output any message.
-            %       cap (logical) - Indiate whether to cap the output comparsion to 15 lines. Default = false.
-            %       html (logical) - Output the comparsion in html format. If there are no output arguments, it's
-            %                        default is true. Otherwise, it is false.
-            %
-            %   Output Arguments
-            %       tf - True if the text files matched, false if not.
-            %       msg - Character message indicating why the test failed, along with a comparison of the two text
-            %       files with the different lines bolded/highlighted. Is empty if tf is true.
-
-            % Read in files
-            user_fn = obj.runCheckTextFiles;
-            soln_fn = [user_fn(1:end-4) '_soln.txt'];
-            student = readlines(user_fn);
-            soln = readlines(soln_fn);
-
-            % Compare using defined rules
-            if ~strcmpi(obj.textRule, 'strict')
-                if isempty(char(student(end)))
-                    student(end) = [];
-                end
-                if isempty(char(soln(end)))
-                    soln(end) = [];
-                end
-            end
-            n_st = length(student);
-            n_sol = length(soln);       
-            if strcmpi(obj.textRule, 'loose')
-                same = strcmpi(student(1:min(n_st, n_sol)), soln(1:min(n_st, n_sol)));
-            else
-                same = strcmp(student(1:min(n_st, n_sol)), soln(1:min(n_st, n_sol)));
-            end
-            if n_st ~= n_sol
-                hasPassed = false;
-                msg = sprintf('The output text has %d lines when %d lines are expected.', length(student), length(soln));
-            elseif ~all(same)
-                hasPassed = false;
-                msg = sprintf('The output text does not match the expected text file.');
-            else
-                hasPassed = true;
-                msg = '';
-            end
-
-            % Output
-            if strcmpi(obj.outputType, 'none')
-                msg = '';
-            elseif ~hasPassed && strcmpi(obj.outputType, 'full')
-                if n_st > 20
-                    student = [student(1:20); "Additional lines have been suppressed."];
-                end
-                if n_sol > 20
-                    soln = [soln(1:20); "Additional lines have been suppressed."];
-                end
-                student(~same) = strcat("<strong>", student(~same), "</strong>");
-                soln(~same) = strcat("<strong>", soln(~same), "</strong>");
-                if n_st > n_sol
-                    student(n_sol+1:end) = strcat("<strong>", student(n_sol+1:end), "</strong>");   
-                elseif n_sol > n_st
-                    soln(n_st+1:end) = strcat("<strong>", soln(n_st+1:end), "</strong>");
-                end
-                msg = sprintf('%s\n%s\nActual text file:\n%s\n%s\n%s\nExpected text file:\n%s\n%s', ...
-                        msg, repelem('-', 16), repelem('-', 16), char(strjoin(student, '\n')), repelem('-', 16), repelem('-', 16), char(strjoin(soln, '\n')));
-                msg(msg == '"') = '''';
-                msg = strrep(msg, '<strong>', '<mark>'); % Replace with highlight in html
-                msg = strrep(msg, '</strong>', '</mark>');
-                msg = strrep(msg, newline, '\n    ');
-            end
-
-            obj.testCase.verifyTrue(hasPassed, msg)
-        end
-    end
-        
-    methods (Static)
-        function [hasPassed, msg] = checkPlots()
+        function [hasPassed, msg] = checkPlots(obj)
             
             % CHECKPLOTS - Check and compare a plot against the solution's.
             %   This function will read in the currently open figures and compare them. For the function to work, all
-            %   figures must be closed and then at least 2 figures must be opened. The student plot should be created
-            %   first, followed by the solution plot. The solution plot must not override the student's, so 'figure'
-            %   must be called. If no output arguments are specified and html is true, then it is assumed the function 
-            %   is being used in a testing environment and a testCase object exists in the caller.
-            %
-            %   Syntax
-            %       [tf, msg] = checkPlots()
-            %       [tf, msg] = checkPlots(Name=Value)
-            %       checkPlots(Name=Value)
-            %
-            %   Name-Value Arguments
-            %       html (logical) - This adds the figure comparison as embedded html data (base64) to the output msg 
-            %                        variable. It also calls verifyEqual. If there are no output arguments, its default 
-            %                        is true. Otherwise, it is false.
-            %       output (char) - Change how much information is contained in msg:
-            %           'full' (default) - Output full comparison data, including image.
-            %           'limit' - Only output error text.
-            %           'none' - Don't output any message.
-            %       reverse (logical) - If true, then the solution plot should be plotted first. Otherwise, and by
-            %                           default, the student plot should be plotted first.
+            %   figures must be closed and then at least 2 figures must be opened. The solution plot should be created
+            %   first, followed by the student plot. The plots must not override one another, so 'figure'
+            %   must be called. The outputType property does affect this function, and the full output includes a figure
+            %   comparison.
             %
             %   Output Arguments
             %       tf - True if the plots matched, false if not.
             %       msg - Character message indicating why the test failed. Is empty if tf is true.
-            %
-            %   Example
-            %       close all;
-            %       func();
-            %       figure;
-            %       func_soln();
-            %       [tf, msg] = checkPlots();
             %
             %   checkPlots does not current support or check the following:
             %       - Annotations, tiled layout, UI elements, colorbars, or other graphic elements
@@ -508,33 +369,27 @@ classdef TesterHelper
             %       - Text styles or font size
             %       - Box styling, tick marks, tick labels, and similar
             %       - Similar plots with a margin of error
-
-            % Check if figures are open
-            if length(findobj('type', 'figure')) < 2
-                msg = 'Your code did not create a plot when one is required.';
-                return
-            end
             
             % sFig - Student, cFig - Correct figure. Need to check next plot in case 'figure' was called in the function.
             i = 1;
-            while true
-                if numel(figure(i).Children) ~= 0
-                    break
-                else
-                    i = i + 1;
+            if numel(figure(i).Children) == 0
+                i = i + 1;
+                if numel(figure(i).Children) == 0
+                    error('HWTester:noPlot', 'There was no solution plot present.');
                 end
             end
-            j = i + 1;
-            while true
-                if numel(figure(j).Children) ~= 0
-                    break
-                else
-                    j = j + 1;
-                end
-            end
-
             cFig = figure(i);
-            sFig = figure(j);
+            i = i + 1;
+            if numel(figure(i).Children) == 0
+                i = i + 1;
+                if numel(figure(i).Children) == 0
+                    hasPassed = false;
+                    msg = 'Your solution did not create a plot when one was expected.';
+                    return
+                end
+            end
+            sFig = figure(i);
+
             msg = [];
 
             % Plot check
@@ -655,24 +510,104 @@ classdef TesterHelper
                 if strcmp(msg(1:2), '\n')
                     msg = msg(3:end);
                 end
-                filename = TesterHelper.compareImg(sFig, cFig);
-                msg = strrep(msg, '\n', '\n    ');
-                msg = sprintf('%s\\nIMAGEFILE:%s', msg, filename);             
+                if strcmpi(obj.outputType, 'full')
+                    filename = TesterHelper.compareImg(sFig, cFig);
+                    msg = strrep(msg, '\n', '\n    ');
+                    msg = sprintf('%s\\nIMAGEFILE:%s', msg, filename);  
+                end
             else
                 hasPassed = true;
             end
         end
 
+        function [hasPassed, msg] = checkTextFiles(obj)
+
+            % CHECKTEXTFILES - Check and compare a text file against the solution's.
+            %   This function will read in a text file and compare it to its corresponding solution file. The comparison
+            %   depends on the textRule property, where 'default' will ignore the extra newline character at the end of
+            %   either text file, 'strict' will not ignore the newline, and 'loose' will also ignore capitalization. 
+            %   The final result is run through the testCase object using verifyTrue. The outputType property does affect 
+            %   this function, and the full output includes a line by line comparison between the two text files, with
+            %   different lines highlighted.
+
+            % Read in files
+            user_fn = obj.runCheckTextFiles;
+            soln_fn = [user_fn(1:end-4) '_soln.txt'];
+
+            % Check for files
+            if ~exist(soln_fn, 'file')
+                error('HWTester:noFile', 'The solution text file wasn''t found');
+            end
+            if ~exist(user_fn, 'file')
+                obj.testCase.verifyTrue(false, ['Your solution did not produce a text file when one was expected. ' ...
+                    'Was it created properly with the right filename?'])
+                return
+            end
+            student = readlines(user_fn);
+            soln = readlines(soln_fn);
+
+            % Compare using defined rules
+            if ~strcmpi(obj.textRule, 'strict')
+                if isempty(char(student(end)))
+                    student(end) = [];
+                end
+                if isempty(char(soln(end)))
+                    soln(end) = [];
+                end
+            end
+            n_st = length(student);
+            n_sol = length(soln);       
+            if strcmpi(obj.textRule, 'loose')
+                same = strcmpi(student(1:min(n_st, n_sol)), soln(1:min(n_st, n_sol)));
+            else
+                same = strcmp(student(1:min(n_st, n_sol)), soln(1:min(n_st, n_sol)));
+            end
+            if n_st ~= n_sol
+                hasPassed = false;
+                msg = sprintf('The output text has %d lines when %d lines are expected.', length(student), length(soln));
+            elseif ~all(same)
+                hasPassed = false;
+                msg = sprintf('The output text does not match the expected text file.');
+            else
+                hasPassed = true;
+                msg = '';
+            end
+
+            % Output
+            if strcmpi(obj.outputType, 'none')
+                msg = '';
+            elseif ~hasPassed && strcmpi(obj.outputType, 'full')
+                if n_st > 20
+                    student = [student(1:20); "Additional lines have been suppressed."];
+                end
+                if n_sol > 20
+                    soln = [soln(1:20); "Additional lines have been suppressed."];
+                end
+                student(~same) = strcat("<strong>", student(~same), "</strong>");
+                soln(~same) = strcat("<strong>", soln(~same), "</strong>");
+                if n_st > n_sol
+                    student(n_sol+1:end) = strcat("<strong>", student(n_sol+1:end), "</strong>");   
+                elseif n_sol > n_st
+                    soln(n_st+1:end) = strcat("<strong>", soln(n_st+1:end), "</strong>");
+                end
+                msg = sprintf('%s\n%s\nActual text file:\n%s\n%s\n%s\nExpected text file:\n%s\n%s', ...
+                        msg, repelem('-', 16), repelem('-', 16), char(strjoin(student, '\n')), repelem('-', 16), repelem('-', 16), char(strjoin(soln, '\n')));
+                msg(msg == '"') = '''';
+                msg = strrep(msg, '<strong>', '<mark>'); % Replace with highlight in html
+                msg = strrep(msg, '</strong>', '</mark>');
+                msg = strrep(msg, newline, '\n    ');
+            end
+
+            obj.testCase.verifyTrue(hasPassed, msg)
+        end
+    end
+  
+    methods (Static)
         function [isClosed, msg] = checkFilesClosed(varargin)
 
             % CHECKFILESCLOSED - Check if all files have been properly closed.
             %   This function will check to ensure that all files have been closed using fclose. If any files are still
-            %   open, it will close them. If no output arguments are specified, then it is assumed the function is being 
-            %   used in a testing environment and a testCase object exists in the caller.
-            %
-            %   Syntax
-            %       [tf, msg] = checkFilesClosed()
-            %       checkFilesClosed()
+            %   open, it will close them.
             %
             %   Output Arguments
             %       tf - True if all files were properly closed, and false if not.
@@ -1153,11 +1088,20 @@ classdef TesterHelper
                 out = '[]';
             elseif isstruct(in) && ~options.interactive
                 try
+                    for i = 1:numel(in)
+                        fields = fieldnames(in);
+                        for j = 1:numel(fields)
+                            if ischar(in(i).(fields{j}))
+                                in(i).(fields{j}) = string(in(i).(fields{j}));
+                            end
+                        end
+                    end
                     out = struct2table(in);
                 catch
                     out = in;
                 end
                 out = char(formattedDisplayText(out, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup',true));
+                out = strrep(out, '"', '''');
             elseif ischar(in) || isstring(in)
                 % Convert string into char
                 if isstring(in)
