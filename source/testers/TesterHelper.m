@@ -126,7 +126,7 @@ classdef TesterHelper
                 obj.testCase.verifyTrue(checks.plot{1}, checks.plot{2});
             end
             if ~isempty(obj.runCheckImages)
-                obj.checkImages(obj.runCheckImages, checks.images);
+                obj.checkImages(obj.runCheckImages, checks.image);
             end
 
         end

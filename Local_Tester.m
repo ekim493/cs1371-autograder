@@ -1,4 +1,4 @@
-assignment_name = input('Enter assignment name:    ');
+assignment_name = input('Enter assignment name: ', 's');
 
 addpath("Submissions\")
 addpath(sprintf('source/solutions/%s', strrep(assignment_name, 'X', 'W')))
@@ -10,6 +10,13 @@ fh = fopen('../Submissions/submission_metadata.json', 'w');
 fprintf(fh, json);
 fclose(fh);
 runTester();
+movefile("results.json", "../")
+files = dir();
+files = files(~[files.isdir]);
+for file = {files.name}
+    if ~(strcmp(file{1}, 'run_autograder') || strcmp(file{1}, 'runTester.m') || strcmp(file{1}, 'README.md'))
+        delete(file{1});
+    end
+end
 cd("../")
-movefile("./source/results.json", "./")
 open("results.json")
