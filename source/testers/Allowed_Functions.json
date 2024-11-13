@@ -80,7 +80,8 @@
         "linspace",
         "diff",
         "end",
-	    "sqrt"],
+	    "sqrt",
+        "imshow"],
     "ALLOWED_OPS":
         ["WHILE",
         "FOR",
