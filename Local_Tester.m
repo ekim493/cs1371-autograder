@@ -2,13 +2,15 @@ assignment_name = input('Enter assignment name: ', 's');
 
 addpath("Submissions\")
 addpath(sprintf('source/solutions/%s', strrep(assignment_name, 'X', 'W')))
-cd("source\")
-metadata = jsondecode(fileread('../submission_metadata.json'));
+metadata = jsondecode(fileread('submission_metadata.json'));
 metadata.assignment.title = assignment_name;
 json = jsonencode(metadata);
-fh = fopen('../Submissions/submission_metadata.json', 'w');
+fh = fopen('./Submissions/submission_metadata.json', 'w');
 fprintf(fh, json);
 fclose(fh);
+
+cd("source\")
+pause(0.1);
 runTester();
 movefile("results.json", "../")
 files = dir();

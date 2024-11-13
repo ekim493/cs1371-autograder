@@ -246,9 +246,7 @@ classdef TesterHelper
                 elseif strcmpi(obj.outputType, 'limit')
                     msg = sprintf('Variable ''%s'' does not match the solution''s.', names{i});
                 elseif strcmpi(obj.outputType, 'full')
-                    [r, c] = size(student);
-                    [r_e, c_e] = size(soln);
-                    msg = ['<u>', names{i}, '</u>\n', '    Actual output (' sprintf('%dx%d %s', r, c, class(student)) '):\n    ' TesterHelper.toChar(student, html=true) '\n    Expected output (' sprintf('%dx%d %s', r_e, c_e, class(soln)) '):\n    ' TesterHelper.toChar(soln, html=true)];
+                    msg = ['<u>', names{i}, '</u>\n', '    Actual output ' TesterHelper.toChar(student, html=true) '\n    Expected output ' TesterHelper.toChar(soln, html=true)];
                 end
                 if isempty(soln)
                     obj.testCase.verifyEmpty(student, msg);
@@ -343,7 +341,7 @@ classdef TesterHelper
                 end
             else
                 hasPassed = false;
-                msg = sprintf('The dimensions of the image do not match the expected image.\nActual size: %dx%dx%d\nExpected size: %dx%dx%d', rUser, cUser, lUser, rExp, cExp, lExp);
+                msg = sprintf('The dimensions of the image do not match the expected image.\n    Actual size: %dx%dx%d\n    Expected size: %dx%dx%d', rUser, cUser, lUser, rExp, cExp, lExp);
             end
 
             % Output
@@ -1094,8 +1092,12 @@ classdef TesterHelper
                 options.cap = true
             end
 
+            [r, c, l] = size(in);
             if isempty(in)
                 out = '[]';
+            elseif l > 1
+                % If there are more than 2 dimensions
+                out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup',true));
             elseif isstruct(in) && ~options.interactive
                 try
                     for i = 1:numel(in)
@@ -1115,25 +1117,25 @@ classdef TesterHelper
             elseif ischar(in) || isstring(in)
                 % Convert string into char
                 if isstring(in)
-                    in = char(in);
+                    out = char(in);
+                else
+                    out = in;
                 end
-                [r, ~] = size(in);
                 % Interactive inputs
-                if r == 1 && options.interactive && exist(in, 'file')
-                    if contains(in, '.png') || contains(in, '.jpg') || contains(in, '.jpeg')
-                        out = sprintf('<a href="matlab: cd(''%s'');clf;imgDisp=imread(''%s'');imshow(imgDisp);clear imgDisp;shg">%s</a>', pwd, in, in);
+                if r == 1 && options.interactive && exist(out, 'file')
+                    if contains(out, '.png') || contains(out, '.jpg') || contains(out, '.jpeg')
+                        out = sprintf('<a href="matlab: cd(''%s'');clf;imgDisp=imread(''%s'');imshow(imgDisp);clear imgDisp;shg">%s</a>', pwd, out, out);
                     else
-                        out = sprintf('<a href="matlab: cd(''%s'');open(''%s'')">%s</a>', pwd, in, in);
+                        out = sprintf('<a href="matlab: cd(''%s'');open(''%s'')">%s</a>', pwd, out, out);
                     end
                 elseif r == 1 && contains(in, '.txt') && exist(in, 'file')
                     out = char(strjoin(readlines(in), '\n'));
                 else
                     % Default char and string conversion
-                    in = [repmat('''', r, 1) in repmat('''', r, 1)];
-                    out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
+                    out = [repmat('''', r, 1) in repmat('''', r, 1)];
+                    out = char(formattedDisplayText(out, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
                 end
             elseif isnumeric(in)
-                [r, c] = size(in);
                 if r == 1
                     if c == 1
                         % Single number
@@ -1151,7 +1153,6 @@ classdef TesterHelper
                     out = [out(1:end-1) ']' out(end)];
                 end
             elseif islogical(in)
-                [~, c] = size(in);
                 out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
                 if contains(out, 'Columns')
                     out = [' [' out(3:end-1) ']'];
@@ -1181,7 +1182,12 @@ classdef TesterHelper
                 end 
             end
             if options.html
-                out = ['   ' out];
+                if l > 1
+                    pref = sprintf('(%dx%dx%d %s):', r, c, l, class(in));
+                else
+                    pref = sprintf('(%dx%d %s):', r, c, class(in));
+                end
+                out = [pref '\n       ' out];
                 out(out == '"') = '''';
                 out = strrep(out, newline, '\n       ');
             end

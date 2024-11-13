@@ -6,8 +6,7 @@ if isunix && ~ismac
         error('The submission metadata wasn''t found.');
     end
 else
-    submission = jsondecode(fileread('submission_metadata.json')); % For local testing
-    addpath("dir\");
+    submission = jsondecode(fileread('../Submissions/submission_metadata.json')); % For local testing
 end
 assignment_name = submission.assignment.title;
 
