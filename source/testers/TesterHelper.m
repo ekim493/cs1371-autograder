@@ -120,7 +120,7 @@ classdef TesterHelper
                 obj.testCase.verifyTrue(checks.files{1}, checks.files{2});
             end
             if ~isempty(obj.runCheckTextFiles)
-                obj.checkTextFiles();
+                obj.checkTextFiles(obj.runCheckTextFiles, checks.textFile);
             end
             if obj.runCheckPlots
                 obj.testCase.verifyTrue(checks.plot{1}, checks.plot{2});
@@ -169,10 +169,22 @@ classdef TesterHelper
             if ~isempty(obj.runCheckImages) && exist(obj.runCheckImages, 'file')
                 name = tempname;
                 copyfile(obj.runCheckImages, name);
+                delete(obj.runCheckImages);
                 checks.image = name;
             else
                 [file, ext] = strtok(obj.runCheckImages);
                 checks.image = [file, '_soln', ext];
+            end
+
+            % CHeck if text file was created
+            if ~isempty(obj.runCheckTextFiles) && exist(obj.runCheckTextFiles, 'file')
+                name = tempname;
+                copyfile(obj.runCheckTextFiles, name);
+                delete(obj.runCheckTextFiles);
+                checks.textFile = name;
+            else
+                [file, ext] = strtok(obj.runCheckTextFiles);
+                checks.textFile = [file, '_soln', ext];
             end
 
             % Run student code
@@ -528,7 +540,7 @@ classdef TesterHelper
             end
         end
 
-        function [hasPassed, msg] = checkTextFiles(obj)
+        function [hasPassed, msg] = checkTextFiles(obj, user_fn, soln_fn)
 
             % CHECKTEXTFILES - Check and compare a text file against the solution's.
             %   This function will read in a text file and compare it to its corresponding solution file. The comparison
@@ -537,10 +549,6 @@ classdef TesterHelper
             %   The final result is run through the testCase object using verifyTrue. The outputType property does affect 
             %   this function, and the full output includes a line by line comparison between the two text files, with
             %   different lines highlighted.
-
-            % Read in files
-            user_fn = obj.runCheckTextFiles;
-            soln_fn = [user_fn(1:end-4) '_soln.txt'];
 
             % Check for files
             if ~exist(soln_fn, 'file')

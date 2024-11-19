@@ -15,6 +15,7 @@ addpath('./testers')
 addpath('/autograder/submission');
 suite = testsuite(sprintf('%sTester', assignment_name));
 runner = testrunner();
+myCluster = parcluster('Processes');
 % Run in parallel if running on linux, run in series if on local device
 if isunix && ~ismac
     try
@@ -23,6 +24,7 @@ if isunix && ~ismac
         if strcmp(E.identifier, 'MATLAB:unittest:TestRunner:ParallelRunException')
             disp(repelem('-', 30))
             disp(E);
+            delete(myCluster.Jobs);
             tests = run(runner, suite);
         end
     end
