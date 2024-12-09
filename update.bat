@@ -1,7 +1,15 @@
 @echo off
 REM Defaults. Edit if necessary
-set baseDir=ekim493/cs1371-autograder:stablev2
+set baseRep=ekim493/cs1371-autograder
 set repoName=ekim493/cs1371-autograder
+
+REM Prompt user for baseTag
+set /p customTag="Enter a tag for the base docker: "
+if "%baseTag%"=="" (
+    set baseTag=base
+)
+
+set baseDir=%baseRep%:%baseTag%
 
 REM Prompt user for customTag
 set /p customTag="Enter a tag for the image: "

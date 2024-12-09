@@ -1,7 +1,7 @@
 @echo off
 REM Default repo and tags. Edit if necessary
 set defaultRepoName=ekim493/cs1371-autograder
-set defaultCustomTag=latest
+set defaultCustomTag=base
 
 REM Prompt user for repoName
 echo Default DockerHub repository and tag: %defaultRepoName%:%defaultCustomTag%
@@ -39,7 +39,7 @@ if %ERRORLEVEL% neq 0 (
 )
 
 REM Build the Docker image
-docker build . -f Dockerfile/Dockerfile.build -t %repoName%:%customTag%
+docker build . -f Dockerfile/Dockerfile.build -t %repoName%:%customTag% --no-cache
 if %ERRORLEVEL% neq 0 (
     echo Docker image build failed.
     pause
