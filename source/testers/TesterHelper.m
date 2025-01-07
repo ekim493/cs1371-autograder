@@ -6,6 +6,9 @@ classdef TesterHelper
         func (1, :) char % Name of the function to be tested.
         testCase % The testCase object to perform verifications on.
 
+        testCaseName char % Full name of the test case (to display for debugging)
+        inputNames cell % Names of inputs (to display for debugging)
+
         runCheckAllEqual (1, 1) logical = true % Whether the checkAllEqual method should be run. Default = true.
         runCheckCalls (1, 1) logical = true % Whether the checkCalls method should be run. Default = true.
         runCheckFilesClosed (1, 1) logical = false % Whether the checkFilesClosed method should be run. Default = false.
@@ -47,6 +50,10 @@ classdef TesterHelper
             obj.inputs = varargin;
             obj.solnInputs = varargin;
 
+            for i = 1:length(obj.inputs)
+                obj.inputNames(i) = {inputname(i)};
+            end
+
             for prop = string(fieldnames(opts))'
                 obj.(prop) = opts.(prop);
             end
@@ -61,6 +68,7 @@ classdef TesterHelper
                 try
                     stack = dbstack;
                     obj.func = char(extractBetween(stack(2).name, '.', '_Test'));
+                    obj.testCaseName = extractAfter(stack(2).name, '.');
                 catch
                     error('HWTester:funcName', 'Error retrieving the name of the function being tested.');
                 end
@@ -86,6 +94,12 @@ classdef TesterHelper
             catch
                 loadVars = tempname;
                 evalin('caller', sprintf('save(''%s'')', loadVars));
+            end
+
+            % Display input variables in command window for debugging
+            disp(sprintf('\nTestcase: %s', obj.testCaseName)); %#ok<DSPSP>
+            for i = 1:length(obj.inputs)
+                disp(sprintf('\n%s =\n%s', obj.inputNames{i}, TesterHelper.toChar(obj.inputs{i}))) %#ok<DSPSP>
             end
 
             f = parfeval(@obj.runFunc, 4, loadVars);
