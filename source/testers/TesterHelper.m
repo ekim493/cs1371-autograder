@@ -775,7 +775,7 @@ classdef TesterHelper
             localCalls = calls(ismember(calls, localFuns));
             calls(ismember(calls, localFuns)) = [];
             for l = 1:numel(localCalls)
-                calls = [calls getCalls([fld filesep localCalls{l} '.m'])]; %#ok<AGROW>
+                calls = [calls TesterHelper.getCalls([fld filesep localCalls{l} '.m'])]; %#ok<AGROW>
             end
         
             % Add operations
@@ -1154,7 +1154,7 @@ classdef TesterHelper
                     out = char(strjoin(readlines(in), '\n'));
                 else
                     % Default char and string conversion
-                    out = [repmat('''', r, 1) in repmat('''', r, 1)];
+                    out = [repmat('''', r, 1) out repmat('''', r, 1)];
                     out = char(formattedDisplayText(out, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
                 end
             elseif isnumeric(in)
