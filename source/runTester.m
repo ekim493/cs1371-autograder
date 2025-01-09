@@ -1,4 +1,4 @@
-function runTester
+function runTester(useParallel)
 if isunix && ~ismac
     try
         submission = jsondecode(fileread('/autograder/submission_metadata.json')); % Import assignment name from gradescope
@@ -16,8 +16,10 @@ addpath('/autograder/submission');
 suite = testsuite(sprintf('%sTester', assignment_name));
 runner = testrunner();
 myCluster = parcluster('Processes');
-% Run in parallel if running on linux, run in series if on local device
-if isunix && ~ismac
+% Store useParallelCheck to see if parallel toolbox should be used
+global useParallelCheck %#ok<GVMIS>
+useParallelCheck = useParallel;
+if useParallelCheck
     try
         tests = runInParallel(runner, suite);
     catch E

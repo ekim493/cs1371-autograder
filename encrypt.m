@@ -1,7 +1,7 @@
 function encrypt
-copyfile("source\", "sourceP\");
+copyfile("source/", "sourceP/");
 % Solutions folder
-cd("sourceP\solutions");
+cd("sourceP/solutions");
 files = {dir().name};
 files = files(4:end);
 for i = 1:length(files)

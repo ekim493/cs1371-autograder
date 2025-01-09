@@ -102,27 +102,38 @@ classdef TesterHelper
                 disp(sprintf('\n%s =\n%s', obj.inputNames{i}, TesterHelper.toChar(obj.inputs{i}))) %#ok<DSPSP>
             end
 
-            f = parfeval(@obj.runFunc, 4, loadVars);
-            ok = wait(f, 'finished', obj.timeout); % Run function with timeout
-            if ~ok
-                error('HWStudent:infLoop', 'This function timed out because it took longer than %d seconds to run. Is there an infinite loop?', obj.timeout);
-            elseif ~isempty(f.Error)
-                try
-                    lines = readlines([obj.func '.m']);
-                    stackLevel = find(strcmpi({f.Error.stack(:).name}, obj.func), true);
-                    line = lines(f.Error.stack(stackLevel).line);
-                    li = find(strcmp(lines, line));
-                    if numel(li) > 1
-                        li = li(li < f.Error.stack(stackLevel).line);
-                        li = max(li);
-                    end
-                catch ME
-                    throw(f.Error);
-                end
-                error('HWStudent:function', '%s\n\nError in %s (line %d)\n%s', f.Error.message, obj.func, li, strtrim(line));
-            end
+            % Use global variable to check parallel running
+            global useParallelCheck; %#ok<GVMIS>
 
-            [outputs, solns, names, checks] = fetchOutputs(f);
+            if isempty(useParallelCheck)
+                useParallelCheck = true;
+            end
+            
+            if useParallelCheck
+                f = parfeval(@obj.runFunc, 4, loadVars);
+                ok = wait(f, 'finished', obj.timeout); % Run function with timeout
+                if ~ok
+                    error('HWStudent:infLoop', 'This function timed out because it took longer than %d seconds to run. Is there an infinite loop?', obj.timeout);
+                elseif ~isempty(f.Error)
+                    try
+                        lines = readlines([obj.func '.m']);
+                        stackLevel = find(strcmpi({f.Error.stack(:).name}, obj.func), true);
+                        line = lines(f.Error.stack(stackLevel).line);
+                        li = find(strcmp(lines, line));
+                        if numel(li) > 1
+                            li = li(li < f.Error.stack(stackLevel).line);
+                            li = max(li);
+                        end
+                    catch ME
+                        throw(f.Error);
+                    end
+                    error('HWStudent:function', '%s\n\nError in %s (line %d)\n%s', f.Error.message, obj.func, li, strtrim(line));
+                end
+    
+                [outputs, solns, names, checks] = fetchOutputs(f);
+            else
+                [outputs, solns, names, checks] = obj.runFunc(loadVars);
+            end
 
             if obj.runCheckCalls
                 obj.checkCalls();

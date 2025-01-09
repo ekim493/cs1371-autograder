@@ -9,9 +9,9 @@ fh = fopen('./Submissions/submission_metadata.json', 'w');
 fprintf(fh, json);
 fclose(fh);
 
-cd("source\")
+cd("source")
 pause(0.1);
-runTester();
+runTester(true);
 movefile("results.json", "../")
 files = dir();
 files = files(~[files.isdir]);
