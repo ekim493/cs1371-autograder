@@ -227,6 +227,9 @@ classdef TesterHelper
                 error('HWStudent:notScript', 'A script was expected, but you submitted a function instead.');
             else
                 if isFunc_student
+                    if numel(obj.inputs) ~= nargin(obj.func)
+                        error('HWStudent:inputArgs', '%d input(s) to the function were expected, but your function had %d.', numel(obj.inputs), nargin(obj.func));
+                    end
                     [~, outputs{1:nargout(obj.func)}] = evalc(sprintf('%s(obj.inputs{:})', obj.func));
                     if isempty(obj.outputNames)
                         names = arrayfun(@(x) ['output' num2str(x)], 1:numel(outputs), 'UniformOutput', false);
@@ -274,7 +277,16 @@ classdef TesterHelper
             %       outputs - Cell array of all student outputs.
             %       solns - Cell array of all solution outputs.
             %       names - Cell array of names of output variables.
+    
+            if isempty(solns) && isempty(outputs)
+                return
+            end
 
+            if numel(solns) ~= numel(outputs)
+                obj.testCase.verifyTrue(false, sprintf('%d output(s) were expected, but your function produced %d.', numel(solns), numel(outputs)));
+                return
+            end
+            
             for i = 1:length(solns)
                 soln = solns{i};
                 student = outputs{i};

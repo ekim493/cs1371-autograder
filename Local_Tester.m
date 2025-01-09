@@ -1,4 +1,5 @@
 assignment_name = input('Enter assignment name: ', 's');
+useParallel = false;
 
 addpath("Submissions\")
 addpath(sprintf('source/solutions/%s', strrep(assignment_name, 'X', 'W')))
@@ -11,7 +12,7 @@ fclose(fh);
 
 cd("source")
 pause(0.1);
-runTester(true);
+runTester(useParallel);
 movefile("results.json", "../")
 files = dir();
 files = files(~[files.isdir]);
