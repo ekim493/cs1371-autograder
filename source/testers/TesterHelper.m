@@ -1184,7 +1184,7 @@ classdef TesterHelper
                 if r == 1
                     if c == 1
                         % Single number
-                        out = num2str(in, 12);
+                        out = num2str(in, 10);
                     else
                         % Numeric vector
                         out = mat2str(in, 10);
