@@ -19,7 +19,7 @@ max_total_time=$((TIMEOUT * 2 * 60 - 1))
 # Maximum number of retries and attempt counter
 max_attempts=3
 attempt=1
-last_error_was_timeout=false
+use_parallel=true
 
 # Loop to retry on failure
 while [ $attempt -le $max_attempts ]; do
@@ -32,21 +32,15 @@ while [ $attempt -le $max_attempts ]; do
         exit 124
     fi
 
-    echo "Running Autograder... (Attempt $attempt)"
-
-    # Determine input for runTester based on previous result
-    if [ $attempt -eq 1 ] || [ "$last_error_was_timeout" = false ]; then
-        input_value="true"
-    else
-        input_value="false"
-    fi
+    echo "Running Autograder... (Attempt $attempt, useParallel = $use_parallel)"
 
     # Run commands with timeout
     timeout ${TIMEOUT}m bash -c "
         cd /autograder/source || exit 1
-        matlab -licmode onlinelicensing -batch \"runTester(${input_value})\" || exit 1
+        matlab -licmode onlinelicensing -batch \"runTester($use_parallel)\" || exit 1
         cp /autograder/source/results.json /autograder/results/results.json || exit 1
     "
+
     exit_code=$?
 
     if [ $exit_code -eq 0 ]; then
@@ -55,14 +49,14 @@ while [ $attempt -le $max_attempts ]; do
         exit 0
     elif [ $exit_code -eq 124 ]; then
         echo "Execution timed out."
-        last_error_was_timeout=true
+        use_parallel=false
         if [ $attempt -eq $max_attempts ]; then
             write_error "The autograder started but failed to run within sufficient time. Check for infinite loops or try re-running the autograder by re-submitting your work. If you believe this is an error, please contact the HW TAs."
             exit 124
         fi
     else
         echo "Execution failed with code $exit_code"
-        last_error_was_timeout=false
+        use_parallel=false
         if [ $attempt -eq $max_attempts ]; then
             write_error "The autograder failed to run properly. Try re-running the autograder by re-submitting your work. If the issue persists, please contact the HW TAs."
             exit 1
