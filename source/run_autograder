@@ -56,7 +56,9 @@ while [ $attempt -le $max_attempts ]; do
         fi
     else
         echo "Execution failed with code $exit_code"
-        use_parallel=false
+        if [ $attempt -ne 1 ]; then
+            use_parallel=false
+        fi
         if [ $attempt -eq $max_attempts ]; then
             write_error "The autograder failed to run properly. Try re-running the autograder by re-submitting your work. If the issue persists, please contact the HW TAs."
             exit 1

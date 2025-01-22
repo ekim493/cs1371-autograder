@@ -23,12 +23,13 @@ if useParallelCheck
     try
         tests = runInParallel(runner, suite);
     catch E
-        if strcmp(E.identifier, 'MATLAB:unittest:TestRunner:ParallelRunException')
-            disp(repelem('-', 30))
-            disp(E);
-            delete(myCluster.Jobs);
-            tests = run(runner, suite);
-        end
+        disp(repelem('-', 30))
+        disp(E);
+        disp(repelem('-', 30))
+        disp('Retrying without parallel execution...')
+        delete(myCluster.Jobs);
+        useParallelCheck = false;
+        tests = run(runner, suite);
     end
 else
     tests = run(runner, suite);
