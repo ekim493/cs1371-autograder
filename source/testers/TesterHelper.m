@@ -47,16 +47,21 @@ classdef TesterHelper
                 opts.?TesterHelper
             end
 
+            % By default, store inputs to constructor as function inputs
             obj.inputs = varargin;
             obj.solnInputs = varargin;
 
+            % By default, retrieve input names from the caller's workspace variable name
             for i = 1:length(obj.inputs)
                 obj.inputNames(i) = {inputname(i)};
             end
 
+            % Store opts
             for prop = string(fieldnames(opts))'
                 obj.(prop) = opts.(prop);
             end
+
+            % Look for testCase object in caller workspace
             if isempty(obj.testCase)
                 try
                     obj.testCase = evalin('caller', 'testCase');
@@ -64,6 +69,8 @@ classdef TesterHelper
                     error('HWTester:noTestCase', 'Error retrieving the testCase object from the caller.');
                 end
             end
+
+            % Look for function name from the name of the caller function
             if isempty(obj.func)
                 try
                     stack = dbstack;
@@ -88,12 +95,18 @@ classdef TesterHelper
                 error('HWStudent:noFunc', 'Undefined function or script ''%s''. Was this file submitted?', obj.func);
             end
 
-            try 
-                nargout(which(sprintf('%s_soln', obj.func)));
-                loadVars = [];
+            % See if the solution function is a script. If so, then save the caller's workspace variables into loadVars
+            % to pass in as arguments later.
+            try
+                isScript = isequal(mtree(which(sprintf('%s_soln', obj.func)), '-file').FileType, 'ScriptFile');
             catch
+                error('HWTester:funcFile', 'Error reading the solution file.');
+            end
+            if isScript
                 loadVars = tempname;
                 evalin('caller', sprintf('save(''%s'')', loadVars));
+            else
+                loadVars = [];
             end
 
             % Display input variables in command window for debugging
@@ -109,6 +122,8 @@ classdef TesterHelper
                 useParallelCheck = true;
             end
             
+            % Use parfeval to evaluate function in the background. Wait for up to obj.timeout seconds, and if there is
+            % no reponse in that time, and infinite loop is assumed.
             if useParallelCheck
                 f = parfeval(@obj.runFunc, 4, loadVars);
                 ok = wait(f, 'finished', obj.timeout); % Run function with timeout
@@ -116,14 +131,12 @@ classdef TesterHelper
                     error('HWStudent:infLoop', 'This function timed out because it took longer than %d seconds to run. Is there an infinite loop?', obj.timeout);
                 elseif ~isempty(f.Error)
                     try
+                        % If the function threw an error, attempt to recreate the default Matlab error message by
+                        % using the error line number and retreiving the relevant line from the function file.
                         lines = readlines([obj.func '.m']);
                         stackLevel = find(strcmpi({f.Error.stack(:).name}, obj.func), true);
-                        line = lines(f.Error.stack(stackLevel).line);
-                        li = find(strcmp(lines, line));
-                        if numel(li) > 1
-                            li = li(li < f.Error.stack(stackLevel).line);
-                            li = max(li);
-                        end
+                        li = f.Error.stack(stackLevel).line;
+                        line = lines(li);
                     catch ME
                         throw(f.Error);
                     end
@@ -135,6 +148,7 @@ classdef TesterHelper
                 [outputs, solns, names, checks] = obj.runFunc(loadVars);
             end
 
+            % Run relevant check functions
             if obj.runCheckCalls
                 obj.checkCalls();
             end
@@ -182,15 +196,18 @@ classdef TesterHelper
                 error('HWTester:noSoln', 'The solution function wasn''t included');
             end
             if isempty(loadVars)
+                % Run as function. Use evalc to suppress function outputs
                 [~, solns{1:nargout(sprintf('%s_soln', obj.func))}] = evalc(sprintf('%s_soln(obj.solnInputs{:})', obj.func));
             else
+                % Run as script. Load variables then evaluate
                 load(loadVars); %#ok<LOAD>
                 eval(sprintf('%s_soln', obj.func));
                 vars = who;
                 solnVars = vars(endsWith(vars, '_soln')); % Extract solutions var names
             end
 
-            % Check if image was created
+            % Check if image was created with the default name. If true, give the image a temporary filename instead. If
+            % false, assume the image was created with the '_soln' extension.
             if ~isempty(obj.runCheckImages) && exist(obj.runCheckImages, 'file')
                 name = tempname;
                 copyfile(obj.runCheckImages, name);
@@ -201,7 +218,8 @@ classdef TesterHelper
                 checks.image = [file, '_soln', ext];
             end
 
-            % CHeck if text file was created
+            % Check if text file was created with the default name. If true, give the file a temporary filename instead.
+            % If false, assume the file was created with the '_soln' extension.
             if ~isempty(obj.runCheckTextFiles) && exist(obj.runCheckTextFiles, 'file')
                 name = tempname;
                 copyfile(obj.runCheckTextFiles, name);
@@ -227,19 +245,23 @@ classdef TesterHelper
                 error('HWStudent:notScript', 'A script was expected, but you submitted a function instead.');
             else
                 if isFunc_student
+                    % Run as function. Use evalc to suppress function outputs
                     if numel(obj.inputs) ~= nargin(obj.func)
                         error('HWStudent:inputArgs', '%d input(s) to the function were expected, but your function had %d.', numel(obj.inputs), nargin(obj.func));
                     end
                     [~, outputs{1:nargout(obj.func)}] = evalc(sprintf('%s(obj.inputs{:})', obj.func));
+
+                    % If outputNames was never initialized, then give each output the default name of 'output #'
                     if isempty(obj.outputNames)
                         names = arrayfun(@(x) ['output' num2str(x)], 1:numel(outputs), 'UniformOutput', false);
                     else
                         names = obj.outputNames;
                     end
                 else
+                    % Run as script. Load variables then evaluate
                     load(loadVars); %#ok<LOAD>
                     eval(obj.func);
-                    % If script, collect variables
+                    % Collect relevant variables, using solnVars as the basis for which variables to find
                     solns = cell(1, numel(solnVars));
                     outputs = cell(1, numel(solnVars));
                     names = cellfun(@(x) extractBefore(x, '_soln'), solnVars, 'UniformOutput', false);
@@ -253,6 +275,8 @@ classdef TesterHelper
                     end
                 end
             end
+
+            % Run relevant checks. These checks must be run in the background during the intial parfeval call.
             if obj.runCheckPlots
                 [hasPassed, msg] = obj.checkPlots();
                 checks.plot = {hasPassed, msg};
@@ -287,9 +311,12 @@ classdef TesterHelper
                 return
             end
             
+            % Loop through variables and compare then
             for i = 1:length(solns)
                 soln = solns{i};
                 student = outputs{i};
+                
+                % Determine output message based on outputType
                 if strcmpi(obj.outputType, 'none')
                     continue
                 elseif strcmpi(obj.outputType, 'limit')
@@ -297,6 +324,8 @@ classdef TesterHelper
                 elseif strcmpi(obj.outputType, 'full')
                     msg = ['<u>', names{i}, '</u>\n', '    Actual output ' TesterHelper.toChar(student, html=true) '\n    Expected output ' TesterHelper.toChar(soln, html=true)];
                 end
+
+                % Verification call
                 if isempty(soln)
                     obj.testCase.verifyEmpty(student, msg);
                 else
@@ -351,7 +380,7 @@ classdef TesterHelper
                 end
             end
 
-            % Run tester
+            % Run verification
             obj.testCase.verifyTrue(hasPassed, msg);
         end
 
@@ -374,7 +403,7 @@ classdef TesterHelper
                 obj.testCase.verifyTrue(false, sprintf('The image ''%s'' wasn''t found. Did you create an image with the right filename?', user_fn));
                 return;
             end
-            % Image comparsion
+            % Image comparsion by comparing image arrays
             user = imread(user_fn);
             expected = imread(expected_fn);
             [rUser,cUser,lUser] = size(user);
@@ -393,7 +422,7 @@ classdef TesterHelper
                 msg = sprintf('The dimensions of the image do not match the expected image.\n    Actual size: %dx%dx%d\n    Expected size: %dx%dx%d', rUser, cUser, lUser, rExp, cExp, lExp);
             end
 
-            % Output
+            % Output formatting
             if strcmpi(obj.outputType, 'none')
                 msg = '';
             elseif strcmpi(obj.outputType, 'full')
@@ -427,7 +456,9 @@ classdef TesterHelper
             %       - Box styling, tick marks, tick labels, and similar
             %       - Similar plots with a margin of error
             
-            % sFig - Student, cFig - Correct figure. Need to check next plot in case 'figure' was called in the function.
+            % sFig - Student, cFig - Correct figure. 
+            % Need to check next plot in case 'figure' was called in the function. There are probably better ways to do
+            % this, but this works for now.
             i = 1;
             if numel(figure(i).Children) == 0
                 i = i + 1;
@@ -561,7 +592,7 @@ classdef TesterHelper
                 end              
             end
 
-            % Output
+            % Output formatting
             if ~isempty(msg)
                 hasPassed = false;
                 if strcmp(msg(1:2), '\n')
@@ -586,6 +617,13 @@ classdef TesterHelper
             %   The final result is run through the testCase object using verifyTrue. The outputType property does affect 
             %   this function, and the full output includes a line by line comparison between the two text files, with
             %   different lines highlighted.
+            %
+            %   Input Arguments
+            %       user_fn, soln_fn - Filename of the student's text file and the expected text file
+            %   
+            %   Output Arguments
+            %       hasPassed - True if the text file comparison passed and false if not.
+            %       msg - Character message containing text file comparison. Is empty if hasPassed is true.
 
             % Check for files
             if ~exist(soln_fn, 'file')
@@ -626,7 +664,8 @@ classdef TesterHelper
                 msg = '';
             end
 
-            % Output
+            % Output formatting. <mark> only works for html, replace with <strong> if the output has to be displayed
+            % locally in Matlab. Limit output display to 20 lines.
             if strcmpi(obj.outputType, 'none')
                 msg = '';
             elseif ~hasPassed && strcmpi(obj.outputType, 'full')
@@ -636,18 +675,15 @@ classdef TesterHelper
                 if n_sol > 20
                     soln = [soln(1:20); "Additional lines have been suppressed."];
                 end
-                student(~same) = strcat("<strong>", student(~same), "</strong>");
-                soln(~same) = strcat("<strong>", soln(~same), "</strong>");
+                student(~same) = strcat("<mark>", student(~same), "</mark>");
+                soln(~same) = strcat("<mark>", soln(~same), "</mark>");
                 if n_st > n_sol
-                    student(n_sol+1:end) = strcat("<strong>", student(n_sol+1:end), "</strong>");   
+                    student(n_sol+1:end) = strcat("<mark>", student(n_sol+1:end), "</mark>");   
                 elseif n_sol > n_st
-                    soln(n_st+1:end) = strcat("<strong>", soln(n_st+1:end), "</strong>");
+                    soln(n_st+1:end) = strcat("<mark>", soln(n_st+1:end), "</mark>");
                 end
                 msg = sprintf('%s\n%s\nActual text file:\n%s\n%s\n%s\nExpected text file:\n%s\n%s', ...
                         msg, repelem('-', 16), repelem('-', 16), char(strjoin(student, '\n')), repelem('-', 16), repelem('-', 16), char(strjoin(soln, '\n')));
-                msg(msg == '"') = '''';
-                msg = strrep(msg, '<strong>', '<mark>'); % Replace with highlight in html
-                msg = strrep(msg, '</strong>', '</mark>');
                 msg = strrep(msg, newline, '\n    ');
             end
 
@@ -748,11 +784,12 @@ classdef TesterHelper
                     return;
                 end
             else
-                % Open figure comparsion, then save the figure data using base64
+                % Open figure comparsion, then save the figure data,
                 if nargin == 2
                     TesterHelper.compareImg(varargin{:}, 'call'); % Recursive call to display figures
                 end
-                set(gcf, 'Position', [100, 100, 480, 145]); % Size of output image
+                % Decrease this value if Gradescope is not displaying properly
+                set(gcf, 'Position', [100, 100, 450, 140]); % Size of output image.
                 set(gcf, 'PaperPositionMode', 'auto');
                 filename = [tempname, '.jpg'];
                 saveas(gcf, filename);
