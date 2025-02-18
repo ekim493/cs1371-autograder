@@ -96,17 +96,14 @@ classdef TesterHelper
             end
 
             % See if the solution function is a script. If so, then save the caller's workspace variables into loadVars
-            % to pass in as arguments later.
-            try
-                isScript = isequal(mtree(which(sprintf('%s_soln', obj.func)), '-file').FileType, 'ScriptFile');
+            % to pass in as arguments later. The try-catch with nargout is used as the solution file should be pcoded,
+            % and mtree and other methods to read the file will not work
+            try 
+                nargout(which(sprintf('%s_soln', obj.func)));
+                loadVars = [];
             catch
-                error('HWTester:funcFile', 'Error reading the solution file.');
-            end
-            if isScript
                 loadVars = tempname;
                 evalin('caller', sprintf('save(''%s'')', loadVars));
-            else
-                loadVars = [];
             end
 
             % Display input variables in command window for debugging
@@ -789,7 +786,7 @@ classdef TesterHelper
                     TesterHelper.compareImg(varargin{:}, 'call'); % Recursive call to display figures
                 end
                 % Decrease this value if Gradescope is not displaying properly
-                set(gcf, 'Position', [100, 100, 450, 140]); % Size of output image.
+                set(gcf, 'Position', [100, 100, 380, 120]); % Size of output image.
                 set(gcf, 'PaperPositionMode', 'auto');
                 filename = [tempname, '.jpg'];
                 saveas(gcf, filename);
