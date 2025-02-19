@@ -65,8 +65,11 @@ for i = 1:length(tests)
     results(i).passed = tests(i).Passed;
     out = ''; % Add default success message
     if tests(i).Incomplete
-        out = tests(i).Details.DiagnosticRecord.Report;
+        % If multiple test cases were run, filer out to get the first error report
+        errorCase = contains({tests(i).Details.DiagnosticRecord.Report}, 'Error occurred');
+        out = tests(i).Details.DiagnosticRecord(errorCase).Report;
         out = strrep(out, newline, '\n');
+        % Filter error message
         if contains(out, 'HWTester:')
             out = 'The autograder ran into an unexpected error while running your function. Please contact the TAs for assistance.';
         else
