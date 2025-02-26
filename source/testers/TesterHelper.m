@@ -28,7 +28,8 @@ classdef TesterHelper
         timeout (1, 1) double = 30 % Number of seconds before function execution should be timed out. Note that includes solution function time.
         imageTolerance (1, 1) double = 10 % The tolerance level for checkImages. Default = 10.
         textRule char = 'default' % How strict checkTextFiles should be. Set to 'default', 'strict', or 'loose'. Default = 'default'.
-        numTolerance (1, 1) double = 0.001 % Absolute tolerance for numerical comparisons in verifyEqual.
+        numTolerance (1, 1) double = 0.001 % Absolute tolerance for numerical comparisons in verifyEqual. Default = 0.001.
+        maxMemPercent (1, 1) double = 2 % Limit maximum array size as a percentage of RAM. Default = 2.
     end
 
     methods
@@ -118,6 +119,10 @@ classdef TesterHelper
             if isempty(useParallelCheck)
                 useParallelCheck = true;
             end
+
+            % Set Matlab array size limit to % of RAM; this limits unresponsive timeouts
+            s = settings;
+            s.matlab.desktop.workspace.ArraySizeLimit.TemporaryValue = obj.maxMemPercent;
             
             % Use parfeval to evaluate function in the background. Wait for up to obj.timeout seconds, and if there is
             % no reponse in that time, and infinite loop is assumed.
@@ -163,6 +168,11 @@ classdef TesterHelper
             end
             if ~isempty(obj.runCheckImages)
                 obj.checkImages(obj.runCheckImages, checks.image);
+            end
+
+            % Clear array size limit, if it exists
+            if hasTemporaryValue(s.matlab.desktop.workspace.ArraySizeLimit)
+                clearTemporaryValue(s.matlab.desktop.workspace.ArraySizeLimit)
             end
 
         end
