@@ -319,7 +319,7 @@ classdef TesterHelper
                 elseif strcmpi(obj.outputType, 'limit')
                     msg = sprintf('Variable ''%s'' does not match the solution''s.', names{i});
                 elseif strcmpi(obj.outputType, 'full')
-                    msg = ['<u>', names{i}, '</u>\n', '    Actual output ' TesterHelper.toChar(student) '\n    Expected output ' TesterHelper.toChar(soln)];
+                    msg = ['<u>', names{i}, '</u>\n', '    Actual output ' TesterHelper.toChar(student, html=true) '\n    Expected output ' TesterHelper.toChar(soln, html=true)];
                 end
 
                 % Verification call
@@ -1161,11 +1161,13 @@ classdef TesterHelper
             %                            existing file, it will also output a hyperlink to open that file in Matlab. 
             %                            Files with image extensions '.png', '.jpg', and '.jpeg' will display as a figure 
             %                            in Matlab if the hyperlink is clicked. Default = false.
+            %       html (logical) - Outputs in html format. Default = false.
             %       cap (logical) - Caps the output to 20 rows. Default = true.
 
             arguments
                 in
                 options.interactive = false
+                options.html = false
                 options.cap = true
             end
 
@@ -1258,14 +1260,15 @@ classdef TesterHelper
                     out = [out '<strong>Additional lines have been suppressed.</strong>'];
                 end 
             end
-            % Old html formatting options, now on by default
-            if l > 1
-                pref = sprintf('(%dx%dx%d %s):', r, c, l, class(in));
-            else
-                pref = sprintf('(%dx%d %s):', r, c, class(in));
+            if options.html
+                if l > 1
+                    pref = sprintf('(%dx%dx%d %s):', r, c, l, class(in));
+                else
+                    pref = sprintf('(%dx%d %s):', r, c, class(in));
+                end
+                out = [pref '\n       ' out];
+                out = strrep(out, newline, '\n       ');
             end
-            out = [pref '\n       ' out];
-            out = strrep(out, newline, '\n       ');
         end
     end
 end
