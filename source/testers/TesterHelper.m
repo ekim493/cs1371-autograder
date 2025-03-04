@@ -29,7 +29,7 @@ classdef TesterHelper
         imageTolerance (1, 1) double = 10 % The tolerance level for checkImages. Default = 10.
         textRule char = 'default' % How strict checkTextFiles should be. Set to 'default', 'strict', or 'loose'. Default = 'default'.
         numTolerance (1, 1) double = 0.001 % Absolute tolerance for numerical comparisons in verifyEqual. Default = 0.001.
-        maxMemPercent (1, 1) double = 2 % Limit maximum array size as a percentage of RAM. Default = 2.
+        maxMemPercent (1, 1) double = 1 % Limit maximum array size as a percentage of RAM. Default = 1.
     end
 
     methods
@@ -127,9 +127,10 @@ classdef TesterHelper
             % Use parfeval to evaluate function in the background. Wait for up to obj.timeout seconds, and if there is
             % no reponse in that time, and infinite loop is assumed.
             if useParallelCheck
-                f = parfeval(@obj.runFunc, 4, loadVars);
+                f = parfeval(backgroundPool, @obj.runFunc, 4, loadVars);
                 ok = wait(f, 'finished', obj.timeout); % Run function with timeout
                 if ~ok
+                    cancel(f);
                     error('HWStudent:infLoop', 'This function timed out because it took longer than %d seconds to run. Is there an infinite loop?', obj.timeout);
                 elseif ~isempty(f.Error)
                     try
@@ -198,7 +199,9 @@ classdef TesterHelper
             checks = struct();
 
             % Run solution code
-            close all;
+            try
+                close all;
+            end
             if ~exist(sprintf('%s_soln', obj.func), 'file')
                 error('HWTester:noSoln', 'The solution function wasn''t included');
             end
