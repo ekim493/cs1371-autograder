@@ -8,14 +8,17 @@ classdef HW0Tester < matlab.unittest.TestCase
             end
         end
     end
-    methods(Test)
-        %% Test methods
+    %% Level 0 methods
+    methods(Test, TestTags = {'L0'})
         % ABC Example
         function exampleABC_Test1(testCase) 
             t = TesterHelper();
             t.outputType = 'limit';
             t.run();
         end
+    end
+    %% Level 1 methods
+    methods(Test, TestTags = {'L1'})
         % Error Example
         function example0_Test1(testCase)
             vec = [1, 2, 3]
@@ -39,6 +42,9 @@ classdef HW0Tester < matlab.unittest.TestCase
             t = TesterHelper(word);
             t.run();
         end
+    end
+    %% Level 2 Methods
+    methods(Test, TestTags = {'L2'})
         % Array, iteration, and conditionals example
         function example3_Test1(testCase)
             arr = randi(15, 3, 3)
@@ -56,6 +62,9 @@ classdef HW0Tester < matlab.unittest.TestCase
             t.runCheckPlots = true;
             t.run();
         end
+    end
+    %% Level 3 Methods
+    methods(Test, TestTags = {'L3'})
         % Lo-level example
         function example5_Test1(testCase)
             filename = 'example.txt'
@@ -72,6 +81,8 @@ classdef HW0Tester < matlab.unittest.TestCase
             t = TesterHelper(st1, field1, vals1);
             t.run();
         end
+    end
+    methods(Test, TestTags = {'L4'})
         % Images Example (bonus)
         function example7_Test1(testCase)
             img = 'image.png'

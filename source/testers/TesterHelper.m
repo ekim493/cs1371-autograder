@@ -113,43 +113,11 @@ classdef TesterHelper
                 disp(sprintf('\n%s =\n%s', obj.inputNames{i}, TesterHelper.toChar(obj.inputs{i}))) %#ok<DSPSP>
             end
 
-            % Use global variable to check parallel running
-            global useParallelCheck; %#ok<GVMIS>
-
-            if isempty(useParallelCheck)
-                useParallelCheck = true;
-            end
-
             % Set Matlab array size limit to % of RAM; this limits unresponsive timeouts
             s = settings;
             s.matlab.desktop.workspace.ArraySizeLimit.TemporaryValue = obj.maxMemPercent;
             
-            % Use parfeval to evaluate function in the background. Wait for up to obj.timeout seconds, and if there is
-            % no reponse in that time, and infinite loop is assumed.
-            if useParallelCheck
-                f = parfeval(backgroundPool, @obj.runFunc, 4, loadVars);
-                ok = wait(f, 'finished', obj.timeout); % Run function with timeout
-                if ~ok
-                    cancel(f);
-                    error('HWStudent:infLoop', 'This function timed out because it took longer than %d seconds to run. Is there an infinite loop?', obj.timeout);
-                elseif ~isempty(f.Error)
-                    try
-                        % If the function threw an error, attempt to recreate the default Matlab error message by
-                        % using the error line number and retreiving the relevant line from the function file.
-                        lines = readlines([obj.func '.m']);
-                        stackLevel = find(strcmpi({f.Error.stack(:).name}, obj.func), true);
-                        li = f.Error.stack(stackLevel).line;
-                        line = lines(li);
-                    catch ME
-                        throw(f.Error);
-                    end
-                    error('HWStudent:function', '%s\n\nError in %s (line %d)\n%s', f.Error.message, obj.func, li, strtrim(line));
-                end
-    
-                [outputs, solns, names, checks] = fetchOutputs(f);
-            else
-                [outputs, solns, names, checks] = obj.runFunc(loadVars);
-            end
+            [outputs, solns, names, checks] = obj.runFunc(loadVars);
 
             % Run relevant check functions
             if obj.runCheckCalls
@@ -199,9 +167,7 @@ classdef TesterHelper
             checks = struct();
 
             % Run solution code
-            try
-                close all;
-            end
+            close all;
             if ~exist(sprintf('%s_soln', obj.func), 'file')
                 error('HWTester:noSoln', 'The solution function wasn''t included');
             end

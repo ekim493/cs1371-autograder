@@ -1,4 +1,5 @@
-*.m
-*.json
-!encrypt.m
-!submission_metadata.json
+source/solutions
+sourceP/
+source/testers/*.m
+Submissions/
+results.json
