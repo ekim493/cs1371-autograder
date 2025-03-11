@@ -1,5 +1,5 @@
-function runTester(useParallel)
-%% OS check
+function runTester(useParallel, timeout)
+% OS check
 % If Matlab is being run on Linux, assume it is the autograder and import the assignment name from Gradescope.
 % Otherwise, use a local testing metadata file, which should be located in the /Submissions folder.
 if isunix && ~ismac
@@ -13,14 +13,19 @@ else
 end
 assignment_name = submission.assignment.title;
 
-%% Run tester
+% Run tester
 addpath('testers')
 addpath('/autograder/submission');
 runner = testrunner();
 suite = testsuite(sprintf('%sTester', assignment_name));
-results = runSuite(runner, suite, useParallel, 10);
+results = runSuite(runner, suite, useParallel, timeout);
 
-%% Points per test case
+% Display Diagnostics. Will auto skip if run in series and display is empty
+for i = 1:height(results)
+    disp(results.display{i});
+end
+
+% Points per test case
 problems = unique(extractBefore(results.name, '_'));
 for i = 1:numel(problems)
     test_cases = contains(results.name, problems(i));
@@ -32,7 +37,7 @@ for i = 1:numel(problems)
     end
 end
 
-%% Parse
+% Parse table
 totalScore = 0;
 for i = 1:height(results)
     results.output_format(i) = "html";
@@ -46,21 +51,20 @@ for i = 1:height(results)
     end
 end
 
-%% Find all level 0 test cases and deduct score if any of them failed
-% Create a cell array containing all the function names then find the ones that are level 0.
-% If any of the level 0s failed a test case, then half the total score.
-
+% Level 0 Deduction
 if ~all(results.passed(strcmp(results.level, 'L0')))
     totalScore = totalScore / 2;
 end
+
+% Remove unnecessary columns
 results.passed = [];
 results.level = [];
+results.display = [];
 
-%% Output
+% Output
 json = struct('visibility', 'visible', 'score', totalScore, 'tests', results);
 
-
-%% Global Edits (optional)
+% Global Edits (optional)
 if false
     json.output = ''; % If a global text output is required, edit this value here.
     json.output_format = 'html'; % If the output text needs special formatting.
@@ -70,7 +74,7 @@ if false
     json.stdout_visibility = 'visible'; % If the command window output should be visible to students.
 end
 
-%% Write json structure to final results.json file
+% Write json structure to final results.json file
 json = jsonencode(json, PrettyPrint=true);
 fh = fopen(fullfile(pwd, 'results.json'), 'w');
 fprintf(fh, json);
