@@ -2,7 +2,7 @@
 
 DELAY=10 # Set time in seconds
 TIMEOUT=4 # Set timeout in minutes
-LOCALTIMEOUT=30 $ Set test case timeout in seconds
+LOCALTIMEOUT=30 # Set test case timeout in seconds
 
 # Write error message to results file
 write_error() {
@@ -38,7 +38,7 @@ while [ $attempt -le $max_attempts ]; do
     # Run commands with timeout
     timeout ${TIMEOUT}m bash -c "
         cd /autograder/source || exit 1
-        matlab -licmode onlinelicensing -batch \"runTester($use_parallel, $LOCALTIMEOUT)\" || exit 1
+        matlab -licmode onlinelicensing -batch \"runTester($use_parallel,$LOCALTIMEOUT)\" || exit 1
         cp /autograder/source/results.json /autograder/results/results.json || exit 1
     "
 

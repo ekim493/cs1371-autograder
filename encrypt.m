@@ -26,7 +26,7 @@ for file = files
     if contains(file, {'HW', 'HX'})
         pcode(file{1}, '-inplace');
         delete(file{1});
-    elseif contains(file, 'Tester')
+    elseif strcmp(file, 'Allowed_Functions.json') || strcmp(file, 'TesterHelper.m')
         continue
     else
         delete(file{1})
