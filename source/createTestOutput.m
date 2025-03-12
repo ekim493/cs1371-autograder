@@ -1,5 +1,5 @@
 function out = createTestOutput(test)
-% CREATETESTOUTPUT - Creates the output text given a TestResult
+% CREATETESTOUTPUT - Creates the output text given a TestResult object
 %   This function takes in the results of a Matlab unit test and formats the display output for Gradescope. If an error
 %   was thrown, it will output the first error message in the stack. If verifications failed, it will output all of
 %   them. 

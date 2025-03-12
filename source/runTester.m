@@ -1,7 +1,20 @@
 function runTester(useParallel, timeout)
-% OS check
-% If Matlab is being run on Linux, assume it is the autograder and import the assignment name from Gradescope.
-% Otherwise, use a local testing metadata file, which should be located in the /Submissions folder.
+% RUNTESTER - Main function to run the Gradescope autograder.
+%   This function finds the relevant assignment name using the submission metadata, and creates the test suite and calls
+%   the runSuite() function. From those results, it will display the diagnostics, calculate the points scored for the
+%   assignment, and create the final "results.json" file necessary for Gradescope.
+%   
+%   Input Arguments
+%       useParallel - Whether runSuite() should run in parallel using parfeval.
+%       timeout - Timeout of parfeval in seconds. Only relevant if useParallel = true.
+%
+%   By default, the following scoring assignment is used: Any incorrect level 0 problems deduct 50% from the final
+%   score. Level 1-3 problems award 1-3 points total, divided by the number of test cases per problem. Level >=4
+%   problems award no points.
+
+
+% OS check. If Matlab is being run on Linux, assume it is the autograder and import the assignment name from Gradescope.
+% Otherwise, use a local testing metadata file, which should be located in the ./Submissions folder.
 if isunix && ~ismac
     try
         submission = jsondecode(fileread('/autograder/submission_metadata.json')); % Import assignment name from gradescope
@@ -12,6 +25,17 @@ else
     submission = jsondecode(fileread('../Submissions/submission_metadata.json')); % For local testing
 end
 assignment_name = submission.assignment.title;
+
+% Check parallel toolbox status. Sometimes Gradescope/AWS bugs and the parallel toolbox fails to load.
+if useParallel
+    try
+        gcp();
+    catch E
+        % If there is an issue initializing the toolbox, run in single threading instead
+        disp("The parallel toobox isn't loading. Changing to series execution...")
+        useParallel = false;
+    end
+end
 
 % Run tester
 addpath('testers')
@@ -37,7 +61,7 @@ for i = 1:numel(problems)
     end
 end
 
-% Parse table
+% Parse table to assign necessary fields
 totalScore = 0;
 for i = 1:height(results)
     results.output_format(i) = "html";
@@ -66,11 +90,11 @@ json = struct('visibility', 'visible', 'score', totalScore, 'tests', results);
 
 % Global Edits (optional)
 if false
-    json.output = ''; % If a global text output is required, edit this value here.
+    json.output = ''; %#ok<UNRCH> % If a global text output is required, edit this value here.
     json.output_format = 'html'; % If the output text needs special formatting.
     tests = []; % Running this line will delete all prior test cases.
     json.score = 0; % If the global score needs to be modified
-    json.visibility = 'after_due_date'; % If test case visibility needs to be changed. This can also be modified in the HW#Scores.json file.
+    json.visibility = 'after_due_date'; % If test case visibility needs to be changed.
     json.stdout_visibility = 'visible'; % If the command window output should be visible to students.
 end
 
@@ -78,5 +102,5 @@ end
 json = jsonencode(json, PrettyPrint=true);
 fh = fopen(fullfile(pwd, 'results.json'), 'w');
 fprintf(fh, json);
-fclose('all');
+fclose(fh);
 end

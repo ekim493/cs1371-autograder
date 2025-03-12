@@ -1,6 +1,6 @@
 clear; clc; close all;
 assignment_name = input('Enter assignment name: ', 's');
-useParallel = false;
+useParallel = true;
 timeout = 30;
 
 addpath("Submissions")

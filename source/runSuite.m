@@ -1,39 +1,58 @@
 function results = runSuite(runner, suite, useParallel, timeout)
 % RUNSUITE - Returns a table of results after running a test suite
 %   This function takes in a runner, a test suite, and parameters to run unit tests. If useParallel is set to true, then
-%   it will run each test case individually on its own parfeval worker. 
+%   it will run each test case individually using parfeval, and it will cancel the job after timeout seconds. Otherwise,
+%   it will simply run the suite on the input TestRunner.
+%
+%   Input Arguments
+%       runner - matlab.unittest.TestRunner object to run test cases using.
+%       suite - matlab.unittest.TestSuite object containing all the test cases to be run.
+%       useParallel - Whether the test cases should be run in parallel using parfeval or not.
+%       timeout - Timeout of parfeval running the test cases in seconds. Only relevant if useParallel = true.
+%
+%   Output Arguments
+%       results - Table containing the following data: name of test case, level of test case, logical pass/fail, output
+%       from createTestOutput(), and display text containing command window output of each Future (empty if useParallel
+%       is false).
+
 arguments
     runner (1, 1) {mustBeA(runner, 'matlab.unittest.TestRunner')}
     suite (:, :) {mustBeA(suite, 'matlab.unittest.TestSuite')}
     useParallel (1, 1) logical = true
-    timeout (1, 1) double = 10
+    timeout (1, 1) double = 30
 end
+
 disp('Running Test Suite...')
-for i = 1:numel(suite)
-    if useParallel
-        group(i) = parfeval(@run, 1, runner, suite(i)); %#ok<AGROW>
-    else
-        group(i) = run(runner, suite(i)); %#ok<AGROW>
-    end
-end
+
 if useParallel
+    % Run each test on parfeval for parallel execution
+    for i = 1:numel(suite)
+        group(i) = parfeval(@run, 1, runner, suite(i)); %#ok<AGROW>
+    end
+    % Once all Futures are queued, monitor their state every 0.01 seconds. Cancel any Futures that have been running for
+    % more than "timeout" amount of seconds. Run until all cases have finished (or timed out).
     while ~all(strcmp({group.State}, 'finished'))
         cancel(group([group.RunningDuration] > duration(0, 0, timeout)));
         pause(0.01);
     end
+else
+    group = run(runner, suite);
 end
+
+% Create results table
 results = table(Size=[numel(suite),5], VariableTypes={'string', 'string', 'logical', 'cell', 'cell'}, Variablenames={'name', 'level', 'passed', 'output', 'display'});
 for i = 1:numel(suite)
     results.name(i) = extractAfter(suite(i).Name, 'Tester/');
     results.level(i) = suite(i).Tags{1};
     if useParallel
         results.display{i} = group(i).Diary;
+        % If a Future was canceled, it will always have a RunningDuration > timeout and sometimes an error message
         if isempty(group(i).Error) && seconds(group(i).RunningDuration) < timeout
             testresult = fetchOutputs(group(i));
             results.passed(i) = testresult.Passed;
             results.output{i} = createTestOutput(testresult);
         else
-            results.output{i} = sprintf('This function timed out because it took longer than %d seconds to run. Is there an infinite loop?', timeout);
+            results.output{i} = sprintf('Verification failed in %s.\\n    ----------------\\n    Test Diagnostic:\\n    ----------------\\n    This function timed out because it took longer than %d seconds to run. Is there an infinite loop?', results.name(i), timeout);
         end
     else
         testresult = group(i);
@@ -41,6 +60,7 @@ for i = 1:numel(suite)
         results.output{i} = createTestOutput(testresult);
     end
 end
+% Test cases sorted in order within each level, so sort by level to return to original order
 [~, ind] = sort(results.level);
 results = results(ind, :);
 end

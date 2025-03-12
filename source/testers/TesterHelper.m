@@ -25,11 +25,13 @@ classdef TesterHelper
         outputType char = 'full' % Amount of information that the output should display. Set to 'full', 'limit', or 'none'. Default = 'full'.
         outputNames cell % Add optional output names to variables instead of the default 'output#'.
         
-        timeout (1, 1) double = 30 % Number of seconds before function execution should be timed out. Note that includes solution function time.
         imageTolerance (1, 1) double = 10 % The tolerance level for checkImages. Default = 10.
         textRule char = 'default' % How strict checkTextFiles should be. Set to 'default', 'strict', or 'loose'. Default = 'default'.
         numTolerance (1, 1) double = 0.001 % Absolute tolerance for numerical comparisons in verifyEqual. Default = 0.001.
         maxMemPercent (1, 1) double = 1 % Limit maximum array size as a percentage of RAM. Default = 1.
+        
+        parallelStrategy char = 'none' % What strategy that should be used to run the tester. Set to 'none', 'thread', or 'process'. Default = 'none'.
+        timeout (1, 1) double = 30 % Number of seconds before function execution should be timed out. Note that includes solution function time.
     end
 
     methods
@@ -88,9 +90,15 @@ classdef TesterHelper
         function run(obj)
 
             % RUN - Main Tester evaluation method.
-            %   This method will execute the runFunc method with a timeout, propagate any errors, and evaluate check 
-            %   functions as defined by the object's properties. The results of the check funtions will be executed
-            %   directly on the testCase object.
+            %   This method will execute the runFunc method, propagate any errors, and evaluate check functions as
+            %   defined by the object's properties. The results of the check funtions will be executed directly on the 
+            %   testCase object. The execution of runFunc depends on parallelStrategy, where 'none' will execute the
+            %   function as normal, 'thread' will use parfeval on a background worker, and 'process' will use parfeval
+            %   on default settings, using current pool (defined by gcp). Note that 'thread' will not work with
+            %   runCheckPlots.
+            %
+            %   The current iteration of the autograder moved parallel execution to the client, so 'none' should be
+            %   used. The other options are left in for legacy use.
 
             if ~exist([obj.func, '.m'], 'file')
                 error('HWStudent:noFunc', 'Undefined function or script ''%s''. Was this file submitted?', obj.func);
@@ -117,7 +125,40 @@ classdef TesterHelper
             s = settings;
             s.matlab.desktop.workspace.ArraySizeLimit.TemporaryValue = obj.maxMemPercent;
             
-            [outputs, solns, names, checks] = obj.runFunc(loadVars);
+            switch obj.parallelStrategy
+                case 'none'
+                    [outputs, solns, names, checks] = obj.runFunc(loadVars);
+                case 'thread'
+                    if obj.runCheckPlots
+                        error("runCheckPlots cannot be run if the parallel strategy is set to 'thread' mode.")
+                    end
+                    f = parfeval(backgroundPool, @obj.runFunc, 4, loadVars);
+                case 'process'
+                    f = parfeval(@obj.runFunc, 4, loadVars);
+            end
+
+            % For parallel execution, use parfeval to evaluate function in the background. Wait for up to obj.timeout 
+            % seconds, and if there is no reponse in that time, and infinite loop is assumed.
+            if exist('f', 'var')
+                ok = wait(f, 'finished', obj.timeout); % Run function with timeout
+                if ~ok
+                    cancel(f);
+                    error('HWStudent:infLoop', 'This function timed out because it took longer than %d seconds to run. Is there an infinite loop?', obj.timeout);
+                elseif ~isempty(f.Error)
+                    try
+                        % If the function threw an error, attempt to recreate the default Matlab error message by
+                        % using the error line number and retreiving the relevant line from the function file.
+                        lines = readlines([obj.func '.m']);
+                        stackLevel = find(strcmpi({f.Error.stack(:).name}, obj.func), true);
+                        li = f.Error.stack(stackLevel).line;
+                        line = lines(li);
+                    catch ME
+                        throw(f.Error);
+                    end
+                    error('HWStudent:function', '%s\n\nError in %s (line %d)\n%s', f.Error.message, obj.func, li, strtrim(line));
+                end
+                [outputs, solns, names, checks] = fetchOutputs(f);
+            end
 
             % Run relevant check functions
             if obj.runCheckCalls
@@ -148,7 +189,7 @@ classdef TesterHelper
 
         function [outputs, solns, names, checks] = runFunc(obj, loadVars)
 
-            % RUNFUNC - Helper function for RUN. To be run in the background using parfeval.
+            % RUNFUNC - Helper function for RUN. Can be run in the background using parfeval.
             %   This function run's the solution code (should be named FUNCNAME_soln), the student's code, checkPlots
             %   (if desired), and checkFilesClosed (if desired).
             %   
@@ -293,12 +334,13 @@ classdef TesterHelper
                 student = outputs{i};
                 
                 % Determine output message based on outputType
-                if strcmpi(obj.outputType, 'none')
-                    continue
-                elseif strcmpi(obj.outputType, 'limit')
-                    msg = sprintf('Variable ''%s'' does not match the solution''s.', names{i});
-                elseif strcmpi(obj.outputType, 'full')
-                    msg = ['<u>', names{i}, '</u>\n', '    Actual output ' TesterHelper.toChar(student, html=true) '\n    Expected output ' TesterHelper.toChar(soln, html=true)];
+                switch obj.outputType
+                    case 'none'
+                        continue
+                    case 'limit'
+                        msg = sprintf('Variable ''%s'' does not match the solution''s.', names{i});
+                    case 'full'
+                        msg = ['<u>', names{i}, '</u>\n', '    Actual output ' TesterHelper.toChar(student, html=true) '\n    Expected output ' TesterHelper.toChar(soln, html=true)];
                 end
 
                 % Verification call
@@ -399,14 +441,14 @@ classdef TesterHelper
             end
 
             % Output formatting
-            if strcmpi(obj.outputType, 'none')
-                msg = '';
-            elseif strcmpi(obj.outputType, 'full')
-                filename = TesterHelper.compareImg(user_fn, expected_fn);
-                msg = strrep(msg, newline, '\n');
-                msg = sprintf('%s\\nIMAGEFILE:%s', msg, filename);
+            switch obj.outputType
+                case 'none'
+                    msg = '';
+                case 'full'
+                    filename = TesterHelper.compareImg(user_fn, expected_fn);
+                    msg = strrep(msg, newline, '\n');
+                    msg = sprintf('%s\\nIMAGEFILE:%s', msg, filename);
             end
-
             obj.testCase.verifyTrue(hasPassed, msg);
 
         end
