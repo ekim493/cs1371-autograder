@@ -1,10 +1,10 @@
 # CS1371-autograder
-The *new* Gradescope autograder for CS1371. Contact [Eric Kim](mailto:ekim493@gatech.edu) for questions or comments.
+The Gradescope autograder for CS1371. Contact [Eric Kim](mailto:ekim493@gatech.edu) for questions or comments.
 ## Install instructions 
 Currently, the Docker is hosted by me at `ekim493/cs1371-autograder`. To follow these instructions on your own, create a Docker hub account, then create your own Docker hub repository.
 - Clone this Github repository.
-- Add all necessary files (solution codes, tester, and scores.json) for the HW.
-    - See the [Structure](https://github.gatech.edu/ekim493/cs1371-autograder#stucture) section below for more info. Also see the [testers readme](https://github.gatech.edu/ekim493/cs1371-autograder/tree/master/source/testers#testers) for info on how to structure the tester and json.
+- Add all necessary files (solution codes and testers) for the HW.
+    - See the [Structure](https://github.gatech.edu/ekim493/cs1371-autograder#stucture) section below for more info. Also see the [testers readme](https://github.gatech.edu/ekim493/cs1371-autograder/tree/master/source/testers#testers) for info on how to structure the tester.
 - Run the `update.bat` script (this script will only work on Windows).
     - There is an optional setting (enabled by default) that will add encryption. This will p-code all solution and tester files before creating and uploading the Docker container.
     - If you have created your own repository, edit the `RepoName` variable at the top of the `update.bat` file.
@@ -47,14 +47,14 @@ Currently, the Docker is hosted by me at ekim493/cs1371-autograder. To follow th
 - See [here](https://github.com/mathworks-ref-arch/matlab-dockerfile) for details on building the matlab docker, and see [here](https://github.com/mathworks-ref-arch/container-images/tree/main/matlab-deps) for details on the required Matlab dependencies.
 
 `source` holds all relevant data necessary to run the autograder
+- `source/run_autograder` is the main shell script run by the Gradescope harness.
 - `source/runTester.m` is the main Matlab driver to run the test cases and output the results as a results.json.
 - `source/solutions` holds the solution codes for all HW assignments. 
     - All assignments should be organized into folders where the name of the folder is the same as the gradescope assignment.
     - All solutions codes should be name `FUNCTION_soln.m`, where `FUNCTION` is replaced with the name of the function.
-- `source/testers` holds the test suites & scoring rubrics for all HW assignments. 
+- `source/testers` holds the tester files for all HW assignments. 
     - The name of the tester should be the the gradescope assignment name + 'Tester.m'.
-    - The name of the scoring rubrics should be a JSON with the name being the assignment + 'Scores.json'.
-    - Example: For a gradescope assignment called `HW0`, the testers file should contain a `HW0Tester.m` and a `HW0Scores.json`.
+    - Example: For a gradescope assignment called `HW0`, the testers file should contain a `HW0Tester.m`.
 
 ## Local Testing
 To test code locally, add all code to test to the `Submissions` folder. Then run `Local_Tester.m`. The output for the test cases will display in the command window, and it will also open up the results.json file.
