@@ -45,3 +45,6 @@ function example3_Test1(testCase)
     t.run();
 end
 ```
+## Test Case specificiations
+Because of the possibility of the race condition, test cases that have checks involving files (ie. text files, images) should output to different file names. 
+The solution can output to the same name as the student's, but different test cases should output to different files.
