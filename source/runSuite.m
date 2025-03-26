@@ -43,7 +43,13 @@ end
 results = table(Size=[numel(suite),5], VariableTypes={'string', 'string', 'logical', 'cell', 'cell'}, Variablenames={'name', 'level', 'passed', 'output', 'display'});
 for i = 1:numel(suite)
     results.name(i) = extractAfter(suite(i).Name, 'Tester/');
-    results.level(i) = suite(i).Tags{1};
+    findL = contains(suite(i).Tags, 'L');
+    if sum(findL) == 0
+        error('HWTester:noTag', 'A level tag was not found for the testcase %s', results.name(i));
+    elseif sum(findL) > 1
+        error('HWTester:duplicateTag', 'Only one tag containing the character ''L'' should be present for test case %s', results.name(i));
+    end
+    results.level(i) = suite(i).Tags{findL};
     if useParallel
         results.display{i} = group(i).Diary;
         % If a Future was canceled, it will always have a RunningDuration > timeout and sometimes an error message

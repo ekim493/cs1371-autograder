@@ -8,7 +8,7 @@ classdef HW0Tester < matlab.unittest.TestCase
             end
         end
     end
-    %% Level 0 methods
+    %% Level 0 tests
     methods(Test, TestTags = {'L0'})
         % ABC Example
         function exampleABC_Test1(testCase) 
@@ -17,7 +17,7 @@ classdef HW0Tester < matlab.unittest.TestCase
             t.run();
         end
     end
-    %% Level 1 methods
+    %% Level 1 tests
     methods(Test, TestTags = {'L1'})
         % Error Example
         function example0_Test1(testCase)
@@ -43,7 +43,7 @@ classdef HW0Tester < matlab.unittest.TestCase
             t.run();
         end
     end
-    %% Level 2 Methods
+    %% Level 2 tests
     methods(Test, TestTags = {'L2'})
         % Array, iteration, and conditionals example
         function example3_Test1(testCase)
@@ -63,7 +63,7 @@ classdef HW0Tester < matlab.unittest.TestCase
             t.run();
         end
     end
-    %% Level 3 Methods
+    %% Level 3 tests
     methods(Test, TestTags = {'L3'})
         % Lo-level example
         function example5_Test1(testCase)
