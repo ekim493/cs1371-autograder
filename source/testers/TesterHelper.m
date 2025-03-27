@@ -1237,6 +1237,10 @@ classdef TesterHelper
                     end
                 elseif r == 1 && contains(in, '.txt') && exist(in, 'file')
                     out = char(strjoin(readlines(in), '\n'));
+                    % If text file was empty, return file name instead
+                    if isempty(out)
+                        out = in;
+                    end
                 else
                     % Default char and string conversion
                     out = [repmat('''', r, 1) out repmat('''', r, 1)];

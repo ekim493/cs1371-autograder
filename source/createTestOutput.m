@@ -23,6 +23,7 @@ if test.Incomplete
     % If multiple test cases were run, filter out to get the first error report
     errorCase = contains({test.Details.DiagnosticRecord.Report}, 'Error occurred');
     out = test.Details.DiagnosticRecord(errorCase).Report;
+    out = strrep(out, '\n', '\\n');
     out = strrep(out, newline, '\n');
     % Filter error message
     if contains(out, 'HWTester:')
@@ -68,7 +69,7 @@ elseif test.Failed
         out = [out '\n    ----------------\n' temp]; %#ok<AGROW>
     end
 end
-out = regexprep(out, '(\\)(?!n)', '\\\\'); % Blackslash error fix
+out = regexprep(out, '(\\)(?![n\\])', '\\\\'); % Blackslash error fix
 out = strrep(out, '"', '\"'); % Escape double quotes
 out(out < 32) = '�'; % Remove illegal ascii characters
 out = strrep(out, '%', '%%'); % fprintf percent sign fix
