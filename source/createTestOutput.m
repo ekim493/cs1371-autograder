@@ -28,7 +28,7 @@ if test.Incomplete
     if contains(out, 'HWTester:')
         out = 'The autograder ran into an unexpected error while running your function. Please contact the TAs for assistance.';
     else
-        if contains(out, 'Error using TesterHelper/runFunc')
+        if contains(out, 'Error using TesterHelper/runFunc') || contains(out, 'Error in TesterHelper/runFunc')
             out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in TesterHelper'));
             if contains(out, 'Error using TesterHelper/runFunc (') % No encryption, has lineno
                 out = regexprep(out, 'Error using TesterHelper/runFunc \(line \d+\)\\n    ', '');

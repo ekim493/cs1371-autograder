@@ -524,6 +524,7 @@ classdef TesterHelper
             if numel(sAxes) ~= numel(cAxes)
                 msg = sprintf('Expected %d subplot(s), but your solution produced %d subplot(s).', numel(cAxes), numel(sAxes));
                 hasPassed = false;
+                appendImage;
                 return
             end
 
@@ -536,6 +537,7 @@ classdef TesterHelper
             if any(sAxesPos ~= cAxesPos)
                 msg = 'The subplot positions do not match.';
                 hasPassed = false;
+                appendImage;
                 return
             end
             
@@ -616,13 +618,18 @@ classdef TesterHelper
                 if strcmp(msg(1:2), '\n')
                     msg = msg(3:end);
                 end
-                if strcmpi(obj.outputType, 'full')
-                    filename = TesterHelper.compareImg(sFig, cFig);
-                    msg = strrep(msg, '\n', '\n    ');
-                    msg = sprintf('%s\\nIMAGEFILE:%s', msg, filename);  
-                end
+                msg = strrep(msg, '\n', '\n    ');
+                appendImage;
             else
                 hasPassed = true;
+            end
+
+            function appendImage
+                % Internal function to append image file to end of message
+                if strcmpi(obj.outputType, 'full')
+                    filename = TesterHelper.compareImg(sFig, cFig);
+                    msg = sprintf('%s\\nIMAGEFILE:%s', msg, filename);  
+                end
             end
         end
 

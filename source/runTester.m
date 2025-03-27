@@ -44,10 +44,12 @@ runner = testrunner();
 suite = testsuite(sprintf('%sTester', assignment_name));
 results = runSuite(runner, suite, useParallel, timeout);
 
-% Display Diagnostics. Will auto skip if run in series and display is empty. Only get rid of first line indicating
+% Display Diagnostics. Skip if run in series and display is empty. Only get rid of first line indicating
 % "Running HW#Tester".
 for i = 1:height(results)
-    disp(extractAfter(results.display{i}, ['Tester' newline]));
+    if ~isempty(results.display{i})
+        disp(extractAfter(results.display{i}, ['Tester' newline]));
+    end
 end
 
 % Points per test case
