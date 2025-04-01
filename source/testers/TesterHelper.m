@@ -1130,7 +1130,7 @@ classdef TesterHelper
             %           vector will be [x-coord1, y-coord1, x-coord2, y-coord2]. It's values will be a 1xN cell array. 
             %           For points, N will be 4 and will store the marker style, marker size, edge color, and face color 
             %           in that order. For line segments, N will be 3 and will store line color, line style, and 
-            %           line width in that order.
+            %           line width in that order. All coordinates will be rounded to 4 decimal places.
             %
             %   See also checkPlots
 
@@ -1142,7 +1142,7 @@ classdef TesterHelper
                 end
                 % Add all drawn points
                 if ~strcmp(line.Marker, 'none')
-                    key = num2cell([line.XData', line.YData'], 2);
+                    key = num2cell([round(line.XData', 4), round(line.YData', 4)], 2);
                     if strcmp(line.MarkerEdgeColor, 'auto')
                         color = line.Color;
                     else
@@ -1155,7 +1155,8 @@ classdef TesterHelper
 
                 % Add all segments
                 if ~strcmp(line.LineStyle, 'none')
-                    key = [line.XData(1:end-1)', line.YData(1:end-1)', line.XData(2:end)', line.YData(2:end)'];
+                    key = [round(line.XData(1:end-1)', 4), round(line.YData(1:end-1)', 4), ...
+                        round(line.XData(2:end)', 4), round(line.YData(2:end)', 4)];
                     needSwap = key(:, 1) > key(:, 3);
                     key(needSwap, :) = key(needSwap, [3 4 1 2]);
                     data = {{line.Color, line.LineStyle, line.LineWidth}};
