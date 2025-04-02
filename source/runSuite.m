@@ -35,8 +35,10 @@ if useParallel
         cancel(group([group.RunningDuration] > duration(0, 0, timeout)));
         pause(0.01);
     end
+    parfevalOnAll(@fclose,0,'all'); % Clear opened files
 else
     group = run(runner, suite);
+    fclose('all'); % Clear opened files
 end
 
 % Create results table

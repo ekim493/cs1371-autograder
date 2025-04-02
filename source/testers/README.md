@@ -4,18 +4,7 @@ The name of the tester should be the gradescope assignment name + 'Tester'.
 - Example: The Gradescope assignment `HW0` should have the tester `HW0Tester.m`.
 ## Tester Specifications
 All testers should inherit the `matlab.unittest.TestCase` class and should implement test cases under the `Test` methods.
-All testers should have have a `TestClassSetup` method where the following function is implemented:
 
-**Make sure the addpath() call points to the relevant solution folder (ie. HW0). Optionally, also add local testing support**
-```
-function add_path(testCase)
-    if isunix && ~ismac
-        addpath('/autograder/source/solutions/HW0');
-    else
-        addpath('../solutions/HW0');
-    end
-end
-```
 All test case methods should be group and tagged by the level of the problem being tested:
 - Level 1 problems ('L1') are assigned 1 point, level 2 ('L2') = 2 points, and level 3 ('L3')= 3 points.
 - Level 0 ('L0') will be assigned 0 points, but failing any test case will halve the total score.
