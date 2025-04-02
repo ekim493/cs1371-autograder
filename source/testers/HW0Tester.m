@@ -1,13 +1,4 @@
 classdef HW0Tester < matlab.unittest.TestCase
-    methods(TestClassSetup)
-        function add_path(testCase)
-            if isunix && ~ismac
-                addpath('/autograder/source/solutions/HW0');
-            else
-                addpath('../solutions/HW0');
-            end
-        end
-    end
     %% Level 0 tests
     methods(Test, TestTags = {'L0'})
         % ABC Example

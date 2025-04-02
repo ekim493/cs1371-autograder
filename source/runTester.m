@@ -37,9 +37,17 @@ if useParallel
     end
 end
 
-% Run tester
+% Add paths and copy dir if necessary
 addpath('testers')
-addpath('/autograder/submission');
+addpath(['solutions' filesep assignment_name]);
+if isunix && ~ismac
+    addpath('/autograder/submission');
+    if exist(fullfile('solutions',assignment_name, 'dir'), 'dir')
+        copyfile(fullfile('solutions', assignment_name, 'dir', '*'), '/autograder/source')
+    end
+end
+
+% Run tester
 runner = testrunner();
 suite = testsuite(sprintf('%sTester', assignment_name));
 results = runSuite(runner, suite, useParallel, timeout);
