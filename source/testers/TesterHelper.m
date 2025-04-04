@@ -1208,11 +1208,13 @@ classdef TesterHelper
                 out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup',true));
             elseif isstruct(in) && ~options.interactive
                 try
+                    % Change into strings or will display as cells in table
                     for i = 1:numel(in)
                         fields = fieldnames(in);
                         for j = 1:numel(fields)
                             if ischar(in(i).(fields{j}))
-                                in(i).(fields{j}) = string(in(i).(fields{j}));
+                                % Replace inner double quotes with \" for display
+                                in(i).(fields{j}) = string(strrep(in(i).(fields{j}), '"', '\"'));
                             end
                         end
                     end
@@ -1221,7 +1223,8 @@ classdef TesterHelper
                     out = in;
                 end
                 out = char(formattedDisplayText(out, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup',true));
-                out = strrep(out, '"', '''');
+                out = regexprep(out, '(?<!\\)"', ''''); % Replace outer double quotes
+                out = strrep(out, '\"', '"'); % Replace inner, escaped double quotes
             elseif ischar(in) || isstring(in)
                 % Convert string into char
                 if isstring(in)
