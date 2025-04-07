@@ -379,7 +379,7 @@ classdef TesterHelper
             calls = TesterHelper.getCalls(which(funcFile)); % Get list of function calls
 
             % Find banned functions and unused functions
-            bannedCalls = [calls(ismember(calls, banned)), calls(~ismember(calls, allowed))];
+            bannedCalls = calls(ismember(calls, banned) | ~ismember(calls, allowed));
             includeCalls = cellstr(setdiff(include, calls));
             if isempty(bannedCalls) && isempty(includeCalls)
                 hasPassed = true;
@@ -567,7 +567,7 @@ classdef TesterHelper
                             || any([sAxesPlots(j).YData] > yLim(2)) || any([sAxesPlots(j).YData] < yLim(1))
                             % Only add msg if it doesn't exist yet
                             if ~contains(msg, 'plot boundaries')
-                                msg = sprintf('%s\\nThere seems to be data outside of the plot boundaries', msg);
+                                msg = sprintf('%s\\n<em>Warning: There seems to be data outside of the plot boundaries</em>', msg);
                             end
                         end
                     end
@@ -1228,6 +1228,7 @@ classdef TesterHelper
                 out = char(formattedDisplayText(out, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup',true));
                 out = regexprep(out, '(?<!\\)"', ''''); % Replace outer double quotes
                 out = strrep(out, '\"', '"'); % Replace inner, escaped double quotes
+                parseHtml;
             elseif ischar(in) || isstring(in)
                 % Convert string into char
                 if isstring(in)
@@ -1252,11 +1253,7 @@ classdef TesterHelper
                     % Default char and string conversion
                     out = [repmat('''', r, 1) out repmat('''', r, 1)];
                     out = char(formattedDisplayText(out, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
-                    if options.html
-                        % Clear tags in char formatting for html
-                        out = strrep(out, '<', '\<');
-                        out = strrep(out, '>', '\<');
-                    end
+                    parseHtml;
                 end
             elseif isnumeric(in)
                 if r == 1
@@ -1292,6 +1289,7 @@ classdef TesterHelper
                 end
             else
                 out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
+                parseHtml;
             end
 
             if out(end) == newline
@@ -1312,6 +1310,15 @@ classdef TesterHelper
                 end
                 out = [pref '\n       ' out];
                 out = strrep(out, newline, '\n       ');
+            end
+
+            function parseHtml
+                % Internal function to parse output char and replace illegal html characters if necessary
+                if options.html
+                    out = strrep(out, '&', '&amp;');
+                    out = strrep(out, '<', '&lt;');
+                    out = strrep(out, '>', '&gt;');
+                end
             end
         end
     end

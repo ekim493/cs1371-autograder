@@ -37,6 +37,9 @@ if test.Incomplete
                 out = regexprep(out, 'Error using TesterHelper/runFunc \(line \d+\)\\n    ', '');
             elseif contains(out, 'Error using TesterHelper/runFunc') % Encrypted TesterHelper outputs no line
                 out = extractAfter(out, 'Error using TesterHelper/runFunc\n');
+            elseif contains(out, '</a>')
+                % Case for invalid expression
+                out = [extractBefore(out, '<a') erase(extractAfter(out, ')">'), '</a>')];
             end
         else
             out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in H'));
@@ -50,6 +53,7 @@ if test.Incomplete
     else
         % Other error messages (ie. out of memory)
         out = extractAfter(out, '\n    --------------\n    Error Details:\n    --------------\n');
+        out = ['An error occured while running your function.\n    --------------\n    Error Details:\n    --------------\n' out];
     end
 elseif test.Failed
     out = ['Verification failed in ' extractAfter(test.Name, '/') '.\n    ----------------\n    Test Diagnostic:'];
