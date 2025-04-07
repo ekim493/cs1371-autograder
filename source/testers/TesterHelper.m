@@ -565,7 +565,10 @@ classdef TesterHelper
                     for j = 1:numel(sAxesPlots)
                         if any([sAxesPlots(j).XData] > xLim(2)) || any([sAxesPlots(j).XData] < xLim(1))...
                             || any([sAxesPlots(j).YData] > yLim(2)) || any([sAxesPlots(j).YData] < yLim(1))
-                            msg = sprintf('%s\\nThere seems to be data outside of the plot boundaries', msg);
+                            % Only add msg if it doesn't exist yet
+                            if ~contains(msg, 'plot boundaries')
+                                msg = sprintf('%s\\nThere seems to be data outside of the plot boundaries', msg);
+                            end
                         end
                     end
                 end

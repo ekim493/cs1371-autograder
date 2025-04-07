@@ -28,7 +28,9 @@ if test.Incomplete
     % Filter error message
     if contains(out, 'HWTester:')
         out = 'The autograder ran into an unexpected error while running your function. Please contact the TAs for assistance.';
-    else
+    elseif contains(out, 'HWStudent:') || contains(out, 'Error in TesterHelper/runFunc')
+        % Parse error message. Contains legacy code that supports old parallized testing. Cuts out error ID and any
+        % error messages thrown by TesterHelper itself.
         if contains(out, 'Error using TesterHelper/runFunc') || contains(out, 'Error in TesterHelper/runFunc')
             out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in TesterHelper'));
             if contains(out, 'Error using TesterHelper/runFunc (') % No encryption, has lineno
@@ -45,6 +47,9 @@ if test.Incomplete
             end
         end
         out = ['An error occured while running your function.\n    --------------\n    Error Details:\n    --------------\n' out];
+    else
+        % Other error messages (ie. out of memory)
+        out = extractAfter(out, '\n    --------------\n    Error Details:\n    --------------\n');
     end
 elseif test.Failed
     out = ['Verification failed in ' extractAfter(test.Name, '/') '.\n    ----------------\n    Test Diagnostic:'];
