@@ -1221,7 +1221,7 @@ classdef TesterHelper
                             end
                         end
                     end
-                    out = struct2table(in);
+                    out = struct2table(in, 'AsArray', true);
                 catch
                     out = in;
                 end
@@ -1252,6 +1252,11 @@ classdef TesterHelper
                     % Default char and string conversion
                     out = [repmat('''', r, 1) out repmat('''', r, 1)];
                     out = char(formattedDisplayText(out, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
+                    if options.html
+                        % Clear tags in char formatting for html
+                        out = strrep(out, '<', '\<');
+                        out = strrep(out, '>', '\<');
+                    end
                 end
             elseif isnumeric(in)
                 if r == 1
