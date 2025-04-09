@@ -180,11 +180,6 @@ classdef TesterHelper
                 obj.checkImages(obj.runCheckImages, checks.image);
             end
 
-            % Clear array size limit, if it exists
-            if hasTemporaryValue(s.matlab.desktop.workspace.ArraySizeLimit)
-                clearTemporaryValue(s.matlab.desktop.workspace.ArraySizeLimit)
-            end
-
         end
 
         function [outputs, solns, names, checks] = runFunc(obj, loadVars)
@@ -262,11 +257,23 @@ classdef TesterHelper
                 error('HWStudent:notScript', 'A script was expected, but you submitted a function instead.');
             else
                 if isFunc_student
-                    % Run as function. Use evalc to suppress function outputs
                     if numel(obj.inputs) ~= nargin(obj.func)
                         error('HWStudent:inputArgs', '%d input(s) to the function were expected, but your function had %d.', numel(obj.inputs), nargin(obj.func));
                     end
-                    [~, outputs{1:nargout(obj.func)}] = evalc(sprintf('%s(obj.inputs{:})', obj.func));
+
+                    % Run as function. Use evalc to suppress function outputs
+                    try
+                        [~, outputs{1:nargout(obj.func)}] = evalc(sprintf('%s(obj.inputs{:})', obj.func));
+                    catch exception
+                        % If an array size limit error was thrown with evalc, then the student function attempted to
+                        % output too much text to the command window (most likely unsuppressed imread or similar)
+                        if strcmp(exception.identifier, 'MATLAB:array:SizeLimitExceeded') && strcmp(exception.stack(1).name, 'TesterHelper.runFunc')
+                            error('HWStudent:exceedDiarySize', ['Matlab attempted to display %s characters to the command window and exceeded the allocated memory capacity (%s). ' ...
+                                'Ensure that you have suppressed your lines of code using a ";".'], extractAfter(exception.arguments{1}, 'x'), exception.arguments{3});
+                        else
+                            rethrow(exception);
+                        end
+                    end
 
                     % If outputNames was never initialized, then give each output the default name of 'output #'
                     if isempty(obj.outputNames)

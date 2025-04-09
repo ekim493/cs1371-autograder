@@ -41,6 +41,12 @@ else
     fclose('all'); % Clear opened files
 end
 
+% Clear array size limit, if it exists
+s = settings;
+if hasTemporaryValue(s.matlab.desktop.workspace.ArraySizeLimit)
+    clearTemporaryValue(s.matlab.desktop.workspace.ArraySizeLimit)
+end
+
 % Create results table
 results = table(Size=[numel(suite),5], VariableTypes={'string', 'string', 'logical', 'cell', 'cell'}, Variablenames={'name', 'level', 'passed', 'output', 'display'});
 for i = 1:numel(suite)
