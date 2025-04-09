@@ -40,6 +40,7 @@ if test.Incomplete
             elseif contains(out, '</a>')
                 % Case for invalid expression
                 out = [extractBefore(out, '<a') erase(extractAfter(out, ')">'), '</a>')];
+                out = erase(out, 'Error using nargin\n    ');
             end
         else
             out = char(extractBetween(out, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in H'));
