@@ -1235,7 +1235,6 @@ classdef TesterHelper
                 out = char(formattedDisplayText(out, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup',true));
                 out = regexprep(out, '(?<!\\)"', ''''); % Replace outer double quotes
                 out = strrep(out, '\"', '"'); % Replace inner, escaped double quotes
-                parseHtml;
             elseif ischar(in) || isstring(in)
                 % Convert string into char
                 if isstring(in)
@@ -1251,7 +1250,7 @@ classdef TesterHelper
                         out = sprintf('<a href="matlab: cd(''%s'');open(''%s'')">%s</a>', pwd, out, out);
                     end
                 elseif r == 1 && contains(in, '.txt') && exist(in, 'file')
-                    out = char(strjoin(readlines(in), '\n'));
+                    out = char(strjoin(readlines(in), newline));
                     % If text file was empty, return file name instead
                     if isempty(out)
                         out = in;
@@ -1260,7 +1259,6 @@ classdef TesterHelper
                     % Default char and string conversion
                     out = [repmat('''', r, 1) out repmat('''', r, 1)];
                     out = char(formattedDisplayText(out, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
-                    parseHtml;
                 end
             elseif isnumeric(in)
                 if r == 1
@@ -1296,11 +1294,17 @@ classdef TesterHelper
                 end
             else
                 out = char(formattedDisplayText(in, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup', true));
-                parseHtml;
             end
 
             if out(end) == newline
                 out(end) = [];
+            end
+            % Parse output to replace illegal html characters
+            if options.html
+                out = strrep(out, '\', '&#92;');
+                out = strrep(out, '&', '&amp;');
+                out = strrep(out, '<', '&lt;');
+                out = strrep(out, '>', '&gt;');
             end
             if options.cap
                 new = strfind(out, newline);
@@ -1309,6 +1313,7 @@ classdef TesterHelper
                     out = [out '<strong>Additional lines have been suppressed.</strong>'];
                 end 
             end
+            % Add formatting for Gradescope display
             if options.html
                 if l > 1
                     pref = sprintf('(%dx%dx%d %s):', r, c, l, class(in));
@@ -1317,15 +1322,6 @@ classdef TesterHelper
                 end
                 out = [pref '\n       ' out];
                 out = strrep(out, newline, '\n       ');
-            end
-
-            function parseHtml
-                % Internal function to parse output char and replace illegal html characters if necessary
-                if options.html
-                    out = strrep(out, '&', '&amp;');
-                    out = strrep(out, '<', '&lt;');
-                    out = strrep(out, '>', '&gt;');
-                end
             end
         end
     end
