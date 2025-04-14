@@ -269,7 +269,7 @@ classdef TesterHelper
                         % output too much text to the command window (most likely unsuppressed imread or similar)
                         if strcmp(exception.identifier, 'MATLAB:array:SizeLimitExceeded') && strcmp(exception.stack(1).name, 'TesterHelper.runFunc')
                             error('HWStudent:exceedDiarySize', ['Matlab attempted to display %s characters to the command window and exceeded the allocated memory capacity (%s). ' ...
-                                'Ensure that you have suppressed your lines of code using a ";".'], extractAfter(exception.arguments{1}, 'x'), exception.arguments{3});
+                                'Ensure that you have suppressed your lines of code using semicolons.'], extractAfter(exception.arguments{1}, 'x'), exception.arguments{3});
                         else
                             rethrow(exception);
                         end

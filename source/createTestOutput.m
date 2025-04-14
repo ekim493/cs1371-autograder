@@ -63,9 +63,9 @@ elseif contains(out, 'HWStudent:') || contains(out, 'Error in TesterHelper/runFu
             out = regexprep(out, 'Error using TesterHelper/runFunc \(line \d+\)\\n    ', '');
         elseif contains(out, 'Error using TesterHelper/runFunc') % Encrypted TesterHelper outputs no line
             out = extractAfter(out, 'Error using TesterHelper/runFunc\n');
-        elseif contains(out, '</a>')
+        elseif contains(out, '&lt;/a&gt;')
             % Case for invalid expression
-            out = [extractBefore(out, '<a') erase(extractAfter(out, ')">'), '</a>')];
+            out = [extractBefore(out, '&lt;a') erase(extractAfter(out, ')"&gt;'), '&lt;/a&gt;')];
             out = erase(out, 'Error using nargin\n    ');
         end
     else
@@ -93,7 +93,6 @@ for j = 1:length(test.Details.DiagnosticRecord)
     temp = test.Details.DiagnosticRecord(j).Report;
     % Html parsing. Additonal parsing not necessary as these messages have already been filtered and designed for html
     % output.
-    temp = regexprep(temp, '(?<!\\)\\(?![n\\])', '&#92;'); % Individual backslash replaced with html character. Note, this breaks filepaths on Windows
     temp = strrep(temp, newline, '\n');
     temp = char(extractBetween(temp, 'Test Diagnostic:\n    ----------------\n', '\n    ---------------------\n    Framework Diagnostic'));
     filename = extractAfter(temp, 'IMAGEFILE:');
