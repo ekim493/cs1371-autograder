@@ -4,7 +4,7 @@ set baseRep=ekim493/cs1371-autograder
 set repoName=ekim493/cs1371-autograder
 
 REM Prompt user for baseTag
-set /p customTag="Enter a tag for the base docker: "
+set /p customTag="Enter a tag for the base docker (press enter to use default): "
 if "%baseTag%"=="" (
     set baseTag=base
 )
@@ -12,7 +12,7 @@ if "%baseTag%"=="" (
 set baseDir=%baseRep%:%baseTag%
 
 REM Prompt user for customTag
-set /p customTag="Enter a tag for the image: "
+set /p customTag="Enter a tag for the image (press enter to use default): "
 if "%customTag%"=="" (
     set customTag=latest
 )

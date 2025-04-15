@@ -35,10 +35,9 @@ if useParallel
         cancel(group([group.RunningDuration] > duration(0, 0, timeout)));
         pause(0.01);
     end
-    parfevalOnAll(@fclose,0,'all'); % Clear opened files
 else
     group = run(runner, suite);
-    fclose('all'); % Clear opened files
+    fclose all; % Clear opened files
 end
 
 % Clear array size limit, if it exists
@@ -81,11 +80,9 @@ end
 
 function results = runSuiteHelper(runner, suite)
 % Helper function to call the run() function. This allows us to call other functions on the same process after the test
-% is done. Currently, assuming only 1 test is run, it checks if that test was incomplete. If true, it will close all
-% files on that process. This prevents checkFilesClosed on subsequent tests from failing due to an errored function.
+% is done. Currently, it will run the test case, then close all files on that process. This prevents checkFilesClosed
+% on subsequent tests from failing due to an errored function.
 
-    results = run(runner, suite);
-    if results(1).Incomplete
-        fclose all;
-    end
+results = run(runner, suite);
+fclose all;
 end

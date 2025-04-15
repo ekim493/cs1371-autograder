@@ -3,12 +3,12 @@ assignment_name = input('Enter assignment name: ', 's');
 useParallel = true;
 timeout = 30;
 
-addpath("Submissions")
+addpath("submissions")
 addpath(sprintf('source/solutions/%s', assignment_name))
 metadata = jsondecode(fileread('submission_metadata.json'));
 metadata.assignment.title = assignment_name;
 json = jsonencode(metadata);
-fh = fopen('./Submissions/submission_metadata.json', 'w');
+fh = fopen('./submissions/submission_metadata.json', 'w');
 fprintf(fh, json);
 fclose(fh);
 
