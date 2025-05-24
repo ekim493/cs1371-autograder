@@ -1,4 +1,4 @@
-function runTester(useParallel, timeout)
+function runTester(useParallel, timeout, varargin)
 % RUNTESTER - Main function to run the Gradescope autograder.
 %   This function finds the relevant assignment name using the submission metadata, and creates the test suite and calls
 %   the runSuite() function. From those results, it will display the diagnostics, calculate the points scored for the
@@ -12,19 +12,17 @@ function runTester(useParallel, timeout)
 %   score. Level 1-3 problems award 1-3 points total, divided by the number of test cases per problem. Level >=4
 %   problems award no points.
 
-
-% OS check. If Matlab is being run on Linux, assume it is the autograder and import the assignment name from Gradescope.
-% Otherwise, use a local testing metadata file, which should be located in the ./Submissions folder.
-if isunix && ~ismac
+if nargin <= 2
+    % If there were only 2 inputs to the function, assume there is a metadata file and attempt to import assignment name.
     try
         submission = jsondecode(fileread('/autograder/submission_metadata.json')); % Import assignment name from gradescope
+        assignment_name = submission.assignment.title;
     catch
         error('The submission metadata wasn''t found.');
     end
 else
-    submission = jsondecode(fileread('../Submissions/submission_metadata.json')); % For local testing
+    assignment_name = varargin{1}; % For local testing
 end
-assignment_name = submission.assignment.title;
 
 % Check parallel toolbox status. Sometimes Gradescope/AWS bugs and the parallel toolbox fails to load.
 if useParallel
@@ -38,12 +36,11 @@ if useParallel
 end
 
 % Add paths and copy dir if necessary
-addpath('testers')
-addpath(['solutions' filesep assignment_name]);
+addpath(assignment_name)
 if isunix && ~ismac
     addpath('/autograder/submission');
-    if exist(fullfile('solutions',assignment_name, 'dir'), 'dir')
-        copyfile(fullfile('solutions', assignment_name, 'dir', '*'), '/autograder/source')
+    if exist(fullfile(assignment_name, 'dir'), 'dir')
+        copyfile(fullfile(assignment_name, 'dir', '*'), '/autograder/source')
     end
 end
 
@@ -65,7 +62,7 @@ problems = unique(extractBefore(results.name, '_'));
 for i = 1:numel(problems)
     test_cases = contains(results.name, problems(i));
     level = str2double(extractAfter(results.level(find(test_cases, 1)), 'L'));
-    if level <= 0 || level > 3
+    if level <= 0
         results.max_score(test_cases) = 0;
     else
         results.max_score(test_cases) = round(level / sum(test_cases), 2);

@@ -2,15 +2,14 @@
 # Use lowercase to specify the release, for example: ARG MATLAB_RELEASE=r2021b
 ARG MATLAB_RELEASE=r2024b
 
-# Specify the list of products to install into MATLAB.
-# If additional packages are necessary, specify them here
+# Specify the list of MATLAB products to install, separated by a space.
 ARG MATLAB_PRODUCT_LIST="MATLAB Parallel_Computing_Toolbox"
 
 # Specify MATLAB Install Location.
 ARG MATLAB_INSTALL_LOCATION="/opt/matlab/${MATLAB_RELEASE}"
 
 # Build from gradescope base
-FROM gradescope/autograder-base:latest
+FROM gradescope/autograder-base:ubuntu-22.04
 
 # Load args into container
 ARG MATLAB_RELEASE
@@ -22,58 +21,58 @@ ENV DEBIAN_FRONTEND="noninteractive" TZ="America/New_York"
 # Download necessary Matlab dependencies
 RUN apt-get update
 RUN apt-get install -y ca-certificates \
-libasound2 \
-libatomic1 \
-libc6 \
-libcairo-gobject2 \
-libcairo2 \
-libcap2 \
-libcrypt1 \
-libcups2 \
-libdrm2 \
-libfontconfig1 \
-libfribidi0 \
-libgbm1 \
-libgdk-pixbuf-2.0-0 \
-libgl1 \
-libglib2.0-0 \
-libgstreamer-plugins-base1.0-0 \
-libgstreamer1.0-0 \
-libgtk-3-0 \
-libice6 \
-libltdl7 \
-libnettle8 \
-libnspr4 \
-libnss3 \
-libpam0g \
-libpango-1.0-0 \
-libpangocairo-1.0-0 \
-libpangoft2-1.0-0 \
-libpixman-1-0 \
-libsndfile1 \
-libtirpc3 \
-libudev1 \
-libuuid1 \
-libwayland-client0 \
-libxcomposite1 \
-libxcursor1 \
-libxdamage1 \
-libxfixes3 \
-libxfont2 \
-libxft2 \
-libxinerama1 \
-libxrandr2 \
-libxt6 \
-libxtst6 \
-libxxf86vm1 \
-locales \
-locales-all \
-make \
-net-tools \
-procps \
-sudo \
-unzip \
-zlib1g
+    libasound2 \
+    libatomic1 \
+    libc6 \
+    libcairo-gobject2 \
+    libcairo2 \
+    libcap2 \
+    libcrypt1 \
+    libcups2 \
+    libdrm2 \
+    libfontconfig1 \
+    libfribidi0 \
+    libgbm1 \
+    libgdk-pixbuf-2.0-0 \
+    libgl1 \
+    libglib2.0-0 \
+    libgstreamer-plugins-base1.0-0 \
+    libgstreamer1.0-0 \
+    libgtk-3-0 \
+    libice6 \
+    libltdl7 \
+    libnettle8 \
+    libnspr4 \
+    libnss3 \
+    libpam0g \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libpangoft2-1.0-0 \
+    libpixman-1-0 \
+    libsndfile1 \
+    libtirpc3 \
+    libudev1 \
+    libuuid1 \
+    libwayland-client0 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxfont2 \
+    libxft2 \
+    libxinerama1 \
+    libxrandr2 \
+    libxt6 \
+    libxtst6 \
+    libxxf86vm1 \
+    locales \
+    locales-all \
+    make \
+    net-tools \
+    procps \
+    sudo \
+    unzip \
+    zlib1g
 
 RUN apt-get clean && apt-get -y autoremove && rm -rf /var/lib/apt/lists/*
 

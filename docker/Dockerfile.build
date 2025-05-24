@@ -1,0 +1,14 @@
+# Base autograder location (default)
+ARG FROM_IMAGE=ekim493/cs1371-autograder:base
+FROM ${FROM_IMAGE}
+
+# Delete old files
+RUN rm -rf /autograder/source
+
+# Copy local files
+COPY src temp /autograder/source/
+
+# Copy run_autograder into proper location and make it executable
+COPY src/run_autograder /autograder/
+RUN dos2unix /autograder/run_autograder \
+    && chmod +x /autograder/run_autograder

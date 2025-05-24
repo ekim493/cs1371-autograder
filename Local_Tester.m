@@ -1,25 +1,23 @@
-clear; clc; close all;
-assignment_name = input('Enter assignment name: ', 's');
+% Modify these variables
 useParallel = true;
-timeout = 30;
+localTimeout = 30;
+sourceFolder = 'cs1371';
+assignmentName = input('Enter assignment name: ', 's'); % Keep as prompt or change to manual input
 
-addpath("submissions")
-addpath(sprintf('source/solutions/%s', assignment_name))
-metadata = jsondecode(fileread('submission_metadata.json'));
-metadata.assignment.title = assignment_name;
-json = jsonencode(metadata);
-fh = fopen('./submissions/submission_metadata.json', 'w');
-fprintf(fh, json);
-fclose(fh);
-
-cd("source")
+% Main script
+addpath('submissions')
+addpath(fullfile(sourceFolder, assignmentName))
+cd('src')
 pause(0.1);
-runTester(useParallel, timeout);
+runTester(useParallel, localTimeout, assignmentName);
 movefile("results.json", "../")
 files = dir();
 files = files(~[files.isdir]);
 for file = {files.name}
-    if ~(strcmp(file{1}, 'run_autograder') || strcmp(file{1}, 'README.md') || endsWith(file{1}, '.m'))
+    if ~(strcmp(file{1}, 'run_autograder') || ...
+            strcmp(file{1}, 'README.md') || ...
+            strcmp(file{1}, 'Allowed_Functions.json') || ...
+            endsWith(file{1}, '.m'))
         delete(file{1});
     end
 end

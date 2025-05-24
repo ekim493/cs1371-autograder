@@ -1,64 +1,67 @@
 # CS1371-autograder
-The Gradescope autograder for CS1371. Contact [Eric Kim](mailto:ekim493@gatech.edu) for questions or comments.
-## Setup instructions (Windows Only)
-*Note: You must have Docker installed and logged in.*
+The Gradescope autograder for CS1371. 
+
+This repository contains files to setup and run the Gradescope autograder for Georgia Tech's CS1371 class. It supports testing various problem types including function outputs, plots, images, and text files. Other features include infinite loop timeouts, function call restrictions, customizable point distribution, image comparisons, and more.
+
+Contact [Eric Kim](mailto:ekim493@gatech.edu) for questions or comments.
+## Getting Started
+### Requirements
+1. The [Gradescope Autograder](https://gradescope-autograders.readthedocs.io/en/latest/) works by pulling a Docker image from Docker hub. Currently, the Docker is hosted by me at [ekim493/cs1371-autograder](https://hub.docker.com/r/ekim493/cs1371-autograder). To follow these instructions on your own, create a [Docker Hub](https://hub.docker.com) account, then create your own Docker Hub repository.
+2. The setup scripts require Powershell 6+ to run. It is avaiable on Windows by default and can be installed for MacOS through Homebrew.
+3. Docker Desktop must be installed in the default location and logged in. Matlab must also be installed and be executable through your search PATH.
+4. Follow the setup instructions to create a source folder containing solution codes and testers for the autograder.
+
+### Setup
+See the [setup.md](setup.md) file for a comprensive overview on how to setup the autograder. See the [examples](examples/) folder for an example.
+- All assignments should be organized into folders where the name of the folder is the same as the gradescope assignment.
+- All solutions codes should be name `FUNCTION_soln.m`, where `FUNCTION` is replaced with the name of the function.
+- The name of the tester should be the the gradescope assignment name + 'Tester.m'.
+    - Example: For a gradescope assignment called `HW0`, the tester file should be called `HW0Tester.m`.
+
+### Image Build
 - Clone this Github repository.
-- Add all necessary files (solution codes and testers) for the HW.
-    - See the [Structure](https://github.gatech.edu/ekim493/cs1371-autograder#stucture) section below for more info. Also see the [testers readme](https://github.gatech.edu/ekim493/cs1371-autograder/tree/master/source/testers#testers) for info on how to structure the tester file.
-- Optional: run the `setup.bat` script.
-    - This script creates a base Docker image with Matlab installed. It only has to be run if you need to create a new base repository or if Matlab/Gradescope base needs to be updated to different version. Otherwise, the `ekim493/cs1371-autograder:base` repository is available for use. Currently Matlab version: `2024b`.
-    - You will be prompted for your Mathworks email and a OTP.
-    - Modify the top 2 variables in the script to change the default base Docker repository name. Alternatively, the script will prompt you for the repository and tag names.
-- Run the `update.bat` script.
-    - Modify the top 2 variables in the script to change the base and destination repository names. You must have write access to the destination repository.
-    - Running the script will prompt you for the base repository tag and destination repository tag. These are `base` and `latest` by default.
-    - It will then ask if you want encryption enabled. This will p-code all solution and tester files before creating and uploading the Docker container.
-- In gradescope, go to 'Configure Autograder', select 'Manual Docker configuration', and then type in the destination repository and tag. For example, `ekim493/cs1371-autograder:latest`.
-    - Make sure the Docker hub repository is public. NOTE: Making it public will allow all files to be visible online. To prevent this, either make the Docker private and add `gradescopeecs` as a collaborator (requires Pro account) or ensure all solution files are pcoded.
+- *Optional*: Run the `setup.ps1` script. See the advanced usage section below for more info.
+- Run the `build.ps1` script. To run a Powershell script, open a Powershell terminal, navigate to the directory with the script, and run `.\build.ps1`. You can override the default parameters for `base`, `repo`, `tag`, `source`, and `encrypt`. To do this, either specify the parameters when executing the script (ex: `.\build.ps1 -source myfolder -tag HW01`), or run the script and follow the prompts to manually configure these values.
+    - The `base` parameter is the name of the repository and tag of the Docker image with Matlab installed. Use the default value or enter the repo:tag used in the `setup.ps1` script. The default is `ekim493/cs1371-autograder:base` with Matlab version `2024b`. 
+    - The `repo` parameter is the name of the new repository that the script will push to. This should be the same name as the repository you created in Docker Hub. The default is `ekim493/cs1371-autograder`.
+    - The `tag` parameter is the name of an identifier to distinguish different images. This can be anything. Note that using the same tag will override previous versions. The default is `latest`.
+    - The `source` parameter is the name of the source folder created during autograder setup. This folder should contain other folders named after the Gradescope assignment and contain the solution codes and testers for the autograder. The default is `cs1371`. 
+    - The `encrypt` parameter is a boolean value on whether to encrypt the source folder. The default is `$true`.
 
-<details>
-  <summary><b>Old/Manual Instructions</b></summary>
+- In gradescope, go to the 'Configure Autograder' tab, select 'Manual Docker configuration', and then type in the docker Hub repository and tag. For example, `ekim493/cs1371-autograder:latest`.
+    - Make sure the Docker hub repository is public. NOTE: Making it public will allow all files to be visible online. To prevent this, either make the Docker private and add `gradescopeecs` as a collaborator (requires Pro account) or ensure encryption is set to true.
+    - If you run into a "sign-in failed" message, see section on running the setup file below.
 
-Currently, the Docker is hosted by me at ekim493/cs1371-autograder. To follow these instructions on your own, create a Docker hub account, then create your own Docker hub repository. Then, replace all instances of 'ekim493/cs1371-autograder' with the name of your Docker hub repository. These instructions are only tested for Windows.
+## Advanced Usage
+### Running the Setup File
+The `setup.ps1` file creates a Docker image compatible with Gradescope and with Matlab installed and logged in. This file can be used to troubleshoot login issues and to update Matlab/linux if necessary. This script will prompt you for your Mathworks email and a one-time password. 
+- If you see a "sign-in failed" message on Gradescope, you may need to re-login to Matlab. To run the script without re-installing Matlab, use the `SkipInstall` tag or follow the prompt after running the script normally.
+- To change Matlab versions, modify the `MATLAB_RELEASE` argument at the top of the `docker/Dockerfile.setup` script. In addition, modify the list of Matlab dependencies in the Dockerfile by going [here](https://github.com/mathworks-ref-arch/container-images/tree/main/matlab-deps) for the full list.
+- To add additional Matlab toolboxes, modify the `MATLAB_PRODUCT_LIST` argument at the top of the `docker/Dockerfile.setup` script.
+- To change the linux version or update the Gradescope base, change the repository and tag following the `FROM` call in the setup Dockerfile.
+- See [here](https://github.com/mathworks-ref-arch/matlab-dockerfile) for additional details on building a container image with Matlab MPM.
 
--  Clone this Github repository.
--  Download the Docker engine and log in.
-- Open the terminal and navigate to the cloned repository directory with the Dockerfile.
-- Add all necessary files (solution codes, tester, and scores.json) for the corresponding HW assignment.
-    - See the [Structure](https://github.gatech.edu/ekim493/cs1371-autograder#stucture) section below for more info. Also see the [testers readme](https://github.gatech.edu/ekim493/cs1371-autograder/tree/master/source/testers#testers) for info on how to structure the tester and json.
-- Type `docker build ./ -t ekim493/cs1371-autograder` and wait for the build process to finish.
-- Type `docker run --rm -it -v /source/submit:/autograder/submission -v /source:/autograder/results ekim493/cs1371-autograder:latest bash`.
-- You should now be in the Docker container, and the terminal should say something like root@123123.
-- Run Matlab by typing `matlab -licmode onlinelicensing`. You will then be prompted to enter your email (enter the one used to login to Mathworks).
-- It will then prompt you for a one time password by following a link to the Mathworks website.
-- Enter the password and Matlab should start.
-- Open a new terminal **while the previous one is still running**, and type `docker commit CONTAINER_NAME ekim493/cs1371-autograder:TAG`.
-    - Replace CONATINER_NAME with the name of the current container. This can be found in the Docker desktop app under the 'containers' tab.
-    - Replace TAG with a tag to label this instance
-    - **Ensure you are logged in**
-- Finally, push the image to the web using `docker push ekim493/cs1371-autograder:TAG` (while still in the new terminal).
-- In gradescope, go to 'Configure Autograder', select 'Manual Docker configuration', and then type in the docker image name. `ekim493/cs1371-autograder:TAG` in this case.
-    - Make sure the Docker hub repository is public. NOTE: Making it public will allow all files to be visible online. To prevent this, either make the Docker private and add `gradescopeecs` as a collaborator (requires Pro account) or ensure all solution files are pcoded.
-</details>
+### Changing Default Values
+The following are a list of default values set for the autograder and where they can be modified.
+- The `setup.ps1` script and the `build.ps1` script have default parameters that can be adjusted at the top under "Param".
+- The `run_autograder` script has default values at the top. See the source folder overview section below for more details.
+- The `createTestOutput.m` function has a constant variable `MAX_OUTPUT_LENGTH` for maximum display characters it can output to Gradescope.
+- The `Allowed_Functions.json` list contains the default list of allowed functions and operations.
+- The `TesterHelper.m` class contains a list of default properties used when running tests (it is recommended these values are modifed through the tester files instead).
 
-## Stucture
-The `Dockerfile` folder contains the scripts used to build our Docker environments.
-- To change the Matlab version and the toolboxes installed, update the `Dockerfile.build` file.
-    - Matlab is installed using the MATLAB Package Manager (MPM), detailed [here](https://github.com/mathworks-ref-arch/matlab-dockerfile).
-    - To obtain the list of Matlab dependencies for each version, see [here](https://github.com/mathworks-ref-arch/container-images/tree/main/matlab-deps).
+### Source Folder Overview
+- `run_autograder` is the bash script that is run by Gradescope when a student file is submitted.
+    - It will attempt to run `runTester.m` up to 3 times. For each attempt, if Matlab takes too long to run, it will automatically timeout.
+    - Adjustable variables at the top of the script:
+        - `DELAY` adds an additional delay in seconds before displaying the results in Gradescope. Used to deter autograder spamming.
+        - `LOCALTIMEOUT` sets the timeout of each test case in seconds.
+        - `TIMEOUT` sets the timeout of each run in minutes. The maximum runtime of run_autograder is set to its double. It is recommended this default value is not changed.
+        
+- `runTester.m` is the main Matlab function to run the test suite and output the results as a results.json.
+- `runSuite.m` is a Matlab function used to run the test suite with a timeout.
+- `createTestOutput.m` is a Matlab function used to customize the text output to Gradescope given the test result.
+- `encrypt.m` is a Matlab function to encrypt the source folder.
+- `TesterHelper.m` is a Matlab class used to run test cases. See [setup](setup.md) for more info.
 
-The `source` folder holds all relevant data necessary to run the autograder
-- `source/run_autograder` is the main shell script run by the Gradescope harness.
-- `source/runTester.m` is the main Matlab driver to run the test cases and output the results as a results.json.
-- `source/solutions` holds the solution codes for all HW assignments. 
-    - All assignments should be organized into folders where the name of the folder is the same as the gradescope assignment.
-    - All solutions codes should be name `FUNCTION_soln.m`, where `FUNCTION` is replaced with the name of the function.
-- `source/testers` holds the tester files for all HW assignments. 
-    - The name of the tester should be the the gradescope assignment name + 'Tester.m'.
-    - Example: For a gradescope assignment called `HW0`, the testers file should contain a `HW0Tester.m`.
-
-## Debugging
-- To test student code locally, create and add all code to a folder called `submissions`. Then run `Local_Tester.m`. The output for the test cases will display in the command window, and it will also open up the results.json file.
-    - Modify the `useParallel` variable at the top of this script to disable parallel execution, which allows the use of breakpoints.
-- For more advanced debugging, you can run the Docker image locally with the following command: `docker run --rm -it -v /source/submit:/autograder/submission -v /source:/autograder/results ekim493/cs1371-autograder:latest bash`.
-    - Replace `ekim493/cs1371-autograder:latest` with the name of the docker image.
+## Local Testing
+To test student code locally, create a folder called `submissions` and add code to test to this folder. Modify the variables at the top of the `Local_Tester.m` script if necessary and then run the file. The output for the test cases will display in the command window, and it will also open up the results.json file. To use the Matlab debugger, set `useParallel` to false.

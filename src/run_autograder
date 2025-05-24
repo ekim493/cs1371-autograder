@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 DELAY=10 # Set time in seconds
-TIMEOUT=4 # Set timeout in minutes
 LOCALTIMEOUT=30 # Set test case timeout in seconds
+TIMEOUT=4 # Set timeout in minutes
 
 # Write error message to results file
 write_error() {

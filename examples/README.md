@@ -1,0 +1,2 @@
+# Example
+This folder contains an example assignment called `HW0`. The `autograder` folder is an example source directory used to setup the autograder, and the `gradescope` folder contains example student code you can submit on Gradescope. 
