@@ -29,7 +29,7 @@ classdef HW0Tester < matlab.unittest.TestCase
         end
         % Character example
         function example2_Test1(testCase)
-            word = 'alphabet';
+            word = TesterHelper.generateString(length=[10, 20], uppercase=true);
             t = TesterHelper(word);
             t.run();
         end
@@ -41,6 +41,7 @@ classdef HW0Tester < matlab.unittest.TestCase
             arr = randi(15, 3, 3);
             t = TesterHelper(arr);
             t.includeFuncs = {'FOR', 'IF'};
+            t.outputNames = {'array', 'number'};
             t.run();
         end
         % Cell array and plotting example
@@ -72,13 +73,19 @@ classdef HW0Tester < matlab.unittest.TestCase
             t = TesterHelper(st1, field1, vals1);
             t.run();
         end
-    end
-    methods(Test, TestTags = {'L4'})
-        % Images Example (bonus)
+        % Images Example
         function example7_Test1(testCase)
             img = 'image.png';
             t = TesterHelper(img);
             t.runCheckImages = 'image_updated.png';
+            t.run();
+        end
+    end
+    methods(Test, TestTags = {'L4'})
+        % Infinite loop
+        function example8_Test1(testCase)
+            ca = TesterHelper.generateCellArray(columns=[5, 10]);
+            t = TesterHelper(ca);
             t.run();
         end
     end

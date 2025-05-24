@@ -25,6 +25,8 @@ All test case methods should be group and tagged by the level of the problem bei
 
 Points will be divded evenly between test cases. For example, a level 1 problem with 4 test cases will be assigned 0.25 points per test case.
 
+On Gradescope, test cases appear in the order of their levels (level -1, then level 0, then level 1, etc.)
+
 ### Creating Test Cases
 The `TesterHelper.m` file contains a `TesterHelper` class which has functions that should be used to test functions. 
 For each test case, create a `TesterHelper` object and pass in the same inputs as the function being tested. 
