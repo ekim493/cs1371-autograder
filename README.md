@@ -63,5 +63,12 @@ The following are a list of default values set for the autograder and where they
 - `encrypt.m` is a Matlab function to encrypt the source folder.
 - `TesterHelper.m` is a Matlab class used to run test cases. See [setup](setup.md) for more info.
 
+### Running the autograder locally
+You can run the autograder locally from the terminal using the following command: 
+
+`docker run -it -v .:/autograder/submission -v .:/autograder/results --platform linux/amd64 ekim493/cs1371-autograder:latest bash`
+
+Replace `ekim493/cs1371-autograder:latest` with the name of the repository and tag you want to test. You can mount local files as if you were submitting to the autograder by changing the directory you run this command from or change the `.` to the directory containing the files (ex. `./mydir:/autograder/submission`).
+
 ## Local Testing
 To test student code locally, create a folder called `submissions` and add code to test to this folder. Modify the variables at the top of the `Local_Tester.m` script if necessary and then run the file. The output for the test cases will display in the command window, and it will also open up the results.json file. To use the Matlab debugger, set `useParallel` to false.
