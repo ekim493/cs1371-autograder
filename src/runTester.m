@@ -36,8 +36,8 @@ if useParallel
 end
 
 % Add paths and copy dir if necessary
-addpath(assignment_name)
 if isunix && ~ismac
+    addpath(assignment_name)
     addpath('/autograder/submission');
     if exist(fullfile(assignment_name, 'dir'), 'dir')
         copyfile(fullfile(assignment_name, 'dir', '*'), '/autograder/source')

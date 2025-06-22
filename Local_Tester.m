@@ -1,16 +1,26 @@
-% Modify these variables
+%% Modify these variables
 useParallel = true;
 localTimeout = 30;
 sourceFolder = 'cs1371';
 assignmentName = input('Enter assignment name: ', 's'); % Keep as prompt or change to manual input
 
-% Main script
+%% Main script
+runLocalTester(useParallel, localTimeout, sourceFolder, assignmentName);
+
+function runLocalTester(useParallel, localTimeout, sourceFolder, assignmentName)
+mainPath = pwd;
+assignmentPath = fullfile(sourceFolder, assignmentName);
+c = onCleanup(@()cleanupFnc(mainPath, assignmentPath));
 addpath('submissions')
-addpath(fullfile(sourceFolder, assignmentName))
+addpath(assignmentPath)
 cd('src')
 pause(0.1);
 runTester(useParallel, localTimeout, assignmentName);
-movefile("results.json", "../")
+movefile("results.json", "..")
+open("../results.json")
+end
+
+function cleanupFnc(mainPath, assignmentPath)
 files = dir();
 files = files(~[files.isdir]);
 for file = {files.name}
@@ -21,5 +31,7 @@ for file = {files.name}
         delete(file{1});
     end
 end
-cd("..")
-open("results.json")
+cd(mainPath);
+rmpath('submissions')
+rmpath(assignmentPath)
+end
