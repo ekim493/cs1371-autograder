@@ -25,9 +25,9 @@ end
 disp('Running Test Suite...')
 
 if useParallel
-    % Run each test on parfeval for parallel execution. Use runSuiteHelper
+    % Run each test on parfeval for parallel execution.
     for i = 1:numel(suite)
-        group(i) = parfeval(@runSuiteHelper, 1, runner, suite(i)); %#ok<AGROW>
+        group(i) = parfeval(@run, 1, runner, suite(i)); %#ok<AGROW>
     end
     % Once all Futures are queued, monitor their state every 0.01 seconds. Cancel any Futures that have been running for
     % more than "timeout" amount of seconds. Run until all cases have finished (or timed out).
@@ -37,13 +37,6 @@ if useParallel
     end
 else
     group = run(runner, suite);
-    fclose all; % Clear opened files
-end
-
-% Clear array size limit, if it exists
-s = settings;
-if hasTemporaryValue(s.matlab.desktop.workspace.ArraySizeLimit)
-    clearTemporaryValue(s.matlab.desktop.workspace.ArraySizeLimit)
 end
 
 % Create results table
@@ -76,13 +69,4 @@ end
 % Test cases sorted in order within each level, so sort by level to return to original order
 [~, ind] = sort(results.level);
 results = results(ind, :);
-end
-
-function results = runSuiteHelper(runner, suite)
-% Helper function to call the run() function. This allows us to call other functions on the same process after the test
-% is done. Currently, it will run the test case, then close all files on that process. This prevents checkFilesClosed
-% on subsequent tests from failing due to an errored function.
-
-results = run(runner, suite);
-fclose all;
 end

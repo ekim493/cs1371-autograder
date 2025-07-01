@@ -160,6 +160,11 @@ classdef TesterHelper
                 [outputs, solns, names, checks] = fetchOutputs(f);
             end
 
+            % Clear array size limit
+            if hasTemporaryValue(s.matlab.desktop.workspace.ArraySizeLimit)
+                clearTemporaryValue(s.matlab.desktop.workspace.ArraySizeLimit)
+            end
+
             % Run relevant check functions
             if obj.runCheckCalls
                 obj.checkCalls();
@@ -179,7 +184,6 @@ classdef TesterHelper
             if ~isempty(obj.runCheckImages)
                 obj.checkImages(obj.runCheckImages, checks.image);
             end
-
         end
 
         function [outputs, solns, names, checks] = runFunc(obj, loadVars)
@@ -271,6 +275,7 @@ classdef TesterHelper
                             error('HWStudent:exceedDiarySize', ['Matlab attempted to display %s characters to the command window and exceeded the allocated memory capacity (%s). ' ...
                                 'Ensure that you have suppressed your lines of code using semicolons.'], extractAfter(exception.arguments{1}, 'x'), exception.arguments{3});
                         else
+                            fclose all;
                             rethrow(exception);
                         end
                     end
