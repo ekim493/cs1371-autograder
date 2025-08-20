@@ -28,11 +28,11 @@ Points will be divded evenly between test cases. For example, a level 1 problem 
 On Gradescope, test cases appear in the order of their levels (level -1, then level 0, then level 1, etc.)
 
 ### Creating Test Cases
-The `TesterHelper.m` file contains a `TesterHelper` class which has functions that should be used to test functions. 
-For each test case, create a `TesterHelper` object and pass in the same inputs as the function being tested. 
-For example, if you are testing a function that you would normally call as follows `out = twoSum([1 2 3], 2)`, then create the object by calling `t = testerHelper([1 2 3], 2)`.
+The `TestRunner.m` file contains a `TestRunner` class which has functions that should be used to test functions. 
+For each test case, create a `TestRunner` object and pass in the same inputs as the function being tested. 
+For example, if you are testing a function that you would normally call as follows `out = twoSum([1 2 3], 2)`, then create the object by calling `t = TestRunner([1 2 3], 2)`.
 
-Then, set the properties of the object using dot notation. The following is a list of properties that involve checks. For full details, read the documentation in [TesterHelper.m](src/TesterHelper.m).
+Then, set the properties of the object using dot notation. The following is a list of properties that involve checks. For full details, read the documentation in [TestRunner.m](src/TestRunner.m).
 - runCheckAllEqual-> Check and compare all solution variables against the student's. Set to true or false. Default = true.
 - runCheckCalls -> Check a function file's calls for banned functions, set by `Allowed_Functions.json`. Set to true or false. Default = true.
 - runCheckPlots -> Check and compare a plot against the solution's. Set to true or false. Default = false.
@@ -64,7 +64,7 @@ The following is an example implementation of a test case calling the `example3`
 ```
 function example3_Test1(testCase)
     arr = randi(15, 3, 3)
-    t = TesterHelper(arr);
+    t = TestRunner(arr);
     t.includeFuncs = {'FOR', 'IF'};
     t.run();
 end

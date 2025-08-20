@@ -3,7 +3,7 @@ classdef HW0Tester < matlab.unittest.TestCase
     methods(Test, TestTags = {'L0'})
         % ABC Example
         function exampleABC_Test1(testCase) 
-            t = TesterHelper();
+            t = TestRunner();
             t.outputType = 'limit';
             t.run();
         end
@@ -13,24 +13,24 @@ classdef HW0Tester < matlab.unittest.TestCase
         % Error Example
         function example0_Test1(testCase)
             vec = [1, 2, 3];
-            t = TesterHelper(vec);
+            t = TestRunner(vec);
             t.run();
         end
         % Basic & multiple test Example
         function example1_Test1(testCase)
             vec = rand(1,9)*100+1;
-            t = TesterHelper(vec);
+            t = TestRunner(vec);
             t.run();
         end
         function example1_Test2(testCase)
             vec = rand(1,9)*100+1;
-            t = TesterHelper(vec);
+            t = TestRunner(vec);
             t.run();
         end
         % Character example
         function example2_Test1(testCase)
-            word = TesterHelper.generateString(length=[10, 20], uppercase=true);
-            t = TesterHelper(word);
+            word = TestRunner.generateString(length=[10, 20], uppercase=true);
+            t = TestRunner(word);
             t.run();
         end
     end
@@ -39,7 +39,7 @@ classdef HW0Tester < matlab.unittest.TestCase
         % Array, iteration, and conditionals example
         function example3_Test1(testCase)
             arr = randi(15, 3, 3);
-            t = TesterHelper(arr);
+            t = TestRunner(arr);
             t.includeFuncs = {'FOR', 'IF'};
             t.outputNames = {'array', 'number'};
             t.run();
@@ -50,7 +50,7 @@ classdef HW0Tester < matlab.unittest.TestCase
                   [2, 5, 9], [3, 2, 1], 'b-.', 1;
                   [3, 5, 6], [6, 2, 4], 'g-', 2};
             num = 2;
-            t = TesterHelper(ca, num);
+            t = TestRunner(ca, num);
             t.runCheckPlots = true;
             t.run();
         end
@@ -60,7 +60,7 @@ classdef HW0Tester < matlab.unittest.TestCase
         % Lo-level example
         function example5_Test1(testCase)
             filename = 'example.txt';
-            t = TesterHelper(filename);
+            t = TestRunner(filename);
             t.runCheckFilesClosed = true;
             t.runCheckTextFiles = 'new.txt';
             t.run();
@@ -70,13 +70,13 @@ classdef HW0Tester < matlab.unittest.TestCase
             st1 = struct('Season', {'Spring', 'Summer', 'Fall', 'Winter'});
             field1 = 'Temp';
             vals1 = [40, 60, 80, 65];
-            t = TesterHelper(st1, field1, vals1);
+            t = TestRunner(st1, field1, vals1);
             t.run();
         end
         % Images Example
         function example7_Test1(testCase)
             img = 'image.png';
-            t = TesterHelper(img);
+            t = TestRunner(img);
             t.runCheckImages = 'image_updated.png';
             t.run();
         end
@@ -84,8 +84,8 @@ classdef HW0Tester < matlab.unittest.TestCase
     methods(Test, TestTags = {'L4'})
         % Infinite loop
         function example8_Test1(testCase)
-            ca = TesterHelper.generateCellArray(columns=[5, 10]);
-            t = TesterHelper(ca);
+            ca = TestRunner.generateCellArray(columns=[5, 10]);
+            t = TestRunner(ca);
             t.run();
         end
     end

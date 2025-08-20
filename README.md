@@ -47,7 +47,7 @@ The following are a list of default values set for the autograder and where they
 - The `run_autograder` script has default values at the top. See the source folder overview section below for more details.
 - The `createTestOutput.m` function has a constant variable `MAX_OUTPUT_LENGTH` for maximum display characters it can output to Gradescope.
 - The `Allowed_Functions.json` list contains the default list of allowed functions and operations.
-- The `TesterHelper.m` class contains a list of default properties used when running tests (it is recommended these values are modifed through the tester files instead).
+- The `TestRunner.m` class contains a list of default properties used when running tests (it is recommended these values are modifed through the tester files instead).
 
 ### Source Folder Overview
 - `run_autograder` is the bash script that is run by Gradescope when a student file is submitted.
@@ -61,7 +61,7 @@ The following are a list of default values set for the autograder and where they
 - `runSuite.m` is a Matlab function used to run the test suite with a timeout.
 - `createTestOutput.m` is a Matlab function used to customize the text output to Gradescope given the test result.
 - `encrypt.m` is a Matlab function to encrypt the source folder.
-- `TesterHelper.m` is a Matlab class used to run test cases. See [setup](setup.md) for more info.
+- `TestRunner.m` is a Matlab class used to run test cases. See [setup](setup.md) for more info.
 
 ### Running the autograder locally
 You can run the autograder locally from the terminal using the following command: 
