@@ -2,7 +2,7 @@ function checkCalls(obj)
 % CHECKCALLS - Check a function file's calls.
 %   This function will check if the function in question calls or does not call certain functions or use
 %   certain operations. A list of allowed functions and operations should be specified in a file with the
-%   named defined by Autograder.FunctionListName. 
+%   name defined by Autograder.FunctionListName. 
 %   
 %   Operations are defined the keywords that appear when the function iskeyword is called, and must be in all caps. 
 %   You can add additional operations by setting the Autograder.AdditionalOPS property. It will run the final result 

@@ -1,4 +1,4 @@
-function [isClosed, msg] = checkFilesClosed(varargin)
+function [isClosed, msg] = checkFilesClosed()
 % CHECKFILESCLOSED - Check if all files have been properly closed.
 %   This function will check to ensure that all files have been closed using fclose. If any files are still
 %   open, it will close them.

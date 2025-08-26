@@ -3,28 +3,18 @@ classdef Autograder
     %   Run the autograder by initializing the class with the relevant properties.
 
     properties
-        % Full path to the assignment contents (solutions and testers. Set automatically if IsGradescope is true.
+        % Full path to the assignment contents (solutions and testers). Set automatically if IsGradescope is true.
         AssignmentPath (1, :) char
         % Whether the autograder is being run for Gradescope. Defaults to true if on Linux platform.
-        IsGradescope (1, 1) logical
+        IsGradescope (1, 1) logical = false
 
         % Whether or not to run the autograder using the parallel toolbox. Required tor test case timeouts.
         UseParallel (1, 1) logical = true
         % Input to the parpool function to launch parallel workers.
         ParallelPool = 'Processes'
-        % Timeout in seconds for each test case.
+        % Timeout in seconds for each test case. Requires UseParallel to be true.
         TestcaseTimeout (1, 1) double = 30
 
-        % Maximum number of characters to output per test case.
-        MaxOutputLength (1, 1) double = 20000
-        % Limit size of arrays as a percentage of maximum RAM. Helps minimize crashes.
-        MaxMemPercent (1, 1) double = 1
-        % Size of output images (width, height)
-        ImageSize (1, 2), double = [760, 240]
-        % Time in seconds for the delay in monitoring futures.
-        MonitorDelay (1, 1) double = 0.1;
-
-        % The following options pertain to the Gradescope json file
         % Optional text relevant to the entire submission.
         GlobalOutput = ''
         % Format of the GlobalOutput text.
@@ -36,12 +26,20 @@ classdef Autograder
     end
 
     properties (Constant)
+        % Maximum number of characters to output per test case.
+        MaxOutputLength (1, 1) double = 20000
+        % Limit size of arrays as a percentage of maximum RAM. Helps minimize crashes.
+        MaxMemPercent (1, 1) double = 1
+        % Size of output images (width, height) in Gradescope. 
+        ImageSize (1, 2) double = [760, 240]
+        % Figure quality (xPos, yPos, width, height). Increasing this value may cause images not to display.
+        FigureSize = [100, 100, 380, 120];
+        % Time in seconds for the delay in monitoring for function timeouts.
+        MonitorDelay (1, 1) double = 0.1
         % Name of file that has function list
         FunctionListName = 'Function_List.json'
         % Additional operators to detect
         AdditionalOPS = {'BANG'}
-        % Figure quality
-        FigureSize = [100, 100, 380, 120];
     end
 
     properties (SetAccess=private)
@@ -55,18 +53,14 @@ classdef Autograder
                 opts.?Autograder
             end
 
+            % Check if system is Linux
+            if isunix && ~ismac
+                obj.IsGradescope = true;
+            end
+
             % Store class properties
             for prop = string(fieldnames(opts))'
                 obj.(prop) = opts.(prop);
-            end
-
-            % Check whether system is Linux
-            if isempty(obj.IsGradescope)
-                if isunix && ~ismac
-                    obj.IsGradescope = true;
-                else
-                    obj.IsGradescope = false;
-                end
             end
 
             if obj.IsGradescope

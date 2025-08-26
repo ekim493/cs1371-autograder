@@ -1,5 +1,5 @@
 function runAutograder(obj)
-% RUN - Main function to run the Gradescope Autograder.
+% RUNAUTOGRADER - Main function to run the Gradescope Autograder.
 %   This function configures the Gradescope paths, initializes the parallel pool, creates the test suite, and runs it
 %   using the runSuite function. It will also display run diagnostics if prompted when running in parallel.
 
@@ -54,7 +54,7 @@ end
 
 % Run suite
 if ~exist('suite', 'var')
-    obj.throwError()
+    obj.throwError('The test class was not found. Was a tester included which inherits the matlab.unittest.TestCase class?');
 end
 obj.Results = obj.runSuite(runner, suite);
 

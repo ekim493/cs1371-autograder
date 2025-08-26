@@ -26,7 +26,7 @@ run_attempts() {
         # Run commands with timeout
         timeout ${TIMEOUT}m bash -c "
             cd /autograder/source || exit 1
-            matlab $MATLAB_ARGS -batch \"runTester($use_parallel)\" || exit 1
+            matlab $MATLAB_ARGS -batch \"Autograder(UseParallel=$use_parallel)\" || exit 1
             cp /autograder/source/results.json /autograder/results/results.json || exit 1
         "
 

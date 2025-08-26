@@ -163,7 +163,7 @@ end
 % Output formatting
 if ~isempty(msg)
     hasPassed = false;
-    if strcmp(msg(1:2), '\n')
+    if startsWith(msg, '\n')
         msg = msg(3:end);
     end
     msg = strrep(msg, '\n', '\n    ');

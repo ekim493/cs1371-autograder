@@ -1,7 +1,7 @@
 function varargout = compareImg(varargin)
 % COMPAREIMG - Compare two images or figures.
 %   This function will read in two figures or two image filenames and displays a figure comparison between
-%   them. This function can also save the figure comparsion as a jpg image. Intended as a helper function
+%   them. This function can also save the figure comparison as a jpg image. Intended as a helper function
 %   for checkImages and checkPlots. For comparing plots, it is recommended you use mapPlot instead.
 %
 %   Syntax
@@ -15,7 +15,7 @@ function varargout = compareImg(varargin)
 %       window as a jpg.
 %
 %   Output Arguments
-%       F - Filename of the comparsion image as a jpg. If no output arguments are specified, it will display
+%       F - Filename of the comparison image as a jpg. If no output arguments are specified, it will display
 %           the comparison as a figure.
 %
 %   See also checkImages, checkPlots, mapPlot
@@ -66,7 +66,7 @@ if nargout == 0
         return;
     end
 else
-    % Open figure comparsion, then save the figure data,
+    % Open figure comparison, then save the figure data,
     if nargin == 2
         TestRunner.compareImg(varargin{:}, 'call'); % Recursive call to display figures
     end

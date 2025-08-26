@@ -1,6 +1,6 @@
 function [outputs, solns, names, checks] = runFunc(obj, loadVars)
 % RUNFUNC - Helper function for RUN. Can be run in the background using parfeval.
-%   This function run's the solution code (should be named FUNCNAME_soln), the student's code, checkPlots
+%   This function runs the solution code (should be named FUNCNAME_soln), the student's code, checkPlots
 %   (if desired), and checkFilesClosed (if desired).
 %
 %   Input Arguments

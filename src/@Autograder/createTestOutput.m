@@ -72,7 +72,7 @@ elseif contains(msg, 'HWStudent:') || contains(msg, 'Error in TestRunner/runFunc
             msg = erase(msg, 'Error using nargin\n    ');
         end
     else
-        msg = char(extractBetween(msg, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in H'));
+        msg = char(extractBetween(msg, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in '));
         if contains(msg, 'Error using TestRunner/run (') % No encryption, has lineno
             msg = regexprep(msg, 'Error using TestRunner/run \(line \d+\)\\n    ', '');
         elseif contains(msg, 'Error using TestRunner/run') % Encrypted TestRunner outputs no line
@@ -105,15 +105,20 @@ for i = 1:numel(test.Details.DiagnosticRecord)
         if fid == -1
             continue
         end
-        bytes = fread(fid);
-        encoder = org.apache.commons.codec.binary.Base64; % base64 encoder
-        base64string = char(encoder.encode(bytes))';
-        size = obj.ImageSize;
-        temp = [extractBefore(temp, 'IMAGEFILE:'), sprintf( ...
-            ['<img src=''data:image/png;base64,%s'' width = ''%d'' height = ''%d''> \\n    <em>' ...
-            'Please run your function in Matlab to view your figure in higher quality.</em>'], ...
-            base64string, size(1), size(2))];
-        fclose(fid);
+        try
+            bytes = fread(fid);
+            encoder = org.apache.commons.codec.binary.Base64; % base64 encoder
+            base64string = char(encoder.encode(bytes))';
+            size = obj.ImageSize;
+            temp = [extractBefore(temp, 'IMAGEFILE:'), sprintf( ...
+                ['<img src=''data:image/png;base64,%s'' width = ''%d'' height = ''%d''> \\n    <em>' ...
+                'Please run your function in Matlab to view your figure in higher quality.</em>'], ...
+                base64string, size(1), size(2))];
+            fclose(fid);
+        catch E
+            warning(getReport(E));
+            temp = '<em>Image comparison failed to run.</em>';
+        end
     end
     if isempty(temp) % If there is an issue and no output diagnostic is provided, skip output display.
         continue;

@@ -15,7 +15,7 @@ function out = generateCellArray(opts)
 %                           will be 1 to 5 in length. Default = true.
 %       strings (logical) - Specify whether the cell array should contain vectors of chars. These chars will
 %                           be a random string of 5 to 10 lowercase letters. Default = true.
-%       logicals (logicals) - Specify whether the cell array should contain vectors of logicals. The length
+%       logicals (logical) - Specify whether the cell array should contain vectors of logicals. The length
 %                             of this vector will be 1 to 5. Default = true.
 %       doubleRange (double) - Specify a range of values for all random double number generation. Default =
 %                              [0, 100].
@@ -55,9 +55,9 @@ for i = 1:numel(ca)
             ca{i} = randi(opts.doubleRange);
         case 's'
             if opts.stringIsSent
-                ca{i} = TestRunner.generateString(sentence=true, length=[20, 40]);
+                ca{i} = utils.generateString(sentence=true, length=[20, 40]);
             else
-                ca{i} = TestRunner.generateString(length=[5, 10]);
+                ca{i} = utils.generateString(length=[5, 10]);
             end
         case 'l'
             ca{i} = logical(randi([0, 1], [1, randi(5)]));

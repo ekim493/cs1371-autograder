@@ -68,8 +68,10 @@ classdef TestRunner
             if isempty(obj.TestCase)
                 try
                     obj.TestCase = evalin('caller', 'testCase');
-                catch
-                    error('TestRunner:noTestCase', 'Error retrieving the testCase object from the caller.');
+                catch E
+                    % error('TestRunner:noTestCase', ['Error retrieving the testCase object from the caller. ' ...
+                        % 'Needs to be set manually when running with "threads".']);
+                        rethrow(E)
                 end
             end
 
@@ -97,7 +99,7 @@ classdef TestRunner
 
     methods (Static)
         % Static methods
-        [isClosed, msg] = checkFilesClosed(varargin)
+        [isClosed, msg] = checkFilesClosed()
         varargout = compareImg(varargin)
         calls = getCalls(path)
         map = mapPlot(lines)

@@ -1,8 +1,9 @@
 function calls = getCalls(path)
 % GETCALLS - Return all built-in function calls and operations that a function used.
 %   This function will output all built-in functions and operations that a particular function called in a
-%   cell array of characters. All operations (use iskeyword() for a list) are indicated in caps. Additional OPS can be
-%   defined using the Autograder.AdditionalOPS property. Intended as a helper function for checkCalls.
+%   cell array of characters. All operations (use iskeyword() for a list) are indicated in caps. Additional
+%   keywords/operators can be defined using the Autograder.AdditionalOPS property. Intended as a helper function 
+%   for checkCalls.
 %
 %   Syntax
 %       C = getCalls(path)
@@ -14,7 +15,7 @@ function calls = getCalls(path)
 % This code runs on the mtree function which is not officially supported. Any helper functions
 % that the student calls will also be checked.
 %
-% This code was taken from the GATECH CS1371 organization repository.
+% This code was taken from the Georgia Tech CS1371 organization repository.
 %
 % See also checkCalls, mtree
 
@@ -42,7 +43,7 @@ additionalOPS = Autograder.AdditionalOPS;
 if isrow(additionalOPS)
     additionalOPS = additionalOPS';
 end
-keywords = [iskeyword; additionalOPS];
+keywords = [iskeyword(); additionalOPS];
 OPS = cellfun(@upper, keywords, 'UniformOutput', false);
 calls = [calls reshape(string(info.mtfind('Kind', OPS).kinds), 1, [])];
 calls = unique(calls);

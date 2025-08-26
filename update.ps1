@@ -93,7 +93,7 @@ if (-not (Get-Process -Name 'Docker Desktop' -ErrorAction SilentlyContinue)) {
 }
 
 # Build
-docker build -f docker/Dockerfile.build -t ${Repo}:$Tag --platform linux/amd64 --build-arg FROM_IMAGE=$Base .
+docker build -f docker/Dockerfile.update -t ${Repo}:$Tag --platform linux/amd64 --build-arg FROM_IMAGE=$Base .
 if ($LASTEXITCODE) { 
     Write-Error "Docker image build failed."
     exit 1

@@ -1,6 +1,6 @@
 %% Modify these variables
 % Whether to use the parallel toolbox. This enables timeouts.
-useParallel = false;
+useParallel = true;
 % Source folder where the assignment folder can be found.
 sourceFolder = 'autograder';
 % Folder where code to grade can be found.
@@ -33,7 +33,7 @@ files = dir();
 files = files(~[files.isdir]);
 fileNames = {files.name};
 % List of files to ignore. Will also ignore all .m files
-ignoreFiles = {'localTester.m', 'run_autograder', 'Function_List.json'};
+ignoreFiles = {'results.json', 'localTester.m', 'encrypt.m', 'run_autograder', 'Function_List.json'};
 for i = 1:length(fileNames)
     if ~any(strcmp(fileNames{i}, ignoreFiles))
         delete(fileNames{i});

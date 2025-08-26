@@ -1,4 +1,4 @@
-function out = generateSpec(options)
+function out = generateSpec(opts)
 % GENERATESPEC - Generates a random specification for plotting.
 %   This function generates a string of characters which can be used as plotting specifications.
 %
@@ -11,21 +11,21 @@ function out = generateSpec(options)
 %       colors (logical) - Specify whether color specs should be included (default = true)
 
 arguments
-    options.lines (1, 1) logical = true
-    options.points (1, 1) logical = true
-    options.colors (1, 1) logical = true
+    opts.lines (1, 1) logical = true
+    opts.points (1, 1) logical = true
+    opts.colors (1, 1) logical = true
 end
 
 out = [];
-if options.lines
+if opts.lines
     lineSpecs = {'-', ':', '-.', '--'};
     out = [lineSpecs{randi(numel(lineSpecs))}];
 end
-if options.points
+if opts.points
     pointSpecs = '.ox+*sdp';
     out = [out pointSpecs(randi(numel(pointSpecs)))];
 end
-if options.colors
+if opts.colors
     colorSpecs = 'rgbcmyk';
     out = [out colorSpecs(randi(numel(colorSpecs)))];
 end

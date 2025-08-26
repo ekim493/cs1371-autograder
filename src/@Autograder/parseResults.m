@@ -4,12 +4,14 @@ function parseResults(obj)
 %   the final results.json file for Gradescope to use. 
 %
 %   The autograder relies on test tags to group problems. Each problem should be grouped and tagged with the problem
-%   name/number, the number of points to assign, and how the points should be assigned (either 'penalty', 'standard', or
-%   'grouped'). 
+%   name/number and how points should be assigned. This should be 'N' (standard scoring), '+N' (bonus points), '-N'
+%   (penalty scoring), 'xN' (multiplicative scoring), and '/N' (penalty multiplicative scoring). Multiplication is done
+%   before any bonus points are added or subtracted. Anything other than standard scoring does not impact the maximum
+%   score that the assignment is out of. Multiplication is compounding. The final score cannot be lower than 0.
 %
-%   The problem number is used to sort the problems, the 'penalty' scoring will deduct a certain percentage (set by the
-%   property PenaltyScore), 'standard' scoring will give each test case the points stated, and 'grouped' scoring will
-%   sum up all of the problems to the stated point total.
+%   The scores should be prefixed with how scores are distributed. Set a prefix of 'each=' for each part in the problem
+%   to be assigned the listed number of points. Set a prefix of 'total=' for the sum of all the parts to be assigned the 
+%   points listed.
 
 % Sort results based on problem name
 [~, ind] = sort(obj.Results.problem);
@@ -17,7 +19,7 @@ results = obj.Results(ind, :); % Will use local variable
 
 % Get the score for each test case and the total
 totalScore = 0;
-maxScore = 0;
+extraPoints = 0;
 multiplier = 1;
 problemNames = unique(results.problem);
 for i = 1:numel(problemNames)
@@ -37,12 +39,16 @@ for i = 1:numel(problemNames)
     type = parts{1};
     operator = parts{2};
     value = str2double(parts{3});
+    if isnan(value)
+        obj.throwError('Invalid point value in scoring tag.');
+    end
 
     % Get properties of problem
     isEach = strcmpi(type, 'each');
     numParts = sum(testCaseMask);
     numPassed = sum(results.passed(testCaseMask));
     numFailed = sum(~results.passed(testCaseMask));
+    allPassed = all(results.passed(testCaseMask));
 
     % Calculate points for the problem
     if isEach
@@ -50,42 +56,47 @@ for i = 1:numel(problemNames)
     else
         pointsPerPart = value / numParts;
     end
-    pointTotal = pointsPerPart * numParts;
 
     % Assign points
     switch operator
         case '' % Standard scoring
-            if isEach
-                % Passed test cases
-                scores = results.passed(testCaseMask) * pointsPerPart;
-                results.score(testCaseMask) = scores;
-                totalScore = totalScore + sum(scores);
-                % Possible score
-                results.max_score(testCaseMask) = pointsPerPart;
-                maxScore = maxScore + pointTotal;
-            else
-                % Passed test cases
-                scores = results.passed(testCaseMask) * pointsPerPart;
-                results.score(testCaseMask) = scores;
-                totalScore = totalScore + sum(scores);
-                % Possible score
-                results.max_score(testCaseMask) = pointsPerPart;
-                maxScore = maxScore + pointTotal;
-            end
+            % Passed test cases
+            scores = results.passed(testCaseMask) .* pointsPerPart;
+            results.score(testCaseMask) = scores;
+            totalScore = totalScore + sum(scores);
+            % Possible score
+            results.max_score(testCaseMask) = pointsPerPart;
         case '+' % Extra credit
-            totalScore = totalScore + numPassed * pointsPerPart;
+            results.score(testCaseMask) = pointsPerPart;
+            extraPoints = extraPoints + numPassed * pointsPerPart;
         case '-' % Penalty scoring
-            totalScore = totalScore - numFailed * pointTotal;
+            results.score(testCaseMask) = -pointsPerPart;
+            extraPoints = extraPoints - numFailed * pointsPerPart;
         case 'x' % Multiplicative scoring
-            multiplier = multiplier * (value ^ numPassed);
-        case '/' % Penaltiy multiplicative scoring
-            multiplier = multiplier * (value ^ numFailed);
+            if isEach
+                multiplier = multiplier * (value ^ numPassed);
+            elseif allPassed
+                multiplier = multiplier * value;
+            end
+        case '/' % Penalty multiplicative scoring
+            if isEach
+                multiplier = multiplier * (value ^ numFailed);
+            elseif ~allPassed
+                multiplier = multiplier * value;
+            end
+        otherwise
+            obj.throwError('Invalid operator in scoring tag.')
     end
 end
 
 % Get final score
 totalScore = totalScore * multiplier;
+totalScore = totalScore + extraPoints;
 totalScore = max(totalScore, 0); % Non-negative
+
+% Add status field to results
+results.status = repmat("failed", height(results), 1);
+results.status(results.passed) = "passed";
 
 % Prepare table for Gradescope formatting
 results.output_format = repmat('html', height(results), 1);
@@ -94,7 +105,7 @@ results.max_score = round(results.max_score, 2);
 results.score = round(results.score, 2);
 
 % Create final json structure and add fields
-json = struct('score', round(totalScore, 2), 'max_score', round(maxScore, 2), 'tests', results);
+json = struct('score', round(totalScore, 2), 'tests', results);
 json.visibility = obj.Visibility;
 json.output = obj.GlobalOutput;
 json.output_format = obj.OutputFormat;

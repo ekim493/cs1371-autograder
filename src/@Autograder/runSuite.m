@@ -1,17 +1,15 @@
 function results = runSuite(obj, runner, suite)
 % RUNSUITE - Returns a table of results after running a test suite
-%   This function takes in a runner and a test suite. If UseParallel is set to true, then it will run each test case 
-%   individually using parfeval, and it will cancel the job after TestcaseTimeout seconds. Otherwise,
-%   it will simply run the suite on the input TestRunner.
+%   This function takes in a runner and a test suite. It runs the test suite either in parallel or in serial depending
+%   on the UseParallel property. This function will also print diagnostics to the command window.
 %
 %   Input Arguments
 %       runner - matlab.unittest.TestRunner object to run test cases using.
 %       suite - matlab.unittest.TestSuite object containing all the test cases to be run.
 %
 %   Output Arguments
-%       results - Table containing the following data: name of test case, level of test case, logical pass/fail, output
-%       from createTestOutput(), and display text containing command window output of each Future (empty if useParallel
-%       is false).
+%       results - Table containing the following data: name of test case, problem name (from test tag), problem scoring
+%       (from test tag), logical pass/fail, and the output from createTestOutput().
 
 arguments
     obj
@@ -21,9 +19,8 @@ end
 
 disp('Running Test Suite...')
 
-group(1:numel(suite)) = parallel.FevalFuture; % Preallocate
-
 if obj.UseParallel
+    group(1:numel(suite)) = parallel.FevalFuture; % Preallocate
     % Create data queue to display test case information from workers
     dataQueue = parallel.pool.DataQueue;
     afterEach(dataQueue, @disp);
@@ -41,7 +38,7 @@ else
     group = run(runner, suite);
 end
 
-% Create results table
+% Create results table (default passed is false)
 results = table(Size=[numel(suite),5], VariableTypes={'string', 'string', 'string', 'logical', 'cell'}, ...
     Variablenames={'name', 'problem', 'scoring', 'passed', 'output'});
 for i = 1:numel(suite)
@@ -56,16 +53,23 @@ for i = 1:numel(suite)
         obj.throwError('Tags for this homework assignment are invalid or are not present.')
     end
     if obj.UseParallel
-        % If a Future was canceled, it will always have a RunningDuration > timeout and sometimes an error message
-        if isempty(group(i).Error) && seconds(group(i).RunningDuration) < obj.TestcaseTimeout
-            testresult = fetchOutputs(group(i));
-            results.passed(i) = testresult.Passed;
-            results.output{i} = obj.createTestOutput(testresult);
-        else
+        % Parse parfeval errors first
+        if ~isempty(group(i).Error)
+            results.output{i} = ...
+                ['The autograder ran into an unexpected error. Please contact the HW TAs with the following information:\n' ...
+                group(i).Error.message];
+            continue
+        end
+        % If a Future was canceled, it should have a RunningDuration > timeout
+        if seconds(group(i).RunningDuration) > obj.TestcaseTimeout
             results.output{i} = sprintf( ...
                 ['Verification failed in %s.\\n    ----------------\\n    Test Diagnostic:\\n    ----------------\\n    ' ...
                 'This function timed out because it took longer than %d seconds to run. Is there an infinite loop?'], ...
                 results.name(i), obj.TestcaseTimeout);
+        else
+            testresult = fetchOutputs(group(i));
+            results.passed(i) = testresult.Passed;
+            results.output{i} = obj.createTestOutput(testresult);
         end
     else
         testResult = group(i);
@@ -79,7 +83,11 @@ function results = runSuiteWorker(runner, suite, dataQueue)
 % Helper function to run the test suite on the worker. Prints the report to the command window for diagnostics.
 
 results = run(runner, suite);
-report = results.Details.DiagnosticRecord.Report;
-report = sprintf('%s\n%s\n%s\n.', repmat('=', 1, 80), report, repmat('=', 1, 80)); % Replicate display
+if isempty(results.Details.DiagnosticRecord)
+    report = '.';
+else
+    report = results.Details.DiagnosticRecord.Report;
+    report = sprintf('%s\n%s\n%s\n', repmat('=', 1, 80), report, repmat('=', 1, 80)); % Replicate display
+end
 send(dataQueue, report);
 end

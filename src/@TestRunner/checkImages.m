@@ -16,7 +16,7 @@ elseif ~exist(user_fn, 'file')
     obj.TestCase.verifyTrue(false, sprintf('The image ''%s'' wasn''t found. Did you create an image with the right filename?', user_fn));
     return;
 end
-% Image comparsion by comparing image arrays
+% Image comparison by comparing image arrays
 user = imread(user_fn);
 expected = imread(expected_fn);
 [rUser,cUser,lUser] = size(user);

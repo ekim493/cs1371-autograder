@@ -5,12 +5,12 @@ function throwError(obj, msg)
 
 if obj.IsGradescope
     report = ['The autograder ran into an unexpected error while running your function. ' ...
-        'Please contact the TAs for assistance and provide them with the following information:\n' char(msg)];
+        'Please contact the TAs for assistance and provide them with the following information:' newline char(msg)];
     json = struct('score', 0, 'output', report);
     json = jsonencode(json, PrettyPrint=true);
-    fh = fopen('results.json', 'w');
-    fprintf(fh, json);
-    fclose(fh);
+    writelines(json, fullfile(pwd, 'results.json'));
+    warning(report);
+    quit(0); % Exit matlab with code 0 so it doesn't rerun
 else
     error(msg);
 end
