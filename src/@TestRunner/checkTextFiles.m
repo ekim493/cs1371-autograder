@@ -53,11 +53,10 @@ else
     msg = '';
 end
 
-% Output formatting. <mark> only works for html, replace with <strong> if the output has to be displayed
-% locally in Matlab. Limit output display to 20 lines.
+% Output formatting. <mark> only works for html (use <strong> locally). Limit output display to 20 lines.
 if strcmpi(obj.OutputType, 'none')
     msg = '';
-elseif ~hasPassed && strcmpi(obj.OutputType, 'compare')
+elseif ~hasPassed && strcmpi(obj.OutputType, 'full')
     if n_st > 20
         student = [student(1:20); "Additional lines have been suppressed."];
     end
@@ -73,7 +72,6 @@ elseif ~hasPassed && strcmpi(obj.OutputType, 'compare')
     end
     msg = sprintf('%s\n%s\nActual text file:\n%s\n%s\n%s\nExpected text file:\n%s\n%s', ...
         msg, repelem('-', 16), repelem('-', 16), char(strjoin(student, '\n')), repelem('-', 16), repelem('-', 16), char(strjoin(soln, '\n')));
-    msg = strrep(msg, newline, '\n    ');
 end
 
 obj.TestCase.verifyTrue(hasPassed, msg)

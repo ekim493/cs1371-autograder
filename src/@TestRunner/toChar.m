@@ -16,13 +16,13 @@ function out = toChar(in, opts)
 %       C - The output character array representing A.
 %
 %   Name-Value Arguments
-%       html (logical) - Parse the output to make it html safe. Default = true.
+%       parse (logical) - Parse the output to make it html safe and add size/type. Default = true.
 %       cap (double) - Number of rows to cap at. Set to -1 to uncap. Default = 20.
 %       precision (double) - Number of digits to output for doubles. Default = 10.
 
 arguments
     in
-    opts.html (1, 1) logical = true
+    opts.parse (1, 1) logical = true
     opts.cap (1, 1) double = 20
     opts.precision (1, 1) double = 10
 end
@@ -59,7 +59,7 @@ elseif ischar(in) || isstring(in)
     else
         out = in;
     end
-    % Interactive inputs
+    % Read inputs
     if r == 1 && endsWith(in, '.txt') && exist(in, 'file')
         out = char(strjoin(readlines(in), newline));
         % If text file was empty, return file name instead
@@ -119,7 +119,7 @@ if opts.cap > 0
     end
 end
 % Html parsing and gradescope formatting
-if opts.html
+if opts.parse
     out = strrep(out, '\', '&#92;');
     out = strrep(out, '&', '&amp;');
     out = strrep(out, '<', '&lt;');
@@ -129,7 +129,8 @@ if opts.html
     else
         pref = sprintf('(%dx%d %s):', r, c, class(in));
     end
-    out = [pref '\n       ' out];
-    out = strrep(out, newline, '\n       ');
+    % Add extra spacing
+    out = strrep(out, newline, [newline '   ']);
+    out = sprintf('%s\n   %s', pref, out);
 end
 end

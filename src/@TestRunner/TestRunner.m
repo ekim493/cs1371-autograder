@@ -14,7 +14,8 @@ classdef TestRunner
         RunCheckTextFiles char = '' % The name of the text file for checkTextFiles to check. If empty, it will not run. Default = ''.
 
         % The following are properties that modify how checks behave.
-        OutputType char = 'compare' % Amount of information that the output should display. Set to 'full', 'limit', or 'none'. Default = 'full'.
+        CheckedVariables cell = {} % Script variables to check. If empty, it will check all variables that the solution script generates.
+        OutputType char = 'full' % Amount of information that the output should display. Set to 'full', 'limit', or 'none'. Default = 'full'.
         AllowedFuncs cell = {} % Functions that are allowed to be used, regardless if they are not in the Allowed_Functions list.
         BannedFuncs cell = {} % Functions that are banned, regardless if they are in the Allowed_Functions list.
         IncludeFuncs cell = {} % Functions that must be used by the student.
@@ -68,10 +69,8 @@ classdef TestRunner
             if isempty(obj.TestCase)
                 try
                     obj.TestCase = evalin('caller', 'testCase');
-                catch E
-                    % error('TestRunner:noTestCase', ['Error retrieving the testCase object from the caller. ' ...
-                        % 'Needs to be set manually when running with "threads".']);
-                        rethrow(E)
+                catch
+                    error('TestRunner:noTestCase', 'Error retrieving the testCase object from the caller.');
                 end
             end
 
@@ -89,17 +88,17 @@ classdef TestRunner
 
         % Other methods
         run(obj)
-        [outputs, solns, names, checks] = runFunc(obj, loadVars)
+        [varNames, varValues] = runScript(obj, scriptName)
         checkAllEqual(obj, outputs, solns, names)
-        checkCalls(obj)
+        checkCalls(obj, funcName)
         checkImages(obj, user_fn, expected_fn)
         [hasPassed, msg] = checkPlots(obj)
         [hasPassed, msg] = checkTextFiles(obj, user_fn, soln_fn)
+        [isClosed, msg] = checkFilesClosed(obj)
     end
 
     methods (Static)
         % Static methods
-        [isClosed, msg] = checkFilesClosed()
         varargout = compareImg(varargin)
         calls = getCalls(path)
         map = mapPlot(lines)

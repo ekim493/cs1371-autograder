@@ -28,17 +28,35 @@ if test.Incomplete
 elseif test.Failed
     out = parseFailedTest(obj, test);
 end
+% Html parsing
 out = strrep(out, '"', '\"'); % Escape double quotes
-out(out < 32) = '�'; % Remove illegal ascii characters
-out = strrep(out, '%', '%%'); % fprintf percent sign fix
+out(out < 32 & out ~= 10) = '�'; % Remove illegal ascii characters, exclude newline
 end
 
 function msg = parseIncompleteTest(obj, test)
 % Helper function to parse test cases that were incomplete, or in other words errored.
 
-% If multiple verifications were run, filter out to get the first error report
+indent = repmat(' ', 1, 4);
+spacer = repmat('-', 1, 14);
+prefix = sprintf(sprintf('An error occured while running your function.\n%s%s\n%sError Details:\n%s%s\n', ...
+    indent, spacer, indent, indent, spacer));
+
+% Always get out the first error report
 errorCases = strcmp({test.Details.DiagnosticRecord.Event}, 'ExceptionThrown');
-msg = test.Details.DiagnosticRecord(find(errorCases)).Report;
+diagnostic = test.Details.DiagnosticRecord(find(errorCases));
+exception = diagnostic.Exception(1);
+
+% Create error message based on identifier
+if contains(exception.identifier, 'HWStudent')
+    msg = sprintf('%s%s%s', prefix, indent, exception.message);
+elseif contains(exception.identifier, 'HWTester') || ~contains(exception.stack(1).file, '+student')
+    msg = 'The autograder ran into an unexpected error while running your function. Please contact the HW TAs for assistance.';
+else
+    lines = readlines(exception.stack(1).file);
+    lineNo = exception.stack(1).line;
+    errorMsg = sprintf('%s\n\nError in %s (line %d)\n%s', exception.message, exception.stack(1).name, lineNo, lines(lineNo));
+    msg = sprintf('%s%s%s', prefix, indent, strrep(errorMsg, newline, [newline indent]));
+end
 % Truncate error message if too long
 shouldTruncate = numel(msg) > obj.MaxOutputLength;
 if shouldTruncate
@@ -46,57 +64,23 @@ if shouldTruncate
 end
 % HTML Parsing
 msg = strrep(msg, '\', '&#92;');
-msg = strrep(msg, newline, '\n');
 msg = strrep(msg, '&', '&amp;');
 msg = strrep(msg, '<', '&lt;');
 msg = strrep(msg, '>', '&gt;');
 % Re-add message after to not cut off parsed characters
 if shouldTruncate
-    msg = [msg, '\n<strong>(Error Message Truncated)</strong>'];
-end
-% Filter error message
-if contains(msg, 'HWTester:')
-    msg = 'The autograder ran into an unexpected error while running your function. Please contact the HW TAs for assistance.';
-elseif contains(msg, 'HWStudent:') || contains(msg, 'Error in TestRunner/runFunc')
-    % Parse error message. Contains legacy code that supports old parallized testing. Cuts out error ID and any
-    % error messages thrown by TestRunner itself.
-    if contains(msg, 'Error using TestRunner/runFunc') || contains(msg, 'Error in TestRunner/runFunc')
-        msg = char(extractBetween(msg, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in TestRunner'));
-        if contains(msg, 'Error using TestRunner/runFunc (') % No encryption, has lineno
-            msg = regexprep(msg, 'Error using TestRunner/runFunc \(line \d+\)\\n    ', '');
-        elseif contains(msg, 'Error using TestRunner/runFunc') % Encrypted TestRunner outputs no line
-            msg = extractAfter(msg, 'Error using TestRunner/runFunc\n');
-        elseif contains(msg, '&lt;/a&gt;')
-            % Case for invalid expression
-            msg = [extractBefore(msg, '&lt;a') erase(extractAfter(msg, ')"&gt;'), '&lt;/a&gt;')];
-            msg = erase(msg, 'Error using nargin\n    ');
-        end
-    else
-        msg = char(extractBetween(msg, '\n    --------------\n    Error Details:\n    --------------\n', '\n    \n    Error in '));
-        if contains(msg, 'Error using TestRunner/run (') % No encryption, has lineno
-            msg = regexprep(msg, 'Error using TestRunner/run \(line \d+\)\\n    ', '');
-        elseif contains(msg, 'Error using TestRunner/run') % Encrypted TestRunner outputs no line
-            msg = extractAfter(msg, 'Error using TestRunner/run\n');
-        end 
-    end
-    msg = ['An error occured while running your function.\n    --------------\n    Error Details:\n    --------------\n' msg];
-else
-    % Other error messages (ie. out of memory)
-    msg = extractAfter(msg, '\n    --------------\n    Error Details:\n    --------------\n');
-    msg = ['An error occured while running your function.\n    --------------\n    Error Details:\n    --------------\n' msg];
+    msg = sprintf('%s\n<strong>(Error Message Truncated)</strong>', msg);
 end
 end
 
 function msg = parseFailedTest(obj, test)
 % Helper function to parse test cases that failed, or in other words did not pass verification.
 
-msg = ['Verification failed in ' extractAfter(test.Name, '/') '.\n    ----------------\n    Test Diagnostic:'];
+msg = sprintf('Verification failed in %s.\n    ----------------\n    Test Diagnostic:', extractAfter(test.Name, '/'));
 for i = 1:numel(test.Details.DiagnosticRecord)
     % Temp string created in case multiple verifications were run for one test case.
     temp = test.Details.DiagnosticRecord(i).Report;
-    % Html parsing. Additonal parsing not necessary as these messages have already been filtered and designed for html output.
-    temp = strrep(temp, newline, '\n');
-    temp = char(extractBetween(temp, 'Test Diagnostic:\n    ----------------\n', '\n    ---------------------\n    Framework Diagnostic'));
+    temp = char(extractBetween(temp, sprintf('Test Diagnostic:\n    ----------------\n'), sprintf('\n    ---------------------\n    Framework Diagnostic')));
     filename = extractAfter(temp, 'IMAGEFILE:');
     if ~isempty(filename)
         % Image to base64 encoding
@@ -111,7 +95,7 @@ for i = 1:numel(test.Details.DiagnosticRecord)
             base64string = char(encoder.encode(bytes))';
             size = obj.ImageSize;
             temp = [extractBefore(temp, 'IMAGEFILE:'), sprintf( ...
-                ['<img src=''data:image/png;base64,%s'' width = ''%d'' height = ''%d''> \\n    <em>' ...
+                ['<img src=''data:image/png;base64,%s'' width = ''%d'' height = ''%d''> \n    <em>' ...
                 'Please run your function in Matlab to view your figure in higher quality.</em>'], ...
                 base64string, size(1), size(2))];
             fclose(fid);
@@ -123,6 +107,6 @@ for i = 1:numel(test.Details.DiagnosticRecord)
     if isempty(temp) % If there is an issue and no output diagnostic is provided, skip output display.
         continue;
     end
-    msg = [msg '\n    ----------------\n' temp]; %#ok<AGROW>
+    msg = sprintf('%s\n    ----------------\n%s', msg, temp);
 end
 end

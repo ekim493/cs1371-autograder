@@ -3,16 +3,20 @@ function runAutograder(obj)
 %   This function configures the Gradescope paths, initializes the parallel pool, creates the test suite, and runs it
 %   using the runSuite function. It will also display run diagnostics if prompted when running in parallel.
 
-addpath(obj.AssignmentPath); % Add assignment path
+% Move the tester to the current (source) directory
+copyfile(fullfile(obj.AssignmentPath, obj.TesterFile), pwd);
 
-% Configure Gradescope paths
-if obj.IsGradescope
-    addpath('/autograder/submission');
-    % Add dir files to source directory
-    if isfolder(fullfile(obj.AssignmentPath, 'dir'))
-        copyfile(fullfile(obj.AssignmentPath, 'dir', '*'), '/autograder/source')
-    end
+% Add resource files to current (source) directory
+resourceFolder = fullfile(obj.AssignmentPath, obj.ResourceFolder);
+if isfolder(resourceFolder)
+    copyfile(resourceFolder, pwd)
 end
+
+% Create student and solution folders as namespaces and move files
+mkdir('+student');
+mkdir('+solution');
+copyfile(obj.SubmissionPath, '+student');
+copyfile(obj.AssignmentPath, '+solution');
 
 % Attempt to load the parallel pool. Sometimes Gradescope/AWS bugs and this can fail to load.
 if obj.UseParallel
@@ -40,29 +44,17 @@ else
     setArrayLimit(obj.MaxMemPercent);
 end
 
-runner = testrunner(); % Create runner
-% Search for testsuite class
-files = dir(obj.AssignmentPath);
-for i = 1:numel(files)
-    [~, fileName, ~] = fileparts(files(i).name);
-    metadata = meta.class.fromName(fileName);
-    if ~isempty(metadata) && any(strcmp({metadata.SuperclassList.Name}, 'matlab.unittest.TestCase'))
-        suite = testsuite(fileName); % Create suite. Don't use full path here or it will change to that directory.
-        break
-    end
-end
+% Create runner and suite
+runner = testrunner();
+suite = testsuite(obj.TesterFile);
 
-% Run suite
-if ~exist('suite', 'var')
-    obj.throwError('The test class was not found. Was a tester included which inherits the matlab.unittest.TestCase class?');
-end
+% Run tests
 obj.Results = obj.runSuite(runner, suite);
 
 % Parse results and create results.json for Gradescope
 obj.parseResults();
 
 % Cleanup
-rmpath(obj.AssignmentPath)
 clearArrayLimit() % No need on workers as we assume pool will shut down
 end
 

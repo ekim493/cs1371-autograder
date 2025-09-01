@@ -99,13 +99,12 @@ results.status = repmat("failed", height(results), 1);
 results.status(results.passed) = "passed";
 
 % Prepare table for Gradescope formatting
-results.output_format = repmat('html', height(results), 1);
 results = removevars(results, {'passed', 'scoring', 'problem'}); % Remove unnecessary vars
 results.max_score = round(results.max_score, 2);
 results.score = round(results.score, 2);
 
 % Create final json structure and add fields
-json = struct('score', round(totalScore, 2), 'tests', results);
+json = struct('score', round(totalScore, 2), 'tests', results, 'test_output_format', 'html');
 json.visibility = obj.Visibility;
 json.output = obj.GlobalOutput;
 json.output_format = obj.OutputFormat;
@@ -113,7 +112,5 @@ json.stdout_visibility = obj.StdoutVisibility;
 
 % Write json structure to final results.json file
 json = jsonencode(json, PrettyPrint=true);
-fh = fopen(fullfile(pwd, 'results.json'), 'w');
-fprintf(fh, json);
-fclose(fh);
+writelines(json, fullfile(pwd, 'results.json'));
 end

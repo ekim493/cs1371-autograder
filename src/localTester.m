@@ -1,6 +1,6 @@
 %% Modify these variables
 % Whether to use the parallel toolbox. This enables timeouts.
-useParallel = true;
+useParallel = false;
 % Source folder where the assignment folder can be found.
 sourceFolder = 'autograder';
 % Folder where code to grade can be found.
@@ -18,27 +18,27 @@ mainPath = fileparts(currPath);
 submissionPath = fullfile(mainPath, submissionFolder);
 assignmentPath = fullfile(mainPath, sourceFolder, assignmentName);
 % Setup
-addpath(submissionPath)
-c = onCleanup(@()cleanupFnc(submissionPath));
+c = onCleanup(@()cleanupFnc());
 % Run autograder
-Autograder(AssignmentPath=assignmentPath, UseParallel=useParallel);
+Autograder(AssignmentPath=assignmentPath, SubmissionPath=submissionPath, UseParallel=useParallel);
 % Open results file
 filePath = fullfile(currPath, 'results.json');
 open(filePath)
 end
 
-function cleanupFnc(submissionPath)
+function cleanupFnc()
 % On cleanup, delete files created during run
 files = dir();
 files = files(~[files.isdir]);
 fileNames = {files.name};
-% List of files to ignore. Will also ignore all .m files
+% List of files to ignore
 ignoreFiles = {'results.json', 'localTester.m', 'encrypt.m', 'run_autograder', 'Function_List.json'};
 for i = 1:length(fileNames)
     if ~any(strcmp(fileNames{i}, ignoreFiles))
         delete(fileNames{i});
     end
 end
-% Remove submission directory
-rmpath(submissionPath)
+% Remove namespaces
+rmdir('+solution', 's');
+rmdir('+student', 's');
 end

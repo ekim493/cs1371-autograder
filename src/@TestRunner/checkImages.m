@@ -1,4 +1,4 @@
-function checkImages(obj, user_fn, expected_fn)
+function [hasPassed, msg] = checkImages(obj, user_fn, expected_fn)
 % CHECKIMAGES - Check and compare an image against the solution's.
 %   This function will read in an image filename (defined by the property runCheckImages) and compare it to
 %   its corresponding image solution with a small tolerance. The final result is run through the testCase
@@ -8,6 +8,10 @@ function checkImages(obj, user_fn, expected_fn)
 %   Input Arguments
 %       user_fn (char) - User image file name.
 %       expected_fn (char) - Expected image file name.
+% 
+%   Output Arguments
+%       hasPassed - True if the images matched, false if not.
+%       msg - Character message indicating why the test failed. Is empty if tf is true.
 
 % Check if images can be accessed
 if ~exist(expected_fn, 'file')
@@ -32,17 +36,17 @@ if rUser == rExp && cUser == cExp && lUser == lExp
     end
 else
     hasPassed = false;
-    msg = sprintf('The dimensions of the image do not match the expected image.\n    Actual size: %dx%dx%d\n    Expected size: %dx%dx%d', rUser, cUser, lUser, rExp, cExp, lExp);
+    msg = sprintf('The dimensions of the image do not match the expected image.\nActual size: %dx%dx%d\nExpected size: %dx%dx%d', ...
+        rUser, cUser, lUser, rExp, cExp, lExp);
 end
 
 % Output formatting
 switch obj.OutputType
     case 'none'
         msg = '';
-    case 'compare'
+    case 'full'
         filename = TestRunner.compareImg(user_fn, expected_fn);
-        msg = strrep(msg, newline, '\n');
-        msg = sprintf('%s\\nIMAGEFILE:%s', msg, filename);
+        msg = sprintf('%s\nIMAGEFILE:%s', msg, filename);
 end
 obj.TestCase.verifyTrue(hasPassed, msg);
 end

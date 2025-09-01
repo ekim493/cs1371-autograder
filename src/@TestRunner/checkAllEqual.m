@@ -2,8 +2,8 @@ function checkAllEqual(obj, outputs, solns, names)
 % CHECKALLEQUAL - Check and compare all solution variables against the student's.
 %   This function compares all data inside 'outputs' with the corresponding data in 'solns' by running it
 %   through the verifyEqual function on the testCase object with an absolute tolerance defined by NumTolerance.
-%   It will also output a message with a level of detail given by OutputType. 'compare' will output full
-%   comparison information, 'variable' will only output which variables are incorrect, and 'none' will have no output text.
+%   It will also output a message with a level of detail given by OutputType. 'full' will output full
+%   comparison information, 'limit' will only output which variables are incorrect, and 'none' will have no output text.
 %
 %   Input Arguments
 %       outputs - Cell array of all student outputs.
@@ -28,10 +28,11 @@ for i = 1:length(solns)
     switch obj.OutputType
         case 'none'
             continue
-        case 'variable'
+        case 'limit'
             msg = sprintf('Variable ''%s'' does not match the solution''s.', names{i});
-        case 'compare'
-            msg = ['<u>', names{i}, '</u>\n', '    Actual output ' TestRunner.toChar(student) '\n    Expected output ' TestRunner.toChar(soln)];
+        case 'full'
+            msg = sprintf('<u>%s</u>\nActual output %s\nExpected output %s', ...
+                names{i}, TestRunner.toChar(student, parse=true), TestRunner.toChar(soln, parse=true));
         otherwise
             error('TestRunner:invalidType', 'The output type %s is not valid.', obj.OutputType);
     end
@@ -40,7 +41,7 @@ for i = 1:length(solns)
     if isempty(soln)
         obj.TestCase.verifyEmpty(student, msg);
     else
-        obj.TestCase.verifyEqual(student, soln, msg, "AbsTol", obj.NumTolerance);
+        obj.TestCase.verifyEqual(student, soln, msg, 'AbsTol', obj.NumTolerance);
     end
 end
 end

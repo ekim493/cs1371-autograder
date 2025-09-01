@@ -3,8 +3,13 @@ classdef Autograder
     %   Run the autograder by initializing the class with the relevant properties.
 
     properties
-        % Full path to the assignment contents (solutions and testers). Set automatically if IsGradescope is true.
+        % Full path to the assignment folder (solutions and testers). Set automatically if IsGradescope is true.
         AssignmentPath (1, :) char
+        % Full path to submission folder. Set automatically if IsGradescope is true.
+        SubmissionPath (1, :) char
+        % Filename of tester located in the assignment folder. If not set, it will search for the first class which 
+        % inherits the 'matlab.unittest.TestCase' class.
+        TesterFile (1, :) char
         % Whether the autograder is being run for Gradescope. Defaults to true if on Linux platform.
         IsGradescope (1, 1) logical = false
 
@@ -38,6 +43,8 @@ classdef Autograder
         MonitorDelay (1, 1) double = 0.1
         % Name of file that has function list
         FunctionListName = 'Function_List.json'
+        % Name of folder inside each assignment that contains additional resources/files
+        ResourceFolder = 'resources';
         % Additional operators to detect
         AdditionalOPS = {'BANG'}
     end
@@ -68,12 +75,34 @@ classdef Autograder
                 try
                     submission = jsondecode(fileread('/autograder/submission_metadata.json'));
                     assignmentName = submission.assignment.title;
-                    obj.AssignmentPath = fullfile('/autograder/assignments', assignmentName);
                 catch
                     obj.throwError('The Gradescope submission metadata was not found.');
                 end
-            elseif isempty(obj.AssignmentPath)
-                obj.throwError('Missing assignment path. If running the autograder locally, the "AssignmentPath" property must be set.')
+                % Set Gradescope paths
+                obj.AssignmentPath = fullfile('/autograder/assignments', assignmentName);
+                obj.SubmissionPath = '/autograder/submission';
+            elseif isempty(obj.AssignmentPath) || isempty(obj.SubmissionPath)
+                obj.throwError(['Missing paths. If running the autograder locally, ' ...
+                    'the assignment and submission paths must be set.'])
+            end
+
+            % Search for TesterName if not given
+            if isempty(obj.TesterFile)
+                addpath(obj.AssignmentPath); % metadata only works using file name
+                files = dir(obj.AssignmentPath);
+                for i = 1:numel(files)
+                    [~, filename, ext] = fileparts(files(i).name);
+                    metadata = meta.class.fromName(filename);
+                    if ~isempty(metadata) && any(strcmp({metadata.SuperclassList.Name}, 'matlab.unittest.TestCase'))
+                        obj.TesterFile = [filename, ext];
+                        break
+                    end
+                end
+                if isempty(obj.TesterFile)
+                    obj.throwError(['The test class was not found. Was a tester included which inherits ' ...
+                        'the matlab.unittest.TestCase class?']);
+                end
+                rmpath(obj.AssignmentPath);
             end
 
             obj.runAutograder() % Run the autograder
