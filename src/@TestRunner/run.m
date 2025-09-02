@@ -38,6 +38,9 @@ if solutionIsFunction && ~studentIsFunction
     error('HWStudent:notFunc', 'A function was expected, but you submitted a script instead.');
 elseif ~solutionIsFunction && studentIsFunction
     error('HWStudent:notScript', 'A script was expected, but you submitted a function instead.');
+elseif ~solutionIsFunction && ~studentIsFunction
+    % If both scripts, append any input variables
+    obj.AllowedFuncs = [obj.AllowedFuncs; obj.InputNames];
 end
 
 % Check for invalid expression/syntax errors
@@ -71,13 +74,13 @@ else
     [solnNames, solnValues] = obj.runScript(solutionFunction);
     % See if CheckedVariables is specified and extract checked variables only
     if ~isempty(obj.CheckedVariables)
-        isChecked = ismember(solnNames, obj.CheckVariables);
-        if numel(solnNames) ~= numel(obj.CheckedVariables)
+        isChecked = ismember(solnNames, obj.CheckedVariables);
+        solnNames = solnNames(isChecked);
+        solnValues = solnValues(isChecked);
+        if ~all(ismember(obj.CheckedVariables, solnNames))
             warning('TestRunner:checkedMismatch', ...
                 'There were specified checked variables that the solution script did not generate.');
         end
-        solnNames = solnNames(isChecked);
-        solnValues = solnValues(isChecked);
     end
 end
 
@@ -142,6 +145,11 @@ else
     if any(varsNoExist)
         vars = strjoin(solnNames(varsNoExist), ', ');
         error('HWStudent:varNotAssigned', 'The following variables were not found: %s.', vars);
+    else
+        % Extract only the variables we care about
+        varsOfInterest = ismember(outputNames, solnNames);
+        outputNames = outputNames(varsOfInterest);
+        outputValues = outputValues(varsOfInterest);
     end
 end
 
