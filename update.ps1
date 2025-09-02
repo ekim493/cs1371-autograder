@@ -13,6 +13,7 @@ Param(
 )
 
 # Check with user and reprompt if necessary
+Write-Host
 Write-Host "Settings:"
 Write-Host "  Base Image : $Base"
 Write-Host "  Repository : $Repo"
@@ -20,33 +21,11 @@ Write-Host "  Tag        : $Tag"
 Write-Host "  Source Dir : $Source"
 Write-Host "  Encrypt    : $Encrypt"
 Write-Host
-$ok = Read-Host "Continue with these settings? (Y/N)"
-if ($ok -match '^[Nn]') {
-  $prompt = Read-Host "Enter base image (repo:tag)"
-  if ($prompt) {$Base = $prompt}
-
-  $prompt = Read-Host "Enter new repository"
-  if ($prompt) {$Repo = $prompt}
-
-  $prompt = Read-Host "Enter new tag"
-  if ($prompt) {$Tag = $prompt}
-
-  $prompt = Read-Host "Enter source dir"
-  if ($prompt) {$Source = $prompt}
-
-  $prompt = Read-Host "Encrypt files? (Y/N)"
-  if ($prompt -match '^[Yy]') {
-    $Encrypt = $true
-  } elseif ($prompt -match '^[Nn]') {
-    $Encrypt = $false
-  } else {
-    Write-Error "Invalid Character(s). Please try again."
+$prompt = Read-Host -Prompt "Continue with these settings? (y/n)"
+  if ($prompt -notmatch '^[Yy]') {
+    Write-Host "Setup cancelled by user." -ForegroundColor Red
     exit 1
   }
-} elseif ($ok -notmatch '^[Yy]') {
-  Write-Error "Invalid Character(s). Please try again."
-  exit 1
-}
 
 # Encrypt files
 if ($Encrypt) {

@@ -6,21 +6,39 @@ Modify default variables under Param.
 
 Param(
   [string]$Repo = 'ekim493/cs1371-autograder:base',
+  [string]$GradescopeBase = 'gradescope/autograder-base:ubuntu-22.04',
+  [string]$MatlabRelease = 'r2024b',
+  [string]$ProductList = 'MATLAB Parallel_Computing_Toolbox',
+  [string]$DependencyFile = 'base-dependencies.txt',
   [switch]$SkipInstall
-  )
+)
 
-# Prompt
+# Confirmation Prompt
 if (-not $SkipInstall) {
-  $prompt = Read-Host -Prompt "Press ENTER to continue with Matlab installation or type N to skip"
-  if ($prompt -match '^[Nn]') {
-    $SkipInstall = $true
-    Write-Host "Pulling from base repositiory $Repo"
-    $prompt = Read-Host -Prompt "Press ENTER to continue or type new repository and tag"
-    if ($prompt) {$Repo = $prompt}
-  } elseif ($prompt) {
-    Write-Error "Invalid Character(s). Please try again."
+  Write-Host
+  Write-Host "Settings:"
+  Write-Host "  Gradescope Base Image : $GradescopeBase"
+  Write-Host "  MATLAB Release        : $MatlabRelease"
+  Write-Host "  MATLAB Products       : $ProductList"
+  Write-Host "  Dependency File       : $DependencyFile"
+  Write-Host "  Output Repository     : $Repo"
+  Write-Host
+  
+} else {
+  Write-Host "Skipping Matlab installation." -ForegroundColor Yellow
+  Write-Host "Pushing to repository: $Repo"
+  Write-Host
+}
+$prompt = Read-Host -Prompt "Continue with these settings? (y/n)"
+if ($prompt -notmatch '^[Yy]') {
+  Write-Host "Setup cancelled by user." -ForegroundColor Red
+  exit 1
+}
+
+# Check if the specified dependency file exists
+if (-not $SkipInstall -and -not (Test-Path -Path $DependencyFile -PathType Leaf)) {
+    Write-Error "Dependency file not found at path: $DependencyFile"
     exit 1
-  }
 }
 
 # Check if Docker is running, start it if not
@@ -50,7 +68,13 @@ if (-not (Get-Process -Name 'Docker Desktop' -ErrorAction SilentlyContinue)) {
 
 # Build the Docker Image
 if (-not $SkipInstall) {
-  docker build -f docker/Dockerfile.setup -t $Repo --platform linux/amd64 --no-cache .
+  docker build `
+    --build-arg GRADESCOPE_BASE=$GradescopeBase `
+    --build-arg MATLAB_RELEASE=$MatlabRelease `
+    --build-arg MATLAB_PRODUCT_LIST="$ProductList" `
+    --build-arg DEPENDENCY_FILE=$DependencyFile `
+    -f docker/Dockerfile.setup -t $Repo --platform linux/amd64 --no-cache .
+    
   if ($LASTEXITCODE -ne 0) {
     Write-Error "Docker image build failed."
     exit 1
