@@ -29,7 +29,6 @@ elseif test.Failed
     out = parseFailedTest(obj, test);
 end
 % Html parsing
-out = strrep(out, '"', '\"'); % Escape double quotes
 out(out < 32 & out ~= 10) = '�'; % Remove illegal ascii characters, exclude newline
 end
 

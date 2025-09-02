@@ -118,19 +118,24 @@ if opts.cap > 0
         out = [out '<strong>Additional lines have been suppressed.</strong>'];
     end
 end
-% Html parsing and gradescope formatting
+% Parse string
 if opts.parse
+    % Add padding if its not there currently
+    if ~startsWith(out, '   ')
+        out = ['   ' out]; % Add to start
+    end
+    out = regexprep(out, '(\n)(?! {3})', '$1   '); % Add to lines
+    % HTML parsing
     out = strrep(out, '\', '&#92;');
     out = strrep(out, '&', '&amp;');
     out = strrep(out, '<', '&lt;');
     out = strrep(out, '>', '&gt;');
+    % Add header
     if l > 1
         pref = sprintf('(%dx%dx%d %s):', r, c, l, class(in));
     else
         pref = sprintf('(%dx%d %s):', r, c, class(in));
     end
-    % Add extra spacing
-    out = strrep(out, newline, [newline '   ']);
-    out = sprintf('%s\n   %s', pref, out);
+    out = sprintf('%s\n%s', pref, out);
 end
 end

@@ -4,8 +4,8 @@ function run(obj)
 %   defined by the object's properties. 
 
 % Get paths to code based on namespace folders
-studentPath = fullfile('+student', [obj.FunctionName, '.m']);
-solutionPath = fullfile('+solution', [obj.FunctionName, '.m']);
+studentPath = fullfile('+student', [obj.FunctionName, '.m']); % Student requires .m for mtree
+solutionPath = fullfile('+solution', [obj.FunctionName]); % Only check existance of soln
 studentFunction = sprintf('student.%s', obj.FunctionName);
 solutionFunction = sprintf('solution.%s', obj.FunctionName);
 
@@ -42,7 +42,7 @@ end
 % Display input variables in command window for debugging
 fprintf('\nTestcase: %s\n', obj.TestCaseName);
 for i = 1:length(obj.Inputs)
-    fprintf('\n%s =\n%s\n', obj.InputNames{i}, TestRunner.toChar(obj.Inputs{i}))
+    fprintf('\n%s =\n%s\n', obj.InputNames{i}, TestRunner.toChar(obj.Inputs{i}, parse=false))
 end
 
 % Run solution code
@@ -119,9 +119,9 @@ if studentIsFunction
 
     % If outputNames was never initialized, then give each output the default name of 'output #'
     if isempty(obj.OutputNames)
-        names = arrayfun(@(x) ['output' num2str(x)], 1:numel(solnValues), 'UniformOutput', false);
+        outputNames = arrayfun(@(x) ['output' num2str(x)], 1:numel(solnValues), 'UniformOutput', false);
     else
-        names = obj.OutputNames;
+        outputNames = obj.OutputNames;
     end
 else
     % Run as script.
@@ -138,7 +138,7 @@ if obj.RunCheckCalls
     obj.checkCalls(studentFunction);
 end
 if obj.RunCheckAllEqual
-    obj.checkAllEqual(outputValues, solnValues, names);
+    obj.checkAllEqual(outputValues, solnValues, outputNames);
 end
 if obj.RunCheckFilesClosed
     obj.checkFilesClosed();

@@ -53,19 +53,17 @@ for i = 1:numel(suite)
         obj.throwError('Tags for this homework assignment are invalid or are not present.')
     end
     if obj.UseParallel
-        % Parse parfeval errors first
-        if ~isempty(group(i).Error)
+        if seconds(group(i).RunningDuration) > obj.TestcaseTimeout
+            % If a Future was canceled, it should have a RunningDuration > timeout
+            results.output{i} = sprintf( ...
+                ['Verification failed in %s.\n    ----------------\n    Test Diagnostic:\n    ----------------\n    ' ...
+                'This function timed out because it took longer than %d seconds to run. Is there an infinite loop?'], ...
+                results.name(i), obj.TestcaseTimeout);
+        elseif ~isempty(group(i).Error)
+            % Parse parfeval errors first
             results.output{i} = ...
                 ['The autograder ran into an unexpected error. Please contact the HW TAs with the following information:\n' ...
                 group(i).Error.message];
-            continue
-        end
-        % If a Future was canceled, it should have a RunningDuration > timeout
-        if seconds(group(i).RunningDuration) > obj.TestcaseTimeout
-            results.output{i} = sprintf( ...
-                ['Verification failed in %s.\\n    ----------------\\n    Test Diagnostic:\\n    ----------------\\n    ' ...
-                'This function timed out because it took longer than %d seconds to run. Is there an infinite loop?'], ...
-                results.name(i), obj.TestcaseTimeout);
         else
             testresult = fetchOutputs(group(i));
             results.passed(i) = testresult.Passed;
@@ -84,10 +82,12 @@ function results = runSuiteWorker(runner, suite, dataQueue)
 
 results = run(runner, suite);
 if isempty(results.Details.DiagnosticRecord)
-    report = '.';
+    send(dataQueue, '.');
 else
-    report = results.Details.DiagnosticRecord.Report;
-    report = sprintf('%s\n%s\n%s\n', repmat('=', 1, 80), report, repmat('=', 1, 80)); % Replicate display
+    for i = 1:numel(results.Details.DiagnosticRecord)
+        report = results.Details.DiagnosticRecord(i).Report;
+        report = sprintf('%s\n%s\n%s\n', repmat('=', 1, 80), report, repmat('=', 1, 80)); % Replicate display
+        send(dataQueue, report);
+    end
 end
-send(dataQueue, report);
 end
