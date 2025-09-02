@@ -14,17 +14,17 @@ function parseResults(obj)
 %   points listed.
 
 % Sort results based on problem name
-[~, ind] = sort(obj.Results.problem);
+[~, ind] = sort(obj.Results.tags);
 results = obj.Results(ind, :); % Will use local variable
 
 % Get the score for each test case and the total
 totalScore = 0;
 extraPoints = 0;
 multiplier = 1;
-problemNames = unique(results.problem);
+problemNames = unique(results.tags);
 for i = 1:numel(problemNames)
     problem = problemNames{i};
-    testCaseMask = strcmp(problem, results.problem);
+    testCaseMask = strcmp(problem, results.tags);
     scoring = unique(results.scoring(testCaseMask));
 
     if numel(scoring) > 1
@@ -34,7 +34,7 @@ for i = 1:numel(problemNames)
     % Extract scoring parts
     parts = regexp(scoring, '([a-zA-Z]+)=([+/\-x]?)(\d+\.?\d*)', 'tokens', 'once');
     if isempty(parts)
-        obj.throwError('One of the problems had invalid tag(s).')
+        obj.throwError('One of the problems had invalid scoring tag(s).')
     end
     type = parts{1};
     operator = parts{2};
@@ -99,7 +99,7 @@ results.status = repmat("failed", height(results), 1);
 results.status(results.passed) = "passed";
 
 % Prepare table for Gradescope formatting
-results = removevars(results, {'passed', 'scoring', 'problem'}); % Remove unnecessary vars
+results = removevars(results, {'passed', 'scoring'}); % Remove unnecessary vars
 results.max_score = round(results.max_score, 2);
 results.score = round(results.score, 2);
 

@@ -1,29 +1,27 @@
-%% Modify these variables
-% Whether to use the parallel toolbox. This enables timeouts.
-useParallel = false;
-% Source folder where the assignment folder can be found.
-sourceFolder = 'autograder';
-% Folder where code to grade can be found.
-submissionFolder = 'submissions';
-% Name of the assignment.
+function localTester(opts)
+arguments
+    % Whether to use the parallel toolbox. This enables timeouts.
+    opts.useParallel = true;
+    % Source folder where the assignment folder can be found.
+    opts.sourceFolder = 'cs1371';
+    % Folder where code to grade can be found.
+    opts.submissionFolder = 'submissions';
+end
+% Ask user for assignment name
 assignmentName = input('Enter assignment name: ', 's');
-
-%% Main script
-runLocalTester(useParallel, sourceFolder, assignmentName, submissionFolder);
-
-function runLocalTester(useParallel, sourceFolder, assignmentName, submissionFolder)
 % Find paths of interest
 currPath = pwd;
 mainPath = fileparts(currPath);
-submissionPath = fullfile(mainPath, submissionFolder);
-assignmentPath = fullfile(mainPath, sourceFolder, assignmentName);
+submissionPath = fullfile(mainPath, opts.submissionFolder);
+assignmentPath = fullfile(mainPath, opts.sourceFolder, assignmentName);
 % Setup
 c = onCleanup(@()cleanupFnc());
 % Run autograder
-Autograder(AssignmentPath=assignmentPath, SubmissionPath=submissionPath, UseParallel=useParallel);
-% Open results file
-filePath = fullfile(currPath, 'results.json');
-open(filePath)
+Autograder(AssignmentPath=assignmentPath, SubmissionPath=submissionPath, UseParallel=opts.useParallel);
+% Move and open results file
+destination = fullfile(mainPath, 'results.json');
+movefile(fullfile(currPath, 'results.json'), destination);
+open(destination)
 end
 
 function cleanupFnc()

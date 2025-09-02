@@ -5,7 +5,7 @@ function run(obj)
 
 % Get paths to code based on namespace folders
 studentPath = fullfile('+student', [obj.FunctionName, '.m']); % Student requires .m for mtree
-solutionPath = fullfile('+solution', [obj.FunctionName]); % Only check existance of soln
+solutionPath = fullfile('+solution', [obj.FunctionName]); % Only check existence of soln
 studentFunction = sprintf('student.%s', obj.FunctionName);
 solutionFunction = sprintf('solution.%s', obj.FunctionName);
 
@@ -52,13 +52,17 @@ if ~isempty(errNodes)
         msg = regexprep(E.message, '<a[^>]*>(.*?)</a>', '$1'); % remove hyperlink
         error('HWStudent:syntaxError', msg);
     end
+elseif obj.RunCheckCalls
+    % If not invalid, check calls for potentially disabled functions
+    obj.checkCalls(studentFunction);
 end
 
-% Display input variables in command window for debugging
-fprintf('\nTestcase: %s\n', obj.TestCaseName);
+% Create string of input variables and add to diagnostics
+inputStr = '';
 for i = 1:length(obj.Inputs)
-    fprintf('\n%s =\n%s\n', obj.InputNames{i}, TestRunner.toChar(obj.Inputs{i}, parse=false))
+    inputStr = sprintf('%s%s =\n%s\n', inputStr, obj.InputNames{i}, TestRunner.toChar(obj.Inputs{i}, parse=false));
 end
+obj.TestCase.onFailure(inputStr(1:end-1)); % Remove newline at end
 
 % Run solution code
 close all; % Close any opened figures
@@ -154,9 +158,6 @@ else
 end
 
 % Run relevant check functions
-if obj.RunCheckCalls
-    obj.checkCalls(studentFunction);
-end
 if obj.RunCheckAllEqual
     obj.checkAllEqual(outputValues, solnValues, outputNames);
 end

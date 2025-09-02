@@ -60,7 +60,7 @@ elseif ischar(in) || isstring(in)
         out = in;
     end
     % Read inputs
-    if r == 1 && endsWith(in, '.txt') && exist(in, 'file')
+    if r == 1 && opts.parse && endsWith(in, '.txt') && exist(in, 'file')
         out = char(strjoin(readlines(in), newline));
         % If text file was empty, return file name instead
         if isempty(out)

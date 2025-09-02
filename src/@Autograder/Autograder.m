@@ -45,8 +45,6 @@ classdef Autograder
         FunctionListName = 'Function_List.json'
         % Name of folder inside each assignment that contains additional resources/files
         ResourceFolder = 'resources';
-        % Additional operators to detect
-        AdditionalOPS = {'BANG'}
     end
 
     properties (SetAccess=private)

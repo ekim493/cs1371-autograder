@@ -47,7 +47,8 @@ exception = diagnostic.Exception(1);
 
 % Create error message based on identifier
 if contains(exception.identifier, 'HWStudent')
-    msg = sprintf('%s%s%s', prefix, indent, exception.message);
+    msg = regexprep(exception.message, '(\n)(?! {4})', '$1    '); % Add padding to message
+    msg = sprintf('%s%s%s', prefix, indent, msg);
 elseif contains(exception.identifier, 'HWTester') || ~any(contains({exception.stack.file}, '+student'))
     msg = 'The autograder ran into an unexpected error while running your function. Please contact the HW TAs for assistance.';
 else

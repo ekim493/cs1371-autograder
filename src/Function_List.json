@@ -93,5 +93,27 @@
         "OTHERWISE",
         "CASE",
         "END",
-        "FUNCTION"]
+        "FUNCTION"],
+    "ADDITIONAL_OPS":
+        ["BANG"],
+    "DISABLED":
+        ["system",
+         "unix",
+         "dos",
+         "BANG",
+         "addpath",
+         "rmpath",
+         "savepath",
+         "cd",
+         "delete",
+         "movefile",
+         "rmdir",
+         "perl",
+         "java",
+         "py",
+         "mex",
+         "loadlibrary",
+         "quit",
+         "exit",
+         "gcp"]
 }

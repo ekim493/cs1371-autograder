@@ -40,14 +40,14 @@ end
 
 % Create results table (default passed is false)
 results = table(Size=[numel(suite),5], VariableTypes={'string', 'string', 'string', 'logical', 'cell'}, ...
-    Variablenames={'name', 'problem', 'scoring', 'passed', 'output'});
+    Variablenames={'name', 'tags', 'scoring', 'passed', 'output'});
 for i = 1:numel(suite)
     results.name(i) = suite(i).ProcedureName; % Assign test case name
     try
         % Assign problem name and scoring fields
         tags = suite(i).Tags;
         isScoring = contains(tags, '=');
-        results.problem(i) = suite(i).Tags{~isScoring};
+        results.tags(i) = suite(i).Tags{~isScoring};
         results.scoring(i) = suite(i).Tags{isScoring};
     catch
         obj.throwError('Tags for this homework assignment are invalid or are not present.')

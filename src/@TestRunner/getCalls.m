@@ -1,4 +1,4 @@
-function calls = getCalls(path)
+function calls = getCalls(path, additionalOPS)
 % GETCALLS - Return all built-in function calls and operations that a function used.
 %   This function will output all built-in functions and operations that a particular function called in a
 %   cell array of characters. All operations (use iskeyword() for a list) are indicated in caps. Additional
@@ -35,11 +35,10 @@ localFuns = cellfun(@(s)(s(1:end-2)), localFuns, 'uni', false);
 localCalls = calls(ismember(calls, localFuns));
 calls(ismember(calls, localFuns)) = [];
 for l = 1:numel(localCalls)
-    calls = [calls TestRunner.getCalls([fld filesep localCalls{l} '.m'])]; %#ok<AGROW>
+    calls = [calls TestRunner.getCalls([fld filesep localCalls{l} '.m'], additionalOPS)]; %#ok<AGROW>
 end
 
 % Add operations
-additionalOPS = Autograder.AdditionalOPS;
 if isrow(additionalOPS)
     additionalOPS = additionalOPS';
 end

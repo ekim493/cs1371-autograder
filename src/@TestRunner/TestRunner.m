@@ -5,6 +5,8 @@ classdef TestRunner
     % documentation for more details.
 
     properties
+        FunctionName (1, :) char % Name of the function to be tested. Set automatically by default.
+
         % The following are check properties that should be set depending on the test case.
         RunCheckAllEqual (1, 1) logical = true % Whether the checkAllEqual method should be run. Default = true.
         RunCheckCalls (1, 1) logical = true % Whether the checkCalls method should be run. Default = true.
@@ -16,8 +18,8 @@ classdef TestRunner
         % The following are properties that modify how checks behave.
         CheckedVariables cell = {} % Script variables to check. If empty, it will check all variables that the solution script generates.
         OutputType char = 'full' % Amount of information that the output should display. Set to 'full', 'limit', or 'none'. Default = 'full'.
-        AllowedFuncs cell = {} % Functions that are allowed to be used, regardless if they are not in the Allowed_Functions list.
-        BannedFuncs cell = {} % Functions that are banned, regardless if they are in the Allowed_Functions list.
+        AllowedFuncs cell = {} % Functions that are allowed to be used, regardless if they are not in the function list.
+        BannedFuncs cell = {} % Functions that are banned, regardless if they are in the function list.
         IncludeFuncs cell = {} % Functions that must be used by the student.
         ImageTolerance (1, 1) double = 10 % The tolerance level for checkImages. Default = 10.
         TextRule char = 'default' % How strict checkTextFiles should be. Set to 'default', 'strict', or 'loose'. Default = 'default'.
@@ -29,7 +31,6 @@ classdef TestRunner
         OutputNames cell % Add optional output names to variables instead of the default 'output#'.
 
         % The following are properties set automatically. Do not modify unless you understand its purpose.
-        FunctionName (1, :) char % Name of the function to be tested.
         TestCase % The testCase object to perform verifications on.
         Inputs % The inputs to the function being tested.
         SolnInputs % The inputs to the solution function (if they are different).
@@ -100,7 +101,7 @@ classdef TestRunner
     methods (Static)
         % Static methods
         varargout = compareImg(varargin)
-        calls = getCalls(path)
+        calls = getCalls(path, additionalOPS)
         map = mapPlot(lines)
         out = toChar(in)
     end

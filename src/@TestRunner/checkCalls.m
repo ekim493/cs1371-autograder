@@ -9,22 +9,29 @@ function [hasPassed, msg] = checkCalls(obj, funcFile)
 %   through the testCase object using verifyTrue. 
 %   
 %   The following object properties can be used to modify the list of calls this function checks:
-%       bannedFuncs - List of additional banned functions.
-%       includeFuncs - List of functions that must be included.
-%       allowedFuncs - List of functions that should bypass the ban restriction.
+%       BannedFuncs - List of additional banned functions.
+%       IncludeFuncs - List of functions that must be included.
+%       AllowedFuncs - List of functions that should bypass the ban restriction.
 % 
 %   Output Arguments
 %       hasPassed - True if only valid functions used, false if not.
 %       msg - Character message indicating why the test failed. Is empty if tf is true.
 
 % Create full list of banned and allowed functions
-list = jsondecode(fileread(Autograder.FunctionListName));
+list = jsondecode(fileread(Autograder.FunctionListName)); % Read from function list file.
 allowed = [list.ALLOWED; list.ALLOWED_OPS; obj.AllowedFuncs'];
 msg = [];
 banned = obj.BannedFuncs';
 include = obj.IncludeFuncs;
+disabled = list.DISABLED;
 
-calls = TestRunner.getCalls(which(funcFile)); % Get list of function calls
+calls = TestRunner.getCalls(which(funcFile), list.ADDITIONAL_OPS); % Get list of function calls
+
+% Check if disabled function was used
+if any(ismember(calls, disabled))
+    error('HWStudent:disabledFunc', ['You used function(s) that were disabled. ' ...
+        'Please remove them or contact the HW TAs if you believe this is an error.']);
+end
 
 % Find banned functions and unused functions
 bannedCalls = calls(ismember(calls, banned) | ~ismember(calls, allowed));
