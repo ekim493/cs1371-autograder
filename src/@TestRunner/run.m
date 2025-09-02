@@ -29,7 +29,8 @@ end
 
 % Check if student submitted the same kind of file
 try
-    studentIsFunction = isequal(mtree(studentPath, '-file').FileType, 'FunctionFile');
+    stuTree = mtree(studentPath, '-file');
+    studentIsFunction = isequal(stuTree.FileType, 'FunctionFile');
 catch
     error('HWStudent:fileRead', 'There was an error reading your file. Please contact the HW TAs or double-check your submission.');
 end
@@ -37,6 +38,17 @@ if solutionIsFunction && ~studentIsFunction
     error('HWStudent:notFunc', 'A function was expected, but you submitted a script instead.');
 elseif ~solutionIsFunction && studentIsFunction
     error('HWStudent:notScript', 'A script was expected, but you submitted a function instead.');
+end
+
+% Check for invalid expression/syntax errors
+errNodes = stuTree.mtfind('Kind', 'ERR');
+if ~isempty(errNodes)
+    try
+        [~] = evalc(studentFunction);
+    catch E
+        msg = regexprep(E.message, '<a[^>]*>(.*?)</a>', '$1'); % remove hyperlink
+        error('HWStudent:syntaxError', msg);
+    end
 end
 
 % Display input variables in command window for debugging
@@ -109,8 +121,8 @@ if studentIsFunction
         % If an array size limit error was thrown with evalc, then the student function attempted to
         % output too much text to the command window (most likely unsuppressed imread or similar)
         if strcmp(exception.identifier, 'MATLAB:array:SizeLimitExceeded')
-            error('HWStudent:exceedDiarySize', ['Matlab attempted to display %s characters to the command window and exceeded the allocated memory capacity (%s). ' ...
-                'Ensure that you have suppressed your lines of code using semicolons.'], extractAfter(exception.arguments{1}, 'x'), exception.arguments{3});
+            error('HWStudent:exceedDiarySize', ['Matlab attempted to display or create a %s array/string and exceeded the allocated memory capacity (%s). ' ...
+                'Ensure that you have suppressed your lines of code using semicolons.'], exception.arguments{1}, exception.arguments{3});
         else
             fclose all; % Close files in case they were opened and function errored before fclose was reached
             rethrow(exception);

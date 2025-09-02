@@ -48,12 +48,13 @@ exception = diagnostic.Exception(1);
 % Create error message based on identifier
 if contains(exception.identifier, 'HWStudent')
     msg = sprintf('%s%s%s', prefix, indent, exception.message);
-elseif contains(exception.identifier, 'HWTester') || ~contains(exception.stack(1).file, '+student')
+elseif contains(exception.identifier, 'HWTester') || ~any(contains({exception.stack.file}, '+student'))
     msg = 'The autograder ran into an unexpected error while running your function. Please contact the HW TAs for assistance.';
 else
-    lines = readlines(exception.stack(1).file);
-    lineNo = exception.stack(1).line;
-    errorMsg = sprintf('%s\n\nError in %s (line %d)\n%s', exception.message, exception.stack(1).name, lineNo, lines(lineNo));
+    stuFunc = find(contains({exception.stack.file}, '+student'), 1, 'first');
+    lines = readlines(exception.stack(stuFunc).file);
+    lineNo = exception.stack(stuFunc).line;
+    errorMsg = sprintf('%s\n\nError in %s (line %d)\n%s', exception.message, exception.stack(stuFunc).name, lineNo, lines(lineNo));
     msg = sprintf('%s%s%s', prefix, indent, strrep(errorMsg, newline, [newline indent]));
 end
 % Truncate error message if too long
