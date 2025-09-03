@@ -14,17 +14,17 @@ function parseResults(obj)
 %   points listed.
 
 % Sort results based on problem name
-[~, ind] = sort(obj.Results.tags);
+[~, ind] = sort(obj.Results.problem);
 results = obj.Results(ind, :); % Will use local variable
 
 % Get the score for each test case and the total
 totalScore = 0;
 extraPoints = 0;
 multiplier = 1;
-problemNames = unique(results.tags);
+problemNames = unique(results.problem);
 for i = 1:numel(problemNames)
     problem = problemNames{i};
-    testCaseMask = strcmp(problem, results.tags);
+    testCaseMask = strcmp(problem, results.problem);
     scoring = unique(results.scoring(testCaseMask));
 
     if numel(scoring) > 1
@@ -99,12 +99,12 @@ results.status = repmat("failed", height(results), 1);
 results.status(results.passed) = "passed";
 
 % Prepare table for Gradescope formatting
-results = removevars(results, {'passed', 'scoring'}); % Remove unnecessary vars
+results = removevars(results, {'passed', 'scoring', 'problem'}); % Remove unnecessary vars
 results.max_score = round(results.max_score, 2);
 results.score = round(results.score, 2);
 
 % Create final json structure and add fields
-json = struct('score', round(totalScore, 2), 'tests', results, 'test_output_format', 'html');
+json = struct('score', round(totalScore, 2), 'tests', results, 'test_output_format', obj.OutputFormat);
 json.visibility = obj.Visibility;
 json.output = obj.GlobalOutput;
 json.output_format = obj.OutputFormat;

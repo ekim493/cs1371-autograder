@@ -39,16 +39,24 @@ else
 end
 
 % Create results table (default passed is false)
-results = table(Size=[numel(suite),5], VariableTypes={'string', 'string', 'string', 'logical', 'cell'}, ...
-    Variablenames={'name', 'tags', 'scoring', 'passed', 'output'});
+results = table(Size=[numel(suite), 6], VariableTypes={'string', 'string', 'string', 'string', 'logical', 'cell'}, ...
+    Variablenames={'name', 'problem', 'scoring', 'visibility', 'passed', 'output'});
 for i = 1:numel(suite)
     results.name(i) = suite(i).ProcedureName; % Assign test case name
     try
-        % Assign problem name and scoring fields
+        % Assign properties from tags
         tags = suite(i).Tags;
-        isScoring = contains(tags, '=');
-        results.tags(i) = suite(i).Tags{~isScoring};
-        results.scoring(i) = suite(i).Tags{isScoring};
+        isVisibility = startsWith(tags, 'visibility=', 'IgnoreCase', true);
+        isScoring = contains(tags, '=') & ~isVisibility;
+        isProblem = ~isVisibility & ~isScoring;
+        if ~any(isVisibility)
+            visibility = obj.Visibility;
+        else
+            visibility = extractAfter(tags{isVisibility}, 'visibility=');
+        end
+        results.visibility(i) = visibility;
+        results.problem(i) = tags{isProblem};
+        results.scoring(i) = tags{isScoring};
     catch
         obj.throwError('Tags for this homework assignment are invalid or are not present.')
     end
