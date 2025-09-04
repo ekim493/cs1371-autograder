@@ -6,8 +6,8 @@ Modify default variables under Param.
 
 Param(
   [string]$Repo = 'ekim493/cs1371-autograder:base',
-  [string]$GradescopeBase = 'gradescope/autograder-base:ubuntu-22.04',
-  [string]$MatlabRelease = 'r2024b',
+  [string]$GradescopeBase = 'gradescope/autograder-base:latest',
+  [string]$MatlabRelease = 'r2025a',
   [string]$ProductList = 'MATLAB Parallel_Computing_Toolbox',
   [string]$DependencyFile = 'base-dependencies.txt',
   [switch]$SkipInstall

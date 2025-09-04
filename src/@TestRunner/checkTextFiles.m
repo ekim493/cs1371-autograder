@@ -1,4 +1,4 @@
-function [hasPassed, msg] = checkTextFiles(obj, user_fn, soln_fn)
+function [hasPassed, msg] = checkTextFiles(obj, userFile, solnFile)
 % CHECKTEXTFILES - Check and compare a text file against the solution's.
 %   This function will read in a text file and compare it to its corresponding solution file. The comparison
 %   depends on the textRule property, where 'default' will ignore the extra newline character at the end of
@@ -8,23 +8,23 @@ function [hasPassed, msg] = checkTextFiles(obj, user_fn, soln_fn)
 %   different lines highlighted.
 %
 %   Input Arguments
-%       user_fn, soln_fn - Filename of the student's text file and the expected text file
+%       userFile, solnFile - Filename of the student's text file and the expected text file
 %
 %   Output Arguments
 %       hasPassed - True if the text file comparison passed and false if not.
 %       msg - Character message containing text file comparison. Is empty if hasPassed is true.
 
 % Check for files
-if ~exist(soln_fn, 'file')
+if ~exist(solnFile, 'file')
     error('TestRunner:noFile', 'The solution text file wasn''t found');
 end
-if ~exist(user_fn, 'file')
+if ~exist(userFile, 'file')
     obj.TestCase.verifyTrue(false, ['Your solution did not produce a text file when one was expected. ' ...
         'Was it created properly with the right filename?'])
     return
 end
-student = readlines(user_fn);
-soln = readlines(soln_fn);
+student = readlines(userFile);
+soln = readlines(solnFile);
 
 % Compare using defined rules
 if ~strcmpi(obj.TextRule, 'strict')

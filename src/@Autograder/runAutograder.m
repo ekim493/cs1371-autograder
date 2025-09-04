@@ -1,7 +1,12 @@
 function runAutograder(obj)
 % RUNAUTOGRADER - Main function to run the Gradescope Autograder.
 %   This function configures the Gradescope paths, initializes the parallel pool, creates the test suite, and runs it
-%   using the runSuite function. It will also display run diagnostics if prompted when running in parallel.
+%   using the runSuite function.
+%
+%   If the parallel pool already exists, it will not be re-initialized to save time when performing local tests.
+%   
+%   It also applies the MaxMemPercent property to the client and workers as a temporary setting. This value is cleared
+%   for the client at the end of the run but not for the workers as we assume the pool will shut down.
 
 % Move the tester to the current (source) directory
 copyfile(fullfile(obj.AssignmentPath, obj.TesterFile), pwd);

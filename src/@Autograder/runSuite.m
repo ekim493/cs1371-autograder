@@ -1,15 +1,22 @@
 function results = runSuite(obj, runner, suite)
 % RUNSUITE - Returns a table of results after running a test suite
 %   This function takes in a runner and a test suite. It runs the test suite either in parallel or in serial depending
-%   on the UseParallel property. This function will also print diagnostics to the command window.
+%   on the UseParallel property. This function will also print diagnostics to the command window and parse the suite to
+%   create a results table.
 %
 %   Input Arguments
 %       runner - matlab.unittest.TestRunner object to run test cases using.
 %       suite - matlab.unittest.TestSuite object containing all the test cases to be run.
 %
 %   Output Arguments
-%       results - Table containing the following data: name of test case, problem name (from test tag), problem scoring
-%       (from test tag), logical pass/fail, and the output from createTestOutput().
+%       results - Table containing the following fields: 
+%           name - name of the test case
+%           problem - problem name from test tag
+%           scoring - tag that has information on how the problem should be scored
+%           visibility - visibility of the test case, defaults to the value of the Visibility property unless it was 
+%                        specified as a test tag
+%           passed - Logical pass/fail
+%           output - Diagnostic report, either from createTestOutput or indicates a timeout or autograder issue.
 
 arguments
     obj

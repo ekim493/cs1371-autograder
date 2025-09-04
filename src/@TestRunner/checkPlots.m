@@ -1,9 +1,10 @@
 function [hasPassed, msg] = checkPlots(obj)
 % CHECKPLOTS - Check and compare a plot against the solution's.
 %   This function will read in the currently open figures and compare them. For the function to work, all
-%   figures must be closed and then at least 2 figures must be opened. The solution plot should be created
+%   figures must be closed and then at least 2 figures must be opened. The solution plot must be created
 %   first, followed by the student plot. The plots must not override one another, so 'figure'
-%   must be called. It will assume that a solution plot was created successfully.
+%   must be called. It will assume that a solution plot was created successfully. If the OutputType is set to full,
+%   the diagnostics will contain a plot comparison. The final output is run through the testCase verifyTrue function.
 %
 %   Output Arguments
 %       hasPassed - True if the plots matched, false if not.
@@ -32,24 +33,6 @@ else % For now only support 2 figures
     cFig = figures(1);
     sFig = figures(2);
 end
-i = 1;
-if numel(figure(i).Children) == 0
-    i = i + 1;
-    if numel(figure(i).Children) == 0
-        error('TestRunner:noPlot', 'There was no solution plot present.');
-    end
-end
-cFig = figure(i);
-i = i + 1;
-if numel(figure(i).Children) == 0
-    i = i + 1;
-    if numel(figure(i).Children) == 0
-        hasPassed = false;
-        msg = 'Your solution did not create a plot when one was expected.';
-        return
-    end
-end
-sFig = figure(i);
 
 msg = [];
 

@@ -1,28 +1,28 @@
-function [hasPassed, msg] = checkImages(obj, user_fn, expected_fn)
+function [hasPassed, msg] = checkImages(obj, userFile, solnFile)
 % CHECKIMAGES - Check and compare an image against the solution's.
-%   This function will read in an image filename (defined by the property runCheckImages) and compare it to
+%   This function will read in an image filename (defined by the property RunCheckImages) and compare it to
 %   its corresponding image solution with a small tolerance. The final result is run through the testCase
-%   object using verifyTrue. The outputType property does affect this function, and the full output
+%   object using verifyTrue. The outputType property does affect this function, and the 'full' output
 %   includes an image comparison.
 %
 %   Input Arguments
-%       user_fn (char) - User image file name.
-%       expected_fn (char) - Expected image file name.
+%       userFile (char) - User image file name.
+%       solnFile (char) - Solution image file name.
 % 
 %   Output Arguments
 %       hasPassed - True if the images matched, false if not.
 %       msg - Character message indicating why the test failed. Is empty if tf is true.
 
 % Check if images can be accessed
-if ~exist(expected_fn, 'file')
+if ~exist(solnFile, 'file')
     error('TestRunner:noImage', 'The solution image wasn''t found');
-elseif ~exist(user_fn, 'file')
-    obj.TestCase.verifyTrue(false, sprintf('The image ''%s'' wasn''t found. Did you create an image with the right filename?', user_fn));
+elseif ~exist(userFile, 'file')
+    obj.TestCase.verifyTrue(false, sprintf('The image ''%s'' wasn''t found. Did you create an image with the right filename?', userFile));
     return;
 end
 % Image comparison by comparing image arrays
-user = imread(user_fn);
-expected = imread(expected_fn);
+user = imread(userFile);
+expected = imread(solnFile);
 [rUser,cUser,lUser] = size(user);
 [rExp,cExp,lExp] = size(expected);
 if rUser == rExp && cUser == cExp && lUser == lExp
@@ -45,7 +45,7 @@ switch obj.OutputType
     case 'none'
         msg = '';
     case 'full'
-        filename = TestRunner.compareImg(user_fn, expected_fn);
+        filename = TestRunner.compareImg(userFile, solnFile);
         msg = sprintf('%s\nIMAGEFILE:%s', msg, filename);
 end
 obj.TestCase.verifyTrue(hasPassed, msg);

@@ -1,11 +1,10 @@
 classdef TestRunner
-    % TESTRUNNER - Runs checks on individual test cases. 
-    % To use this class, create
-    % an instance, set the relevant properties, then call the run() method. See setup.md for instructions, or read the
-    % documentation for more details.
+    % TESTRUNNER - Runs checks on individual test cases.
+    %   This class manages and runs checks on individual test cases. To use this class, create an instance, set the
+    %   relevant properties, then call the run() method. See the repository documentation for more info.
 
     properties
-        FunctionName (1, :) char % Name of the function to be tested. Set automatically by default.
+        FunctionName (1, :) char % Name of the function to be tested. If not set, the prefix before '_Test' is used.
 
         % The following are check properties that should be set depending on the test case.
         RunCheckAllEqual (1, 1) logical = true % Whether the checkAllEqual method should be run. Default = true.
@@ -26,8 +25,7 @@ classdef TestRunner
         NumTolerance (1, 1) double = 0.001 % Absolute tolerance for numerical comparisons in verifyEqual. Default = 0.001.
 
         % The following are QoL properties that change display names.
-        TestCaseName char % Full name of the test case (to display for debugging)
-        InputNames cell % Names of inputs (to display for debugging)
+        InputNames cell % Names of inputs (to display for debugging). Set automatically. Will be 'input#' if there was no name.
         OutputNames cell % Add optional output names to variables instead of the default 'output#'.
 
         % The following are properties set automatically. Do not modify unless you understand its purpose.
@@ -58,7 +56,12 @@ classdef TestRunner
 
             % Retrieve input names from the caller's workspace variable name
             for i = 1:length(obj.Inputs)
-                obj.InputNames(i) = {inputname(i)};
+                inputName = inputname(i);
+                if isempty(inputName)
+                    obj.InputNames{i} = sprintf('input%d', i);
+                else
+                    obj.InputNames{i} = inputname(i);
+                end
             end
 
             % Store opts
@@ -80,7 +83,6 @@ classdef TestRunner
                 try
                     stack = dbstack;
                     obj.FunctionName = char(extractBetween(stack(2).name, '.', '_Test'));
-                    obj.TestCaseName = extractAfter(stack(2).name, '.');
                 catch
                     error('TestRunner:funcName', 'Error retrieving the name of the function being tested.');
                 end

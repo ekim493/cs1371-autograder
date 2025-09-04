@@ -1,7 +1,16 @@
 function run(obj)
 % RUN - Main Tester evaluation method.
 %   This method will execute the student and solution functions, propagate any errors, and evaluate check functions as
-%   defined by the object's properties. 
+%   defined by the object's properties. It supports running both scripts and functions.
+%   
+%   The student code should located in a folder called '+student' and the solution code should be located in a folder
+%   called '+solution'. The Autograder class should do this automatically.
+%
+%   Errors caused by invalid setup are propagated with the 'TestRunner' identifier, and special errors caused by the
+%   student are propagated with the 'HWStudent' identifier. Minor parsing is done with some error messages.
+%
+%   Images and text files created by the solution which are tested are moved to a temporary filename as defined by
+%   the tempname function.
 
 % Get paths to code based on namespace folders
 studentPath = fullfile('+student', [obj.FunctionName, '.m']); % Student requires .m for mtree
@@ -71,11 +80,15 @@ if solutionIsFunction
     try
         [~, solnValues{1:solutionNumOut}] = evalc(sprintf('%s(obj.SolnInputs{:})', solutionFunction));
     catch E
-        error('TestRunner:solnError', 'The solution function threw an error: \n%s', getReport(E));
+        error('TestRunner:solnError', 'The solution function threw an error: \n%s', getReport(E, 'basic'));
     end
 else
     % Run solution script
-    [solnNames, solnValues] = obj.runScript(solutionFunction);
+    try
+        [solnNames, solnValues] = obj.runScript(solutionFunction);
+    catch E
+        error('TestRunner:solnError', 'The solution script threw an error: \n%s', getReport(E, 'basic'));
+    end
     % See if CheckedVariables is specified and extract checked variables only
     if ~isempty(obj.CheckedVariables)
         isChecked = ismember(solnNames, obj.CheckedVariables);
@@ -130,6 +143,8 @@ if studentIsFunction
         if strcmp(exception.identifier, 'MATLAB:array:SizeLimitExceeded')
             error('HWStudent:exceedDiarySize', ['Matlab attempted to display or create a %s array/string and exceeded the allocated memory capacity (%s). ' ...
                 'Ensure that you have suppressed your lines of code using semicolons.'], exception.arguments{1}, exception.arguments{3});
+        elseif strcmp(exception.identifier, 'MATLAB:unassignedOutputs')
+            error('HWStudent:unassignedOutputs', erase(exception.message, 'student.'))
         else
             fclose all; % Close files in case they were opened and function errored before fclose was reached
             rethrow(exception);

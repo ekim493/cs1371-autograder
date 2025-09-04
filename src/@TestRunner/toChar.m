@@ -1,9 +1,8 @@
 function out = toChar(in, opts)
 % TOCHAR - Convert the input into a character.
 %   This function takes in any input and converts it into a character vector.
-%       By default:
 %           - Structures are converted to tables so all fields and values can be displayed.
-%           - If the input is a string that ends with '.txt' and a corresponding txt file exists,
+%           - If parse is true and the input is a string that ends with '.txt' and a corresponding txt file exists,
 %             the contents of the file will be output.
 %           - Numeric and logical vectors have a '[' and ']' to indicate the beginning and end.
 %           - Any input that leads to more than twenty rows of characters will have additional rows suppressed.

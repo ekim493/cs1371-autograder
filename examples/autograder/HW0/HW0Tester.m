@@ -1,15 +1,15 @@
 classdef HW0Tester < matlab.unittest.TestCase
     %% Level 0 tests
-    methods(Test, TestTags = {'L0'})
+    methods(Test, TestTags = {'0.1', 'total=/0.5'})
         % ABC Example
         function exampleABC_Test1(testCase) 
             t = TestRunner();
-            t.outputType = 'limit';
+            t.OutputType = 'limit';
             t.run();
         end
     end
     %% Level 1 tests
-    methods(Test, TestTags = {'L1'})
+    methods(Test, TestTags = {'1.1', 'each=1'})
         % Error Example
         function example0_Test1(testCase)
             vec = [1, 2, 3];
@@ -29,19 +29,19 @@ classdef HW0Tester < matlab.unittest.TestCase
         end
         % Character example
         function example2_Test1(testCase)
-            word = TestRunner.generateString(length=[10, 20], uppercase=true);
+            word = utils.generateString(length=[10, 20], uppercase=true);
             t = TestRunner(word);
             t.run();
         end
     end
     %% Level 2 tests
-    methods(Test, TestTags = {'L2'})
+    methods(Test, TestTags = {'2.1', 'each=2'})
         % Array, iteration, and conditionals example
         function example3_Test1(testCase)
             arr = randi(15, 3, 3);
             t = TestRunner(arr);
-            t.includeFuncs = {'FOR', 'IF'};
-            t.outputNames = {'array', 'number'};
+            t.IncludeFuncs = {'FOR', 'IF'};
+            t.OutputNames = {'array', 'number'};
             t.run();
         end
         % Cell array and plotting example
@@ -51,18 +51,18 @@ classdef HW0Tester < matlab.unittest.TestCase
                   [3, 5, 6], [6, 2, 4], 'g-', 2};
             num = 2;
             t = TestRunner(ca, num);
-            t.runCheckPlots = true;
+            t.RunCheckPlots = true;
             t.run();
         end
     end
     %% Level 3 tests
-    methods(Test, TestTags = {'L3'})
+    methods(Test, TestTags = {'3.1', 'each=3'})
         % Lo-level example
         function example5_Test1(testCase)
             filename = 'example.txt';
             t = TestRunner(filename);
-            t.runCheckFilesClosed = true;
-            t.runCheckTextFiles = 'new.txt';
+            t.RunCheckFilesClosed = true;
+            t.RunCheckTextFiles = 'new.txt';
             t.run();
         end
         % Structures Example
@@ -77,14 +77,14 @@ classdef HW0Tester < matlab.unittest.TestCase
         function example7_Test1(testCase)
             img = 'image.png';
             t = TestRunner(img);
-            t.runCheckImages = 'image_updated.png';
+            t.RunCheckImages = 'image_updated.png';
             t.run();
         end
     end
-    methods(Test, TestTags = {'L4'})
+    methods(Test, TestTags = {'4.1', 'each=+1'})
         % Infinite loop
         function example8_Test1(testCase)
-            ca = TestRunner.generateCellArray(columns=[5, 10]);
+            ca = utils.generateCellArray(columns=[5, 10]);
             t = TestRunner(ca);
             t.run();
         end

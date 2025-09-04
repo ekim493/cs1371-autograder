@@ -1,4 +1,4 @@
-function out = example4_soln(ca, num)
+function out = example4(ca, num)
 [~, ind] = sort(cell2mat(ca(:, 4)));
 ca = ca(ind, :);
 toPlot = ca(num, :);

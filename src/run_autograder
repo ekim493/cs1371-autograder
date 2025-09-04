@@ -23,11 +23,10 @@ run_attempts() {
 
         echo "Running Autograder... (Attempt $attempt, useParallel = $use_parallel)"
 
-        # Run commands with timeout
+        # Run the autograder with timeout
         timeout ${TIMEOUT}m bash -c "
             cd /autograder/source || exit 1
             matlab $MATLAB_ARGS -batch \"Autograder(UseParallel=$use_parallel)\" || exit 1
-            cp /autograder/source/results.json /autograder/results/results.json || exit 1
         "
 
         local exit_code=$?

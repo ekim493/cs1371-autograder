@@ -1,4 +1,4 @@
-function out = example8_soln(ca)
+function out = example8(ca)
 out = 0;
 for i = 1:length(ca)
     if ismatrix(ca{i})
