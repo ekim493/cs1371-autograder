@@ -58,7 +58,7 @@ if ~isempty(errNodes)
     try
         [~] = evalc(studentFunction);
     catch E
-        error('HWStudent:syntaxError', msg);
+        error('HWStudent:syntaxError', E.message);
     end
 elseif obj.RunCheckCalls
     % If not invalid, check calls for potentially disabled functions
@@ -136,7 +136,7 @@ if studentIsFunction
         error('HWStudent:narginErr', E.message);
     end
     if numel(obj.Inputs) ~= numStudentIn
-        error('HWStudent:inputArgs', '%d input(s) to the function were expected, but your function had %d.', numel(obj.Inputs), nargin(obj.FunctionName));
+        error('HWStudent:inputArgs', '%d input(s) to the function were expected, but your function had %d.', numel(obj.Inputs), numStudentIn);
     end
 
     % Run as function. Use evalc to suppress function outputs

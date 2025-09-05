@@ -20,7 +20,7 @@ See the [setup.md](setup.md) file for a comprensive overview on how to setup the
 ### Image Build
 - Clone this Github repository.
 - *Optional*: Run the `setup.ps1` script. See the advanced usage section below for more info.
-- Run the `build.ps1` script. To run a Powershell script, open a Powershell terminal, navigate to the directory with the script, and run `.\build.ps1`. Set the parameters for `base`, `repo`, `tag`, `source`, and `encrypt` when executing the script (ex: `.\build.ps1 -source myfolder -tag HW01`).
+- Run the `update.ps1` script. To run a Powershell script, open a Powershell terminal, navigate to the directory with the script, and run `.\update.ps1`. Set the parameters for `base`, `repo`, `tag`, `source`, and `encrypt` when executing the script (ex: `.\update.ps1 -source myfolder -tag HW01`).
     - The `base` parameter is the name of the repository and tag of the Docker image with Matlab installed. Use the default value or enter the repo:tag used in the `setup.ps1` script. The default is `ekim493/cs1371-autograder:base`. 
     - The `repo` parameter is the name of the new repository that the script will push to. This should be the same name as the repository you created in Docker Hub. The default is `ekim493/cs1371-autograder`.
     - The `tag` parameter is the name of an identifier to distinguish different images. This can be anything. Note that using the same tag will override previous versions. The default is `latest`.
@@ -47,23 +47,37 @@ The `setup.ps1` file creates a Docker image compatible with Gradescope and with 
 
 ### Changing Default Values
 The autograder contains various default values that have been set. You may edit them at the following locations:
-- The `setup.ps1` script and the `build.ps1` script have default parameters that can be adjusted at the top under "Param".
+- The `setup.ps1` script and the `update.ps1` script have default parameters that can be adjusted at the top under "Param".
 - The `run_autograder` script has default values at the top.
-    - `DELAY` adds an additional delay in seconds before displaying the results in Gradescope. Used to deter autograder spamming.
-    - `TIMEOUT` sets the timeout of each autograder attempt in minutes. 
-    - `MAX_ATTEMPTS` sets the maximum number of times to attempt running the autograder.
-    - `MAX_TIME` sets the timeout of the entire autograder run in minutes. 
-    - `MATLAB_ARGS` adds additional Matlab arguments. Currently set to launch with online licensing.
-- The `Autograder.m` class has various properties with default values.
-- The `TestRunner.m` class has various properties with default values. It is recommended these values are modified through the tester file instead.
+- The `Autograder` class has various properties with default values.
+- The `TestRunner` class has various properties with default values. It is recommended these values are modified through the tester file instead.
 - The `Function_List.json` list contains the default list of allowed functions and operations.
 
-### Running the autograder locally
+### Source Folder Overview
+- `run_autograder` is the bash script that is run by Gradescope when a student file is submitted.
+    - It will attempt to run `runTester.m` up to 3 times. For each attempt, if Matlab takes too long to run, it will automatically timeout.
+    - Adjustable variables at the top of the script:
+        - `DELAY` adds an additional delay in seconds before displaying the results in Gradescope. Used to deter autograder spamming.
+        - `TIMEOUT` sets the timeout of each autograder attempt in minutes. 
+        - `MAX_ATTEMPTS` sets the maximum number of times to attempt running the autograder.
+        - `MAX_TIME` sets the timeout of the entire autograder run in minutes. 
+        - `MATLAB_ARGS` adds additional Matlab arguments. Currently set to launch with online licensing.
+        
+- `@Autograder` is the main Matlab class used to run the test suite and parse the results.
+- `@TestRunner` is the Matlab class used to run individual test cases. See [setup](setup.md) for more information.
+- `+utils` contain extra Matlab functions useful for test cases or the autograder.
+- `env` folder should be created and contain enviornment specific files (if necessary).
+- `localTester.m` is a Matlab function used to run the autograder locally.
+- `encrypt.m` is a Matlab function to encrypt the source folder.
+
+### Running the autograder through Docker
 You can run the autograder locally from the terminal using the following command: 
 
-`docker run -it --platform linux/amd64 ekim493/cs1371-autograder:latest bash`
+```
+docker run -it --platform linux/amd64 ekim493/cs1371-autograder:latest bash
+```
 
 Replace `ekim493/cs1371-autograder:latest` with the name of the repository and tag you want to test. You can also mount local files as if you were submitting to the autograder. For example, you can upload files from a local `submission` folder by running the command: `docker run -it -v ./submission:/autograder/submission --platform linux/amd64 ekim493/cs1371-autograder:latest bash`.
 
 ## Local Testing
-To test student code locally, create a folder called `submission` and add code to test to this folder. Then navigate to the `src` directory or add it to your path and run the `localTester` function. You can modify the submission folder, assignment folder, and whether or not to use parallel by using the NAME=VALUE format. For example, to test with parallel off, call `localTester(UseParallel=false)`. 
+To test student code locally, create a folder called `submission` and add code to test to this folder. Then navigate to the `src` directory or add it to your path and run the `localTester` function. You can modify the submission folder (`SubmissionFolder`), assignment folder (`SourceFolder`), and whether or not to use parallel (`UseParallel`) by using the NAME=VALUE format. For example, to test with parallel off, call `localTester(UseParallel=false)`. 
