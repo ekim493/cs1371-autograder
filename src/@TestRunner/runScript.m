@@ -14,7 +14,11 @@ for i = 1:numel(testRunnerObj.SolnInputs)
     eval(sprintf('%s=testRunnerObj.SolnInputs{i};', testRunnerObj.InputNames{i}))
 end
 variablesBeforeScript = who; % Get variables before
-[~] = evalc(scriptNameToRun); % Run, suppress output
+try
+    [~] = evalc(scriptNameToRun); % Run, suppress output
+catch E
+    error('HWStudent:scriptErr', E.message);
+end
 variablesAfterScript = who; % Get variables after
 newVars = setdiff(variablesAfterScript, variablesBeforeScript); % New variables created
 newVars(strcmp(newVars, 'variablesBeforeScript')) = []; % Remove storage variable

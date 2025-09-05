@@ -58,7 +58,6 @@ if ~isempty(errNodes)
     try
         [~] = evalc(studentFunction);
     catch E
-        msg = regexprep(E.message, '<a[^>]*>(.*?)</a>', '$1'); % remove hyperlink
         error('HWStudent:syntaxError', msg);
     end
 elseif obj.RunCheckCalls
@@ -130,25 +129,22 @@ if obj.RunCheckPlots
     figure;
 end
 if studentIsFunction
-    if numel(obj.Inputs) ~= nargin(studentFunction)
+    try
+        numStudentIn = nargin(studentFunction);
+    catch E
+        % Sometimes invalid functions will cuase nargin to error
+        error('HWStudent:narginErr', E.message);
+    end
+    if numel(obj.Inputs) ~= numStudentIn
         error('HWStudent:inputArgs', '%d input(s) to the function were expected, but your function had %d.', numel(obj.Inputs), nargin(obj.FunctionName));
     end
 
     % Run as function. Use evalc to suppress function outputs
     try
         [~, outputValues{1:nargout(studentFunction)}] = evalc(sprintf('%s(obj.Inputs{:})', studentFunction));
-    catch exception
-        % If an array size limit error was thrown with evalc, then the student function attempted to
-        % output too much text to the command window (most likely unsuppressed imread or similar)
-        if strcmp(exception.identifier, 'MATLAB:array:SizeLimitExceeded')
-            error('HWStudent:exceedDiarySize', ['Matlab attempted to display or create a %s array/string and exceeded the allocated memory capacity (%s). ' ...
-                'Ensure that you have suppressed your lines of code using semicolons.'], exception.arguments{1}, exception.arguments{3});
-        elseif strcmp(exception.identifier, 'MATLAB:unassignedOutputs')
-            error('HWStudent:unassignedOutputs', erase(exception.message, 'student.'))
-        else
+    catch E
             fclose all; % Close files in case they were opened and function errored before fclose was reached
-            rethrow(exception);
-        end
+            rethrow(E);
     end
 
     % If outputNames was never initialized, then give each output the default name of 'output #'
