@@ -1,4 +1,4 @@
-function example5_soln(fn)
+function example5(fn)
 fh = fopen(fn);
 fhw = fopen('new.txt', 'w');
 line = fgets(fh);

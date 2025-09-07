@@ -1,4 +1,4 @@
-function [out1, out2] = example3_soln(arr)
+function [out1, out2] = example3(arr)
 [r, ~] = size(arr);
 count = 0;
 for i = 1:r

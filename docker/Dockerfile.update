@@ -5,10 +5,13 @@ FROM ${FROM_IMAGE}
 # Delete old files
 RUN rm -rf /autograder/source
 
-# Copy local files
-COPY src temp /autograder/source/
+# Copy source files
+COPY src /autograder/source
+
+# Copy assignment files
+COPY temp /autograder/assignments
 
 # Copy run_autograder into proper location and make it executable
-COPY src/run_autograder /autograder/
+COPY src/run_autograder /autograder
 RUN dos2unix /autograder/run_autograder \
     && chmod +x /autograder/run_autograder
