@@ -14,31 +14,30 @@ end
 % Ask user for assignment name
 assignmentName = input('Enter assignment name: ', 's');
 % Find paths of interest
-currPath = fileparts(mfilename('fullpath'));
-mainPath = fileparts(currPath);
+mainPath = fileparts(fileparts(mfilename('fullpath')));
+currPath = pwd;
 submissionPath = fullfile(mainPath, opts.SubmissionFolder);
 assignmentPath = fullfile(mainPath, opts.SourceFolder, assignmentName);
 % Setup
-c = onCleanup(@()cleanupFnc(currPath));
+initFiles = dir(currPath);
+c = onCleanup(@()cleanupFnc(currPath, initFiles));
 % Run autograder
 Autograder(ResultsPath=mainPath, AssignmentPath=assignmentPath, SubmissionPath=submissionPath, UseParallel=opts.UseParallel);
 % Open results file
 open(fullfile(mainPath, 'results.json'));
 end
 
-function cleanupFnc(currPath)
+function cleanupFnc(currPath, initFiles)
 % On cleanup, delete files created during run
+initFiles = initFiles(~[initFiles.isdir]);
 files = dir(currPath);
-files = files(~[files.isdir]);
-fileNames = {files.name};
-% List of files to ignore
-ignoreFiles = {'results.json', 'localTester.m', 'encrypt.m', 'run_autograder', 'Function_List.json'};
-for i = 1:length(fileNames)
-    if ~any(strcmp(fileNames{i}, ignoreFiles))
-        delete(fullfile(currPath, fileNames{i}));
-    end
+fileNames = {files(~[files.isdir]).name};
+initNames = {initFiles.name};
+newFiles = setdiff(fileNames, initNames);
+for i = 1:length(newFiles)
+    delete(fullfile(currPath, newFiles{i}));
 end
 % Remove namespaces
-rmdir(fullfile('src', '+solution'), 's');
-rmdir(fullfile('src', '+student'), 's');
+rmdir(fullfile(currPath, '+solution'), 's');
+rmdir(fullfile(currPath, '+student'), 's');
 end
