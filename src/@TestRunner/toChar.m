@@ -51,7 +51,7 @@ elseif isstruct(in)
     out = char(formattedDisplayText(out, 'UseTrueFalseForLogical', true, 'LineSpacing', 'compact', 'SuppressMarkup',true));
     out = regexprep(out, '(?<!\\)"', ''''); % Replace outer double quotes
     out = strrep(out, '\"', '"'); % Replace inner, escaped double quotes
-elseif ischar(in) || isstring(in)
+elseif ischar(in) || (isstring(in) && isscalar(in))
     % Convert string into char
     if isstring(in)
         out = char(in);
@@ -59,8 +59,8 @@ elseif ischar(in) || isstring(in)
         out = in;
     end
     % Read inputs
-    if r == 1 && opts.parse && endsWith(in, '.txt') && exist(in, 'file')
-        out = char(strjoin(readlines(in), newline));
+    if r == 1 && opts.parse && endsWith(out, '.txt') && exist(out, 'file')
+        out = char(strjoin(readlines(out), newline));
         % If text file was empty, return file name instead
         if isempty(out)
             out = in;
