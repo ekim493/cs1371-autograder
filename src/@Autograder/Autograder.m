@@ -45,12 +45,8 @@ classdef Autograder
         MaxMemPercent (1, 1) double = 1
         % Size of output images (width, height) in Gradescope.
         ImageSize (1, 2) double = [760, 240]
-        % Figure quality (xPos, yPos, width, height). Increasing this value may cause images not to display properly.
-        FigureSize = [100, 100, 380, 120];
         % Time in seconds for the delay in monitoring for function timeouts.
         MonitorDelay (1, 1) double = 0.1
-        % Name of file that has function list
-        FunctionListName = 'Function_List.json'
         % Name of folder inside each assignment that contains additional resources/files
         ResourceFolder = 'resources';
     end

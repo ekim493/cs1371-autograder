@@ -19,7 +19,12 @@ function [hasPassed, msg] = checkCalls(obj, funcFile)
 %       msg - Character message indicating why the test failed. Is empty if tf is true.
 
 % Create full list of banned and allowed functions
-list = jsondecode(fileread(Autograder.FunctionListName)); % Read from function list file.
+try
+    list = jsondecode(fileread(obj.ValidFunctionList)); % Read from function list file.
+catch
+    warning('Unable to read valid function list. Skipping checkCalls.');
+    return
+end
 allowed = [list.ALLOWED; list.ALLOWED_OPS; obj.AllowedFuncs'];
 msg = [];
 banned = obj.BannedFuncs';

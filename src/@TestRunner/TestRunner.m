@@ -17,12 +17,15 @@ classdef TestRunner
         % The following are properties that modify how checks behave.
         CheckedVariables cell = {} % Script variables to check. If empty, it will check all variables that the solution script generates.
         OutputType char = 'full' % Amount of information that the output should display. Set to 'full', 'limit', or 'none'. Default = 'full'.
-        AllowedFuncs cell = {} % Functions that are allowed to be used, regardless if they are not in the function list.
-        BannedFuncs cell = {} % Functions that are banned, regardless if they are in the function list.
-        IncludeFuncs cell = {} % Functions that must be used by the student.
         ImageTolerance (1, 1) double = 10 % The tolerance level for checkImages. Default = 10.
         TextRule char = 'default' % How strict checkTextFiles should be. Set to 'default', 'strict', or 'loose'. Default = 'default'.
         NumTolerance (1, 1) double = 0.001 % Absolute tolerance for numerical comparisons in verifyEqual. Default = 0.001.
+
+        % The following are properties that modify how checkCalls behaves
+        ValidFunctionList char = 'Function_List.json' % JSON file containing the default list of allowed and disabled functions.
+        AllowedFuncs cell = {} % Functions that are allowed to be used, regardless if they are not in the function list.
+        BannedFuncs cell = {} % Functions that are banned, regardless if they are in the function list.
+        IncludeFuncs cell = {} % Functions that must be used by the student.
 
         % The following are QoL properties that change display names.
         InputNames cell % Names of inputs (to display for debugging). Set automatically. Will be 'input#' if there was no name.
@@ -32,6 +35,11 @@ classdef TestRunner
         TestCase % The testCase object to perform verifications on.
         Inputs % The inputs to the function being tested.
         SolnInputs % The inputs to the solution function (if they are different).
+    end
+
+    properties (Constant)
+        % Figure quality (xPos, yPos, width, height). Increasing this value may cause images not to display properly.
+        FigureSize = [100, 100, 380, 120]; 
     end
 
     methods

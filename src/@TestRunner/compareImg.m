@@ -71,7 +71,7 @@ else
         TestRunner.compareImg(varargin{:}, 'call'); % Recursive call to display figures
     end
     % Decrease this value if Gradescope is not displaying properly
-    set(gcf, 'Position', Autograder.FigureSize); % Size of output image.
+    set(gcf, 'Position', TestRunner.FigureSize); % Size of output image.
     set(gcf, 'PaperPositionMode', 'auto');
     filename = [tempname, '.jpg'];
     saveas(gcf, filename);
