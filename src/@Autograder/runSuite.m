@@ -68,8 +68,7 @@ for i = 1:numel(suite)
         obj.throwError('Tags for this homework assignment are invalid or are not present.')
     end
     if obj.UseParallel
-        if seconds(group(i).RunningDuration) > obj.TestcaseTimeout
-            % If a Future was canceled, it should have a RunningDuration > timeout
+        if ~isempty(group(i).Error) && strcmp(group(i).Error(1).identifier, 'parallel:fevalqueue:ExecutionCancelled')
             results.output{i} = sprintf( ...
                 ['Verification failed in %s.\n    ----------------\n    Test Diagnostic:\n    ----------------\n    ' ...
                 'This function timed out because it took longer than %d seconds to run. Is there an infinite loop?'], ...
@@ -77,8 +76,8 @@ for i = 1:numel(suite)
         elseif ~isempty(group(i).Error)
             % Parse parfeval errors first
             results.output{i} = ...
-                ['The autograder ran into an unexpected error. Please contact the HW TAs with the following information:\n' ...
-                group(i).Error.message];
+                ['The autograder ran into an unexpected error. Please contact the HW TAs with the following information:' ...
+                newline group(i).Error.message];
         else
             testresult = fetchOutputs(group(i));
             results.passed(i) = testresult.Passed;

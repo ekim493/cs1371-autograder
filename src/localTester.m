@@ -35,7 +35,9 @@ fileNames = {files(~[files.isdir]).name};
 initNames = {initFiles.name};
 newFiles = setdiff(fileNames, initNames);
 for i = 1:length(newFiles)
-    delete(fullfile(currPath, newFiles{i}));
+    if ~strcmp(newFiles{i}, 'results.json') % Ignore results if in currPath
+        delete(fullfile(currPath, newFiles{i}));
+    end
 end
 % Remove namespaces
 rmdir(fullfile(currPath, '+solution'), 's');
