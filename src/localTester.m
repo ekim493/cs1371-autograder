@@ -42,4 +42,5 @@ end
 % Remove namespaces
 rmdir(fullfile(currPath, '+solution'), 's');
 rmdir(fullfile(currPath, '+student'), 's');
+close('all');
 end

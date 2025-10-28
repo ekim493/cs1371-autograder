@@ -97,8 +97,8 @@ function msg = parseFailedTest(obj, test)
 msg = sprintf('Verification failed in %s.\n    ----------------\n    Test Diagnostic:', extractAfter(test.Name, '/'));
 for i = 1:numel(test.Details.DiagnosticRecord)
     % Temp string created in case multiple verifications were run for one test case.
-    temp = test.Details.DiagnosticRecord(i).Report;
-    temp = char(extractBetween(temp, sprintf('Test Diagnostic:\n    ----------------\n'), sprintf('\n    ---------------------\n    Framework Diagnostic')));
+    report = test.Details.DiagnosticRecord(i).Report;
+    temp = char(extractBetween(report, sprintf('Test Diagnostic:\n    ----------------\n'), sprintf('\n    ---------------------\n    Framework Diagnostic')));
     filename = extractAfter(temp, 'IMAGEFILE:');
     if isempty(filename)
         % If not imagefile, truncate if too long
@@ -126,6 +126,10 @@ for i = 1:numel(test.Details.DiagnosticRecord)
             warning(getReport(E));
             temp = '<em>Image comparison failed to run.</em>';
         end
+    end
+    failureMsg = extractBetween(report, 'FailureMessage:<', '>');
+    if ~isempty(failureMsg)
+        temp = sprintf('%s\n    ----------------\n    %s', temp, failureMsg{1});
     end
     if isempty(temp) % If there is an issue and no output diagnostic is provided, skip output display.
         continue;
