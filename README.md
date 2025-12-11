@@ -12,8 +12,8 @@ Contact [Eric Kim](mailto:ekim493@gatech.edu) for questions or comments.
 4. Follow the setup instructions to create a source folder containing solution codes and testers for the autograder.
 
 ### Setup
-See the [setup.md](setup.md) file for a comprensive overview on how to setup the autograder and tester file. See the [examples](examples/) folder for an example.
-- All assignments should be organized into folders where the name of the folder is the same as the gradescope assignment.
+See the [setup.md](setup.md) file for a comprehensive overview on how to setup the autograder and tester file. See the [examples](examples/) folder for an example.
+- All assignments should be organized into folders where the name of the folder is the same as the Gradescope assignment.
 - One tester file, which inherits the `matlab.unittest.TestCase` class should be inside each assignment folder.
 - Any resources (ie. images, text files), should be placed into a folder called `assets` within the assignment folder. This name is customizable.
 
@@ -27,8 +27,8 @@ See the [setup.md](setup.md) file for a comprensive overview on how to setup the
     - The `source` parameter is the name of the source folder created during autograder setup. This folder should contain other folders named after the Gradescope assignment and contain the solution codes and testers for the autograder. The default is `cs1371`. 
     - The `encrypt` parameter is a boolean value on whether to encrypt the source folder. The default is `$true`.
 
-- In gradescope, go to the 'Configure Autograder' tab, select 'Manual Docker configuration', and then type in the docker Hub repository and tag. For example, `ekim493/cs1371-autograder:latest`. 
-    - Make sure the Docker hub repository is public. NOTE: Making it public will allow all files to be visible online. To prevent this, either make the Docker private and add `gradescopeecs` as a collaborator (requires Pro account) or ensure encryption is set to true.
+- In Gradescope, go to the 'Configure Autograder' tab, select 'Manual Docker configuration', and then type in the docker Hub repository and tag. For example, `ekim493/cs1371-autograder:latest`. 
+    - Make sure the Docker hub repository is public. NOTE: Making it public will allow all files to be visible online. To prevent this, either make the Docker private and add `gradescopeecs` as a collaborator (requires Pro account) or ensure encryption is set to `true` (done by default).
 - Go to assignment -> settings and ensure that the `Container Specifications` under autograder settings is set to the maximum allocated. It is also recommended to put the following into the ignored file section to only accept .m files:
 ```
 *
@@ -36,17 +36,13 @@ See the [setup.md](setup.md) file for a comprensive overview on how to setup the
 ```
 
 ## Advanced Usage
-### Test Runner
-
-For ease of use, this repository uses subtrees to store the TestRunner depenency (found in `src/@TestRunner`). The full repository can be found [here](https://github.com/ekim493/test-runner).
-
 ### Running the Setup File
 The `setup.ps1` file creates a Docker image compatible with Gradescope and with MATLAB installed and logged in. This file can be used to update Matlab/linux if necessary. This script will prompt you for your Mathworks login. The following are the tags associated with the setup:
 - The `Repo` parameter is the name of the repository and tag of the new Docker image. The input to this parameter should be the same as the input to the `base` parameter of the update.ps1 file. The default is `ekim493/cs1371-autograder:base`.
-- The `GradescopeBase` parameter is the name of the Gradescope repository and tag that will become the base containger. Ensure that the tag corresponds with an Ubuntu install or you may run into issues. The default is `gradescope/autograder-base:latest`.
+- The `GradescopeBase` parameter is the name of the Gradescope repository and tag that will become the base container. Ensure that the tag corresponds with an Ubuntu install or you may run into issues. The default is `gradescope/autograder-base:latest`.
 - The `MatlabRelease` parameter is the version of Matlab you want installed. The default is `r2025a`.
 - The `ProductList` parameter is a list of Matlab products you want installed, separated by spaces. You can view the formatted names for products [here](https://github.com/mathworks-ref-arch/matlab-dockerfile). The default is `MATLAB Parallel_Computing_Toolbox`. 
-- The `DependencyFile` parameter is the file name containing a list of Linux dependencies that the revelant Matlab version requires. You can download the dependency file from [here](https://github.com/mathworks-ref-arch/container-images/tree/main/matlab-deps). The default is `base-dependencies.txt`.
+- The `DependencyFile` parameter is the file name containing a list of Linux dependencies that the relevant Matlab version requires. You can download the dependency file from [here](https://github.com/mathworks-ref-arch/container-images/tree/main/matlab-deps). The default is `base-dependencies.txt`.
 - If you see a "sign-in failed" message on Gradescope, you may need to re-login to Matlab. To run the script without re-installing Matlab, use the `SkipInstall` tag or follow the prompt after running the script normally.
 
 ### Changing Default Values
@@ -68,9 +64,10 @@ The autograder contains various default values that have been set. You may edit 
         - `MATLAB_ARGS` adds additional Matlab arguments. Currently set to launch with online licensing.
         
 - `@Autograder` is the main Matlab class used to run the test suite and parse the results.
-- `@TestRunner` is the Matlab class used to run individual test cases. See [setup](setup.md) for more information.
+- `@TestRunner` is the Matlab class used to run individual test cases. For ease of use, this repository uses subtrees to store this class. The main repository can be found [here](https://github.com/ekim493/test-runner). View the readme [here](./src/@TestRunner/README.md).
+
 - `+utils` contain extra Matlab functions useful for test cases or the autograder.
-- `env` folder should be created and contain enviornment specific files (if necessary).
+- `env` folder should be created and contain environment specific files (if necessary).
 - `localTester.m` is a Matlab function used to run the autograder locally.
 - `encrypt.m` is a Matlab function to encrypt the source folder.
 
