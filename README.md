@@ -15,7 +15,7 @@ Contact [Eric Kim](mailto:ekim493@gatech.edu) for questions or comments.
 See the [setup.md](setup.md) file for a comprensive overview on how to setup the autograder and tester file. See the [examples](examples/) folder for an example.
 - All assignments should be organized into folders where the name of the folder is the same as the gradescope assignment.
 - One tester file, which inherits the `matlab.unittest.TestCase` class should be inside each assignment folder.
-- Any resources (ie. images, text files), should be placed into a folder called `resources` within the assignment folder. This name is customizable.
+- Any resources (ie. images, text files), should be placed into a folder called `assets` within the assignment folder. This name is customizable.
 
 ### Image Build
 - Clone this Github repository.
@@ -36,6 +36,10 @@ See the [setup.md](setup.md) file for a comprensive overview on how to setup the
 ```
 
 ## Advanced Usage
+### Test Runner
+
+For ease of use, this repository uses subtrees to store the TestRunner depenency (found in `src/@TestRunner`). The full repository can be found [here](https://github.com/ekim493/test-runner).
+
 ### Running the Setup File
 The `setup.ps1` file creates a Docker image compatible with Gradescope and with MATLAB installed and logged in. This file can be used to update Matlab/linux if necessary. This script will prompt you for your Mathworks login. The following are the tags associated with the setup:
 - The `Repo` parameter is the name of the repository and tag of the new Docker image. The input to this parameter should be the same as the input to the `base` parameter of the update.ps1 file. The default is `ekim493/cs1371-autograder:base`.
