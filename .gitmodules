@@ -1,3 +1,0 @@
-[submodule "src/@TestRunner"]
-	path = src/@TestRunner
-	url = ../test-runner.git
