@@ -48,7 +48,7 @@ classdef Autograder
         % Time in seconds for the delay in monitoring for function timeouts.
         MonitorDelay (1, 1) double = 0.1
         % Name of folder inside each assignment that contains additional resources/files
-        ResourceFolder = 'resources';
+        ResourceFolder = 'assets';
     end
 
     properties (SetAccess=private)

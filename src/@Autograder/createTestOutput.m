@@ -95,6 +95,7 @@ function msg = parseFailedTest(obj, test)
 % Does not need html parsing as the toChar function handles it for us.
 
 msg = sprintf('Verification failed in %s.\n    ----------------\n    Test Diagnostic:', extractAfter(test.Name, '/'));
+failureMsg = '';
 for i = 1:numel(test.Details.DiagnosticRecord)
     % Temp string created in case multiple verifications were run for one test case.
     report = test.Details.DiagnosticRecord(i).Report;
@@ -127,13 +128,15 @@ for i = 1:numel(test.Details.DiagnosticRecord)
             temp = '<em>Image comparison failed to run.</em>';
         end
     end
-    failureMsg = extractBetween(report, 'FailureMessage:<', '>');
-    if ~isempty(failureMsg)
-        temp = sprintf('%s\n    ----------------\n    %s', temp, failureMsg{1});
+    if isempty(failureMsg) % Only add failure message once at the end
+        failureMsg = extractBetween(report, 'FailureMessage:<', '>');
     end
     if isempty(temp) % If there is an issue and no output diagnostic is provided, skip output display.
         continue;
     end
     msg = sprintf('%s\n    ----------------\n%s', msg, temp);
+end
+if ~isempty(failureMsg)
+    msg = sprintf('%s\n    ----------------\n    %s', msg, failureMsg{1});
 end
 end
