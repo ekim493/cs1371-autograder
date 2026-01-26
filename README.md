@@ -4,6 +4,8 @@ The MATLAB Gradescope autograder, designed for Georgia Tech's CS1371 course.
 This repository contains files to setup and run the Gradescope autograder. It supports testing various problem types including script variables, function outputs, plots, images, and text files. Other features include infinite loop timeouts, function call restrictions, customizable point distribution, image comparisons, and more.
 
 Contact [Eric Kim](mailto:ekim493@gatech.edu) for questions or comments.
+
+Youtube Tutorial: [https://youtu.be/uQwXpEx1CUk](https://youtu.be/uQwXpEx1CUk)
 ## Getting Started
 ### Requirements
 1. The [Gradescope Autograder](https://gradescope-autograders.readthedocs.io/en/latest/) works by pulling a Docker image from Docker hub. To follow these instructions on your own, create a [Docker Hub](https://hub.docker.com) account, then create your own Docker Hub repository. You can view the CS1371 Docker here: [ekim493/cs1371-autograder](https://hub.docker.com/r/ekim493/cs1371-autograder).
