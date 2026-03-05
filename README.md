@@ -82,5 +82,11 @@ docker run -it --platform linux/amd64 ekim493/cs1371-autograder:latest bash
 
 Replace `ekim493/cs1371-autograder:latest` with the name of the repository and tag you want to test. You can also mount local files as if you were submitting to the autograder. For example, you can upload files from a local `submission` folder by running the command: `docker run -it -v ./submission:/autograder/submission --platform linux/amd64 ekim493/cs1371-autograder:latest bash`.
 
+Once the container is running, you can run MATLAB with the following command:
+```
+matlab -licmode onlinelicensing
+```
+Note: As of March 2026, using Rosetta emulation on Apple Silicon may cause MATLAB to fail to launch. You can fix this by disabling Rosetta under Docker settings or switching to Docker VMM.
+
 ## Local Testing
 To test student code locally, create a folder called `submission` and add code to test to this folder. Then navigate to the `src` directory or add it to your path and run the `localTester` function. You can modify the submission folder (`SubmissionFolder`), assignment folder (`SourceFolder`), and whether or not to use parallel (`UseParallel`) by using the NAME=VALUE format. For example, to test with parallel off, call `localTester(UseParallel=false)`. 
