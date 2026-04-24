@@ -26,7 +26,7 @@ if (-not $SkipInstall) {
   
 } else {
   Write-Host "Skipping Matlab installation." -ForegroundColor Yellow
-  Write-Host "Pushing to repository: $Repo"
+  Write-Host "Pulling from repository: $Repo"
   Write-Host
 }
 $prompt = Read-Host -Prompt "Continue with these settings? (y/n)"
@@ -91,7 +91,7 @@ if (-not $SkipInstall) {
 # Run container for MATLAB login
 Write-Host "Running container to login to MATLAB…"
 $name = "autograder-$(Get-Random)"
-docker run -it -v .:/autograder/submission -v .:/autograder/results --platform linux/amd64 --name $name $Repo matlab -licmode onlinelicensing -batch quit
+docker run -it --platform linux/amd64 --name $name $Repo matlab -licmode onlinelicensing -batch quit
 if ($LASTEXITCODE -ne 0) {
   Write-Error "Docker run or Matlab login failed."
   exit 1
@@ -108,17 +108,20 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # Push to web and cleanup
-if (-not $SkipInstall) {
-  Write-Host "Pushing to repositiory $Repo"
-  $prompt = Read-Host -Prompt "Press ENTER to continue or type new repository and tag"
-  if ($prompt) {$NewRepo = $prompt} else {$NewRepo = $Repo}
-  docker push $NewRepo
-  if ($LASTEXITCODE -ne 0) {
-    Write-Error "Docker push failed."
-    exit 1
-  }
-  # Cleanup
-  Write-Host "Docker push successful. Cleaning docker container..."
-  docker rm $name -f
-  Write-Host "Docker setup complete. Repository: $NewRepo" -ForegroundColor Green
+Write-Host "Pushing to repository $Repo"
+$prompt = Read-Host -Prompt "Press ENTER to continue or type new repository and tag"
+if ($prompt) {
+  $NewRepo = $prompt
+  docker tag $Repo $NewRepo
+} else {
+  $NewRepo = $Repo
 }
+docker push $NewRepo
+if ($LASTEXITCODE -ne 0) {
+  Write-Error "Docker push failed."
+  exit 1
+}
+# Cleanup
+Write-Host "Docker push successful. Cleaning docker container..."
+docker rm $name -f
+Write-Host "Docker setup complete. Repository: $NewRepo" -ForegroundColor Green
